@@ -19,6 +19,7 @@ function render() {
     const date = document.createElement('span'); date.className = 'date'; date.textContent = row.date;
     const title = document.createElement('h2'); title.textContent = row.title;
     const read = document.createElement('span'); read.className = 'read'; read.textContent = '打开阅读档案 ↗';
+    if (row.missing_images) read.textContent += ' · 部分历史图片已缺失';
     link.append(date, title, read); reports.append(link);
   }
 }

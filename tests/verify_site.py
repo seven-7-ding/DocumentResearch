@@ -4,19 +4,20 @@ import functools
 import http.server
 import json
 from pathlib import Path
-import re
-import subprocess
+import ssl
 import sys
 import threading
 import urllib.request
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import publisher as p
+from browser_cdp import Browser
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--site', required=True, type=Path)
+    parser.add_argument('--url', help='Verify deployed bytes and rendering against this cloud URL')
     parser.add_argument('--browser', default='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe')
     args = parser.parse_args()
     run = p.new_run('browser')
@@ -25,37 +26,37 @@ def main():
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Quiet, directory=str(args.site.resolve())))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    base = f'http://127.0.0.1:{server.server_port}/'
+    base = args.url.rstrip('/') + '/' if args.url else f'http://127.0.0.1:{server.server_port}/'
     result = {'files_verified': 0, 'browser': []}
     try:
         for file in args.site.rglob('*'):
             if file.is_file():
                 path = file.relative_to(args.site).as_posix()
-                with urllib.request.urlopen(base + path, timeout=15) as response:
+                if path.startswith('.'): continue
+                context = ssl.create_default_context(cafile=ssl.get_default_verify_paths().cafile)
+                with urllib.request.urlopen(base + path, timeout=30, context=context) as response:
                     if response.read() != file.read_bytes():
                         raise ValueError('HTTP mismatch: ' + path)
                 result['files_verified'] += 1
         reports = sorted((args.site / 'reports').iterdir())
-        cases = [('desktop', '', '1440,1000'), ('mobile', '', '390,844'),
-                 ('latest-report', 'reports/' + reports[-1].name + '/', '390,844')]
-        for name, route, size in cases:
-            command = [args.browser, '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
-                '--user-data-dir=' + str(run / ('profile-' + name)), '--window-size=' + size,
-                '--virtual-time-budget=12000', '--dump-dom', '--screenshot=' + str(run / (name + '.png')), base + route]
-            proc = subprocess.run(command, capture_output=True, timeout=55)
-            (run / (name + '.html')).write_bytes(proc.stdout)
-            (run / (name + '.stderr.txt')).write_bytes(proc.stderr)
-            dom = proc.stdout.decode('utf-8', errors='replace')
-            if proc.returncode or not (run / (name + '.png')).exists():
-                raise ValueError(name + ': browser failed')
-            if not route and 'class="card"' not in dom:
-                raise ValueError(name + ': catalog did not render')
-            if route and 'class="katex-error"' in dom:
-                raise ValueError(name + ': KaTeX errors')
-            count = len(re.findall(r'class="katex"', dom))
-            if route and 'renderMathInElement' in dom and count == 0:
-                raise ValueError(name + ': math did not render')
-            result['browser'].append({'case': name, 'katex_count': count, 'screenshot': name + '.png'})
+        cases = [('desktop', '', 1440, 1000), ('mobile', '', 390, 844),
+                 ('latest-report', 'reports/' + reports[-1].name + '/', 390, 844)]
+        browser = Browser(args.browser, run / 'chromium')
+        try:
+            for name, route, width, height in cases:
+                data = browser.capture(base + route, name, width, height)
+                if data['errors'] or data['scrollWidth'] > data['width'] + 1:
+                    raise ValueError(name + ': render error or horizontal page overflow: ' + str(data))
+                if not route and not data['cards']: raise ValueError('Catalog is empty')
+                result['browser'].append({'case': name, **data})
+            browser.call('Page.navigate', {'url': base})
+            # Reuse the loaded catalog to test an actual UI event.
+            browser.capture(base, 'filter-before', 390, 844)
+            found = browser.evaluate("document.querySelector('#query').value=" + json.dumps(reports[-1].name) + ";document.querySelector('#query').dispatchEvent(new Event('input'));document.querySelectorAll('.card').length")
+            if found != 1: raise ValueError('Date filter failed')
+            result['date_filter_matches'] = found
+        finally:
+            browser.close()
         (run / 'result.json').write_bytes(p.encode(result))
         print(json.dumps({'run_dir': str(run), **result}, indent=2))
     finally:

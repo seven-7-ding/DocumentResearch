@@ -2,7 +2,7 @@
   "source_dir": "../EveryDayPaper",
   "repository": "seven-7-ding/DocumentResearch",
   "branch": "gh-pages",
-  "publication_enabled": false,
+  "publication_enabled": true,
   "max_file_mb": 15,
   "max_site_mb": 750,
   "max_repo_mb": 850,
