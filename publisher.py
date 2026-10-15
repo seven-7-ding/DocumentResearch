@@ -131,7 +131,7 @@ class GitHub:
 
 class Report(HTMLParser):
     """Preserve script/style text and rewrite only explicit local image references."""
-    def __init__(self, source, max_file, allow_missing=False):
+    def __init__(self, source, max_file, allow_missing=False, previous=None):
         super().__init__(convert_charrefs=False)
         self.source = source.resolve()
         self.day = source.stem
@@ -142,6 +142,10 @@ class Report(HTMLParser):
         self.in_title = False
         self.allow_missing = allow_missing
         self.warnings = []
+        self.previous = previous or {}
+        self.asset_map = {}
+        self.retained_bytes = 0
+        self.retained = set()
 
     def local_url(self, value):
         parsed = urllib.parse.urlsplit(value)
@@ -154,7 +158,15 @@ class Report(HTMLParser):
         file = (self.source.parent / urllib.parse.unquote(parsed.path)).resolve()
         if not file.is_relative_to(self.source.parent) or file.suffix.lower() not in IMAGES:
             raise ValueError(f'{self.day}: local references must be images within source_dir: {parsed.path}')
+        source_key = hashlib.sha256(file.relative_to(self.source.parent).as_posix().encode()).hexdigest()
         if not file.is_file():
+            if source_key in self.previous:
+                saved = self.previous[source_key]
+                self.asset_map[source_key] = saved['path']
+                if saved['path'] not in self.retained:
+                    self.retained_bytes += saved['size']
+                    self.retained.add(saved['path'])
+                return 'assets/' + saved['path'].rsplit('/', 1)[-1]
             if self.allow_missing:
                 self.warnings.append(f'Missing historical image: {parsed.path}')
                 return None
@@ -165,6 +177,7 @@ class Report(HTMLParser):
         name = hashlib.sha256(data).hexdigest()[:24] + file.suffix.lower()
         path = f'reports/{self.day}/assets/{name}'
         self.assets[path] = data
+        self.asset_map[source_key] = path
         return 'assets/' + name + ('#' + parsed.fragment if parsed.fragment else '')
 
     def tag(self, tag, attrs, close=False):
@@ -211,21 +224,22 @@ class Report(HTMLParser):
     def handle_decl(self, decl): self.output.append('<!' + decl + '>')
 
 
-def build_report(file, max_file, allow_missing=False):
+def build_report(file, max_file, allow_missing=False, previous=None):
     text = file.read_text(encoding='utf-8-sig')
     if '\ufffd' in text or re.search(r'(?:file:///|[A-Z]:[\\/])', text):
         raise ValueError(f'{file.name}: encoding error or absolute local path')
     if re.search(r'url\(\s*[\'"]?(?!https:|http:|data:|#)', text, re.I):
         raise ValueError(f'{file.name}: unsupported local CSS resource')
-    parser = Report(file, max_file, allow_missing)
+    parser = Report(file, max_file, allow_missing, previous)
     parser.feed(text)
     parser.close()
     data = ''.join(parser.output).encode('utf-8')
     if len(data) > max_file:
         raise ValueError(f'{file.name}: HTML exceeds max_file_mb')
-    payload = {f'reports/{file.stem}/index.html': data, **parser.assets}
+    payload = {f'reports/{file.stem}/index.html': data,
+               f'reports/{file.stem}/asset-map.json': encode(parser.asset_map), **parser.assets}
     return payload, {'date': file.stem, 'title': ''.join(parser.title) or file.stem,
-                     'url': f'reports/{file.stem}/', 'bytes': sum(map(len, payload.values())),
+                     'url': f'reports/{file.stem}/', 'bytes': sum(map(len, payload.values())) + parser.retained_bytes,
                      'missing_images': len(parser.warnings)}
 
 
@@ -236,9 +250,16 @@ def plan(files, config, remote, read):
     months = {}
     max_file = config['max_file_mb'] * 1024 * 1024
     for file in files:
-        report, item = build_report(file, max_file, config.get('allow_missing_images', False))
         prefix = f'reports/{file.stem}/'
-        deleted.update(path for path in remote if path.startswith(prefix) and path not in report)
+        map_key = prefix + 'asset-map.json'
+        previous = {}
+        if map_key in remote:
+            for key, path in json.loads(read(remote[map_key])).items():
+                if path.startswith(prefix + 'assets/') and path in remote:
+                    previous[key] = {'path': path, 'size': remote[path].get('size', 0)}
+        report, item = build_report(file, max_file, config.get('allow_missing_images', False), previous)
+        retained = set(json.loads(report[map_key]).values())
+        deleted.update(path for path in remote if path.startswith(prefix) and path not in report and path not in retained)
         payload.update(report)
         month = file.stem[:7]
         if month not in months:

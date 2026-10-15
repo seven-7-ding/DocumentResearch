@@ -32,7 +32,7 @@ class PublisherTests(unittest.TestCase):
         self.write('<title>中文日报</title><img src="temp/figure.png"><a href="#paper">go</a><a href="temp/2608.17163.pdf">paper</a>')
         payload, item = p.build_report(self.file, 1024)
         self.assertEqual(item['title'], '中文日报')
-        self.assertEqual(len(payload), 2)
+        self.assertEqual(len(payload), 3)
         result = payload['reports/2026-10-15/index.html'].decode()
         self.assertIn('https://arxiv.org/pdf/2608.17163', result)
         self.assertIn('src="assets/', result)
@@ -47,6 +47,21 @@ class PublisherTests(unittest.TestCase):
         self.assertEqual(item['missing_images'], 1)
         self.assertIn('原文件已清理', next(iter(payload.values())).decode())
         self.assertNotIn('src=', next(iter(payload.values())).decode())
+
+    def test_cloud_images_survive_local_temp_cleanup(self):
+        image = self.source / 'figure.png'
+        image.write_bytes(b'existing cloud image')
+        self.write('<title>saved</title><img src="figure.png">')
+        first, _, _ = p.plan([self.file], self.config, {}, None)
+        remote = {path: {'sha': p.sha(data), 'size': len(data), 'data': data} for path, data in first.items()}
+        image.unlink()
+        _, deleted, summary = p.plan([self.file], self.config, remote, lambda item: item['data'])
+        self.assertEqual(summary['changed_files'], 0)
+        self.assertEqual(deleted, set())
+        self.write('<title>deep read updated</title><img src="figure.png">')
+        _, deleted, summary = p.plan([self.file], self.config, remote, lambda item: item['data'])
+        self.assertEqual(summary['changed_files'], 2)
+        self.assertEqual(deleted, set())
 
     def test_traversal_and_secret_blocked(self):
         for url in ['../secret.png', '.env', '/etc/passwd', 'file:///C:/secret.png']:
