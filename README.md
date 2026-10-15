@@ -71,4 +71,6 @@ conda run -n bit python -B publisher.py status
 
 `codex-executor.log` 最多保留五条近期记录和一条重要历史记录；`task_checklist.md` 只保留任务勾选。两者、`logdir/`、`.env` 和原始 `codex-prompt.txt` 均不提交。
 
+当前仓库按用户要求在交付后删除整个 `logdir/`，不保留验证产物或空目录。它不是网站运行所需文件；后续本地构建/发布命令会临时重建运行目录，工作完成后可删除。
+
 参考：[GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)、[Git Trees API](https://docs.github.com/en/rest/git/trees)。
