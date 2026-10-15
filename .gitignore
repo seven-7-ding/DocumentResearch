@@ -1,0 +1,10 @@
+logdir/
+codex-executor.log
+codex-cli-executor.log
+task_checklist.md
+codex-prompt.txt
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
