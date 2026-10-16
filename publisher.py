@@ -244,10 +244,21 @@ def build_report(file, max_file, allow_missing=False, previous=None):
 
 
 def plan(files, config, remote, read):
-    payload = {file.name: file.read_bytes() for file in (ROOT / 'web').iterdir() if file.is_file()}
+    import portal
+    frontend = ('index.html', 'app.js', 'style.css', 'sync.js', 'oauth-client.json')
+    payload = {name: (ROOT / 'web' / name).read_bytes() for name in frontend if (ROOT / 'web' / name).is_file()}
     payload['.nojekyll'] = b''
     deleted = set()
     months = {}
+    source = files[0].parent
+    library, report_cards, paper_index = portal.library_payload(source)
+    payload.update(library)
+    # Keep one preceding generation, avoiding broken loads during a deployment.
+    previous_shards = set()
+    if 'library/manifest.json' in remote:
+        previous_shards = {s['url'] for s in json.loads(read(remote['library/manifest.json']))['shards']}
+    deleted.update(path for path in remote if re.fullmatch(r'library/[0-9a-f]-[0-9a-f]{12}\.json', path)
+                   and path not in payload and path not in previous_shards)
     max_file = config['max_file_mb'] * 1024 * 1024
     for file in files:
         prefix = f'reports/{file.stem}/'
@@ -267,6 +278,13 @@ def plan(files, config, remote, read):
             months[month] = {row['date']: row for row in json.loads(read(remote[key]))} if key in remote else {}
         months[month][file.stem] = item
     all_months = {p[8:-5] for p in remote if re.fullmatch(r'catalog/\d{4}-\d{2}\.json', p)} | set(months)
+    for month in all_months:
+        key = f'catalog/{month}.json'
+        if month not in months:
+            months[month] = {row['date']: row for row in json.loads(read(remote[key]))}
+        for day, item in months[month].items():
+            if day in report_cards:
+                item.update(portal.report_summary(day, report_cards[day], paper_index))
     for month, entries in months.items():
         payload[f'catalog/{month}.json'] = encode(sorted(entries.values(), key=lambda item: item['date'], reverse=True))
     payload['catalog/months.json'] = encode(sorted(all_months, reverse=True))
@@ -308,6 +326,9 @@ def main():
                 files = files[-1:]
             if not files:
                 raise ValueError('No matching daily HTML report found')
+            if api and config.get('refresh_metadata'):
+                import refresh_library
+                refresh_library.refresh(source, run)
             head, remote = api.snapshot(config['branch']) if api else (None, {})
             if api:
                 repository = api.api(api.endpoint(''))
@@ -322,6 +343,16 @@ def main():
             if api:
                 result.update(api.publish(config['branch'], head, remote, payload, deleted))
                 result['url'] = 'https://' + config['repository'].split('/')[0] + '.github.io/' + config['repository'].split('/')[1] + '/'
+                if config.get('space_enabled'):
+                    import publish_space
+                    try:
+                        result['space'] = publish_space.publish()
+                    except Exception as error:
+                        result['space_error'] = str(error)
+                        (run / 'result.json').write_bytes(encode(result))
+                        trace('GitHub published; HF sync failed; retry publish_space.py')
+                        print(json.dumps(result, ensure_ascii=False, indent=2))
+                        return 1
         (run / 'result.json').write_bytes(encode(result))
         trace(f'{args.command}: success; evidence {run.name}')
         print(json.dumps(result, ensure_ascii=False, indent=2))

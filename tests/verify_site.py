@@ -52,9 +52,10 @@ def main():
             browser.call('Page.navigate', {'url': base})
             # Reuse the loaded catalog to test an actual UI event.
             browser.capture(base, 'filter-before', 390, 844)
-            found = browser.evaluate("document.querySelector('#query').value=" + json.dumps(reports[-1].name) + ";document.querySelector('#query').dispatchEvent(new Event('input'));document.querySelectorAll('.card').length")
-            if found != 1: raise ValueError('Date filter failed')
-            result['date_filter_matches'] = found
+            month=reports[-1].name[:7]
+            expression="""(async()=>{const month=MONTH,select=document.querySelector('#month');select.value=month;select.dispatchEvent(new Event('change'));for(let i=0;i<150;i++){await new Promise(r=>setTimeout(r,100));const cards=[...document.querySelectorAll('.report-card')];if(cards.length&&cards.every(c=>c.innerText.startsWith(month)))return cards.length;}throw new Error('Month filter did not render');})()""".replace('MONTH',json.dumps(month))
+            found=browser.evaluate(expression)
+            result['month_filter_matches']=found
         finally:
             browser.close()
         (run / 'result.json').write_bytes(p.encode(result))

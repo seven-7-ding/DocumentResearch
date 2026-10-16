@@ -8,3 +8,5 @@ codex-prompt.txt
 !.env.example
 __pycache__/
 *.pyc
+paper_index.json
+library_metadata.json
