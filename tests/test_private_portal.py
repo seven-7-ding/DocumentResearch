@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import sys
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 import unittest
 import urllib.error
 import urllib.request
@@ -39,6 +41,25 @@ class FakeHub:
 
 
 class PrivateTests(unittest.TestCase):
+    def test_concurrent_asset_requests_share_private_check(self):
+        class SlowHub(FakeHub):
+            checks = 0
+            def call(self,path,*args,**kwargs):
+                if path.startswith('/api/spaces/'):
+                    self.checks+=1
+                    time.sleep(.1)
+                return super().call(path,*args,**kwargs)
+        run=publisher.new_run('concurrent_api_tests');hub=SlowHub()
+        server=make_server(run,s.Store(hub,'owner/test'),0,'127.0.0.1')
+        threading.Thread(target=server.serve_forever,daemon=True).start()
+        def get(_):
+            with urllib.request.urlopen('http://127.0.0.1:'+str(server.server_port)+'/api/session') as r:
+                return r.status
+        try:
+            with ThreadPoolExecutor(8) as pool:self.assertEqual(list(pool.map(get,range(8))),[200]*8)
+            self.assertEqual(hub.checks,1)
+        finally:server.shutdown();server.server_close()
+
     def test_merge_retry_noop_and_reconnect(self):
         hub=FakeHub();a=s.Store(hub,'owner/test');b=s.Store(hub,'owner/test')
         base=s.empty();value={**base,'notes':'手机笔记','rating':4}

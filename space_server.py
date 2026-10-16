@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import time
+import threading
 import urllib.error
 import urllib.parse
 from hf_storage import Hub, Store, Conflict, encode
@@ -31,10 +32,14 @@ class Handler(SimpleHTTPRequestHandler):
         # Fail closed if someone changes this Space to public. Short cache bounds
         # API traffic and expires even after a later upstream outage.
         if time.monotonic() >= getattr(self.server, 'private_until', 0):
-            info = self.server.store.hub.call('/api/spaces/' + SPACE)
-            if info.get('private') is not True or info.get('sdk') != 'docker':
-                raise ValueError('门户必须运行在私有 Docker Space，已停止访问。')
-            self.server.private_until = time.monotonic() + 10
+            # Concurrent asset requests share one check instead of all querying HF.
+            with self.server.private_lock:
+                if time.monotonic() < getattr(self.server, 'private_until', 0):
+                    return
+                info = self.server.store.hub.call('/api/spaces/' + SPACE)
+                if info.get('private') is not True or info.get('sdk') != 'docker':
+                    raise ValueError('门户必须运行在私有 Docker Space，已停止访问。')
+                self.server.private_until = time.monotonic() + 10
 
     def do_GET(self):
         try:
@@ -93,6 +98,7 @@ class Handler(SimpleHTTPRequestHandler):
 def make_server(root, store, port=7860, host='0.0.0.0', origin=ORIGIN):
     server = ThreadingHTTPServer((host, port), partial(Handler, directory=str(root)))
     server.store, server.origin = store, origin
+    server.private_lock = threading.Lock()
     return server
 
 

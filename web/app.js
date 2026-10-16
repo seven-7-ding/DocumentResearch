@@ -148,13 +148,14 @@ remoteButton.onclick=()=>{if(editing&&pending[editing.id]?.conflict){delete pend
 new MutationObserver(()=>{remoteButton.hidden=!editing||!pending[editing.id]?.conflict;}).observe($('#edit-status'),{childList:true});
 window.addEventListener('online',sync);window.addEventListener('focus',sync);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});
-setInterval(()=>{if(!document.hidden)sync();},60000);
+// Saving/focus/online events still synchronize immediately; passive checks are sparse.
+setInterval(()=>{if(!document.hidden)sync();},300000);
 await Promise.allSettled([reports(),library().catch(e=>{notice(e.message);$('#papers').textContent='图书馆载入失败';})]);
 try{
   auth=await session();
   if(auth){
     cloud=new CloudStore(auth);status('连接云端…');
     pending=JSON.parse(localStorage.getItem(queueKey())||'{}');
-    await cloud.connect();manage.hidden=false;await sync();
+    manage.hidden=false;await sync();
   }
 }catch(e){status('云端未连接');notice(e.message);}
