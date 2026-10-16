@@ -22,6 +22,8 @@ def verify(preview=False):
     target=next(p for p in rows if p['title'].lower()=='loss of plasticity in deep continual learning')
     store=Store(FakeHub(),'local/filters')
     store.save(target['id'],{**empty(),'tags':['Continual Learning','Plasticity','重点','待复现'],'rating':5},empty())
+    second=next(p for p in rows if p['id']!=target['id'])
+    store.save(second['id'],{**empty(),'rating':2},empty())
     for name in ('index.html','app.js','style.css','sync.js'):payload[name]=(publisher.ROOT/'web'/name).read_bytes()
     cards=[{'date':day,'url':'#daily',**portal.report_summary(day,cards,index)} for day,cards in sorted(reports.items(),reverse=True)]
     months=sorted({r['date'][:7] for r in cards},reverse=True)
@@ -36,10 +38,38 @@ def verify(preview=False):
     try:
         browser.call('Page.enable')
         browser.call('Page.addScriptToEvaluateOnNewDocument',{'source':"window.uiErrors=[];addEventListener('error',e=>uiErrors.push(e.message));addEventListener('unhandledrejection',e=>uiErrors.push(String(e.reason)));"})
-        browser.capture(url,'desktop',1280,950)
+        try:browser.capture(url,'desktop',1280,950)
+        except TimeoutError:
+            print(json.dumps(browser.evaluate("({errors:window.uiErrors,body:document.body.innerText.slice(0,200)})"),ensure_ascii=False))
+            raise
         def js(code):return browser.evaluate(code)
         def until(condition):return js("(async()=>{const end=Date.now()+15000;while(!("+condition+")){if(Date.now()>end)throw Error('timeout');await new Promise(r=>setTimeout(r,100));}return true;})()")
         until("document.querySelector('#sync-status').textContent.includes('seven-7-ding')&&document.querySelectorAll('.paper-card').length===12")
+        sorting=js("""(async()=>{const {sortPapers}=await import('./app.js');const rows=[
+          {id:'c',title:'Zebra',added:'',published:'2025-01-01'},
+          {id:'b',title:'beta',added:'2026-02-01',published:'2023-01-01'},
+          {id:'d',title:'alpha',added:'2026-01-01',published:'2024-01-01'},
+          {id:'a',title:'Alpha',added:'2026-01-01',published:'2024-01-01'}];
+          const saved={a:{rating:5},b:{rating:1},d:{rating:5}},expected={added:['adbc','badc'],published:['badc','cadb'],rating:['badc','adbc'],title:['adbc','cbad']};
+          for(const [field,orders] of Object.entries(expected))for(const [i,direction] of ['asc','desc'].entries())if(sortPapers(rows,field,direction,saved).map(p=>p.id).join('')!==orders[i])throw Error('Sort mismatch '+field+direction);
+          if(rows.map(p=>p.id).join('')!=='cbda')throw Error('Input order mutated');
+          return true;})()""")
+        assert sorting
+        js('window.sortRows='+json.dumps(rows,ensure_ascii=False)+';window.sortRatings='+json.dumps(store.items,ensure_ascii=False))
+        assert js("document.querySelector('#sort-field').value==='added'&&document.querySelector('#sort-direction').value==='desc'")
+        real_order=js("""(async()=>{const {sortPapers}=await import('./app.js');const field=document.querySelector('#sort-field'),direction=document.querySelector('#sort-direction');
+          const ids=()=>[...document.querySelectorAll('.paper-card')].map(e=>e.dataset.paperId).join('|');
+          if(ids()!==sortPapers(sortRows,'added','desc',sortRatings).slice(0,12).map(p=>p.id).join('|'))throw Error('Wrong default order');
+          for(const key of ['added','published','rating','title'])for(const order of ['asc','desc']){
+            field.value=key;direction.value=order;field.dispatchEvent(new Event('change'));
+            const expected=sortPapers(sortRows,key,order,sortRatings).map(p=>p.id);
+            if(ids()!==expected.slice(0,12).join('|'))throw Error('Wrong first page '+key+order);
+            document.querySelector('#next').click();if(ids()!==expected.slice(12,24).join('|'))throw Error('Wrong second page '+key+order);
+          }
+          field.value='added';direction.value='desc';direction.dispatchEvent(new Event('change'));
+          if(!document.querySelector('#page-label').textContent.startsWith('1 /'))throw Error('Sort did not reset page');return true;})()""")
+        assert real_order
+        result.update(eightSortOrders=True,missingLast=True,stableTies=True,sortBeforePagination=True,defaultNewest=True)
         js('window.example='+json.dumps(target,ensure_ascii=False))
         checks=js("""(async()=>{const {matches,colorFor}=await import('./app.js');const p={title:'A [RL] <img>',authors:['Alice','Bob'],first_author:'Alice',last_author:'Bob',institutions:['Lab A','Lab B'],venue:'ICML',type:'一般论文',published:'2025',added:'2026-10-16'};const a={tags:['tag A','tag B'],rating:4};return [
           matches(p,{author:['Nobody','Alice'],institution:['Lab B','Other'],venue:['ICLR','ICML'],tag:['tag C','tag A']},a),
@@ -55,6 +85,10 @@ def verify(preview=False):
           choose('author',[example.authors[0],example.authors.at(-1)]);choose('institution',example.institutions);choose('venue',['Nature','ICML']);choose('tag',['Plasticity','Continual Learning']);
           const title=document.querySelector('[name=title]');title.value='plasticity';title.dispatchEvent(new Event('input',{bubbles:true}));""")
         assert js("document.querySelectorAll('.paper-card').length")==1
+        active_before=js("document.querySelector('#active-filters').textContent")
+        js("document.querySelector('#sort-field').value='rating';document.querySelector('#sort-direction').value='asc';document.querySelector('#sort-field').dispatchEvent(new Event('change'))")
+        assert js("document.querySelectorAll('.paper-card').length===1&&document.querySelector('.paper-card').dataset.paperId===example.id")
+        assert js("document.querySelector('#active-filters').textContent")==active_before
         assert js("new FormData(document.querySelector('#filters')).getAll('author').length")==2
         for selector in ('.paper-link','.authors','.institutions','.venue','.chips'):
             assert js('!!document.querySelector('+json.dumps(selector+' mark')+')'),selector
@@ -77,6 +111,7 @@ def verify(preview=False):
             browser.call('Emulation.setDeviceMetricsOverride',{'width':width,'height':height,'deviceScaleFactor':1,'mobile':width<600})
             js("document.documentElement.style.scrollBehavior='auto';document.querySelector('#papers').scrollIntoView({behavior:'instant'})")
             assert js('document.documentElement.scrollWidth<=innerWidth')
+            assert js("[...document.querySelectorAll('.sort-bar select')].every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})")
             assert js("[...document.querySelectorAll('.multi-select>summary')].every(e=>{const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return r.width<=p.width+1})")
             if preview and width<600:shots.append(browser.call('Page.captureScreenshot',{'format':'jpeg','quality':35})['data'])
             js("(()=>{document.querySelector('.filter-panel').open=true;const d=document.querySelector('[name=venue]').nextElementSibling;d.open=true;d.scrollIntoView({behavior:'instant'})})()")

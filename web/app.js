@@ -2,6 +2,23 @@ import {CloudStore,session,emptyAnnotation,validate,Conflict} from './sync.js';
 const $=s=>document.querySelector(s);
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const SIZE=12;
+const titleOrder=new Intl.Collator('en',{sensitivity:'base',numeric:true,ignorePunctuation:true});
+export function sortPapers(rows,field='added',direction='desc',saved={}){
+  if(!['added','published','rating','title'].includes(field))field='added';
+  const sign=direction==='asc'?1:-1;
+  const value=p=>field==='rating'?(saved[p.id]?.rating??null):(p[field]?.trim()||null);
+  return [...rows].sort((a,b)=>{
+    const x=value(a),y=value(b);
+    // Missing dates/titles and unrated entries stay last in either direction.
+    if(x===null&&y!==null)return 1;if(y===null&&x!==null)return -1;
+    const order=x===null?0:field==='rating'?x-y:field==='title'?titleOrder.compare(x,y):x<y?-1:x>y?1:0;
+    return sign*order||titleOrder.compare(a.title||'',b.title||'')||String(a.id).localeCompare(String(b.id),'en');
+  });
+}
+function sortLabels(){
+  const labels={added:['升序 · 最早加入','降序 · 最新加入'],published:['升序 · 最早发表','降序 · 最新发表'],rating:['升序 · 低分优先','降序 · 高分优先'],title:['升序 · A → Z','降序 · Z → A']}[$('#sort-field').value];
+  [...$('#sort-direction').options].forEach((option,i)=>option.textContent=labels[i]);
+}
 const MULTI=['author','first_author','last_author','institution','venue','tag','type'];
 const widgets=new Map();
 const list=v=>Array.isArray(v)?v.filter(Boolean):v?[v]:[];
@@ -69,14 +86,14 @@ export function matches(p,f,a=emptyAnnotation()){
   }return true;
 }
 function render(){
-  const f=filterValues(), filtered=papers.filter(p=>matches(p,f,annotations[p.id]||emptyAnnotation()));
+  const f=filterValues(), filtered=sortPapers(papers.filter(p=>matches(p,f,annotations[p.id]||emptyAnnotation())),$('#sort-field').value,$('#sort-direction').value,annotations);
   const pages=Math.max(1,Math.ceil(filtered.length/SIZE));page=Math.min(page,pages);
   $('#result-count').textContent=filtered.length+' / '+papers.length+' 篇';
   const active=Object.entries(f).filter(([k,v])=>list(v).length&&k!=='title'&&k!=='author_query').length;
   $('#active-filters').textContent=active?'· '+active+' 项':'';
   const target=$('#papers');target.replaceChildren();
   for(const p of filtered.slice((page-1)*SIZE,page*SIZE)){
-    const a=annotations[p.id]||emptyAnnotation(),card=node('article',undefined,'paper-card card');
+    const a=annotations[p.id]||emptyAnnotation(),card=node('article',undefined,'paper-card card');card.dataset.paperId=p.id;
     const type=node('div',undefined,'type-line');type.append(marked('span',p.type,'type',[],f.type.includes(p.type)),node('span','·'));
     const venue=marked('span',p.venue,'venue',[],f.venue.includes(p.venue));venue.title=p.venue;type.append(venue);card.append(type);
     const h=node('h3'),link=marked('a',p.title,'paper-link',f.title?[f.title]:[]);link.href=p.pdf_url;link.target='_blank';link.rel='noopener noreferrer';link.title='打开论文 PDF';h.append(link);card.append(h);
@@ -158,7 +175,7 @@ async function library(){
   const manifest=await data('library/manifest.json'),queue=[...manifest.shards],rows=[];
   await Promise.all(Array.from({length:4},async()=>{while(queue.length){const shard=queue.shift();rows.push(...await data(shard.url));}}));
   if(rows.length!==manifest.count)throw new Error('目录更新中，请刷新重试。');
-  papers=rows.sort((a,b)=>b.added.localeCompare(a.added)||a.title.localeCompare(b.title));
+  papers=rows;
   $('#total').textContent=papers.length+' 篇';
   for(const key of ['first_author','last_author','venue','type'])options(filters.elements[key],papers.map(p=>p[key]));
   options(filters.elements.institution,papers.flatMap(p=>p.institutions));
@@ -173,6 +190,7 @@ document.addEventListener('click',e=>{for(const widget of widgets.values())if(!w
 filters.addEventListener('submit',e=>e.preventDefault());
 filters.addEventListener('input',()=>{page=1;render();});
 filters.addEventListener('reset',()=>{queueMicrotask(()=>{page=1;for(const widget of widgets.values())widget.reset();render();});});
+for(const id of ['#sort-field','#sort-direction'])$(id).addEventListener('change',()=>{page=1;sortLabels();render();});
 $('#prev').onclick=()=>{page--;render();$('#library').scrollIntoView();};$('#next').onclick=()=>{page++;render();$('#library').scrollIntoView();};
 $('#close-editor').onclick=()=>$('#editor').close();
 const manage=node('button','笔记管理');manage.hidden=true;$('.account').append(manage);

@@ -23,6 +23,7 @@
 <fieldset><legend>发表时间 · 最新版本</legend><input name="published_from" type="date" aria-label="发表起始日期"><span>—</span><input name="published_to" type="date" aria-label="发表截止日期"></fieldset>
 <fieldset><legend>加入图书馆时间</legend><input name="added_from" type="date" aria-label="入库起始日期"><span>—</span><input name="added_to" type="date" aria-label="入库截止日期"></fieldset>
 </div><p class="filter-help">同一字段任选其一，不同字段同时满足。</p></details></form>
+<div class="sort-bar"><label for="sort-field">排序<select id="sort-field"><option value="added">加入图书馆时间</option><option value="published">发表时间</option><option value="rating">评分</option><option value="title">标题首字母</option></select></label><label for="sort-direction">顺序<select id="sort-direction"><option value="asc">升序 · 最早加入</option><option value="desc" selected>降序 · 最新加入</option></select></label></div>
 <p id="notice" role="status" hidden></p><div id="papers" class="paper-grid" aria-live="polite"><p>正在载入图书馆…</p></div>
 <div class="pagination"><button id="prev">上一页</button><span id="page-label"></span><button id="next">下一页</button></div>
 </section></main>
