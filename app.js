@@ -150,4 +150,3 @@ try{
     await cloud.connect();$('#login').hidden=true;$('#logout').hidden=false;manage.hidden=false;await sync();
   }else if(new URLSearchParams(location.search).get('login')==='1'){$('#account-dialog').showModal();}
 }catch(e){status('云端未连接');notice(e.message);}
-
