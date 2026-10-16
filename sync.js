@@ -4,8 +4,9 @@ const CLIENT='https://seven-7-ding-documentresearch.static.hf.space/oauth-client
 const SESSION='document-research:session:v1';
 const REPO_NAME='document-research-notes';
 const jsonEqual=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
-const base64=bytes=>btoa(String.fromCharCode(...bytes));
+const base64=bytes=>{let text='';for(let i=0;i<bytes.length;i+=8192)text+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(text);};
 const encoded=text=>base64(new TextEncoder().encode(text));
+const bucket=id=>{let hash=2166136261;for(const c of id)hash=Math.imul(hash^c.codePointAt(0),16777619);return (hash>>>0).toString(16).slice(-1);};
 export const emptyAnnotation=()=>({tags:[],notes:'',rating:null});
 export class Conflict extends Error {constructor(remote){super('这篇笔记已在另一台设备修改。请保留当前文字，重新打开笔记后合并。');this.remote=remote;}}
 export function validate(value){
@@ -74,12 +75,16 @@ export class CloudStore {
     info??=await this.call('/api/datasets/'+this.repo);
     if(info.private!==true)throw new Error('笔记仓库不是私有，已停止同步。');
     if(info.sha===this.head)return this.items;
-    let doc={schema:1,items:{},writes:0};
+    let doc={schema:2,buckets:[],writes:0,history_bytes:0};
     // Pin reads to the inspected revision: a concurrent write cannot mix head and data.
     if(info.sha)try{doc=await this.call('/datasets/'+this.repo+'/resolve/'+info.sha+'/annotations.json');}catch(e){if(e.status!==404)throw e;}
-    if(doc.schema!==1||!doc.items||JSON.stringify(doc).length>2000000)throw new Error('云端笔记格式或容量异常，已停止同步。');
-    for(const [id,value] of Object.entries(doc.items)){if(id.length>180)throw new Error('无效论文标识');validate(value);}
-    this.items=doc.items;this.head=info.sha;this.writes=doc.writes||0;return this.items;
+    this.legacy=doc.schema===1&&doc.items&&typeof doc.items==='object';
+    if(!this.legacy&&(doc.schema!==2||!Array.isArray(doc.buckets)||doc.buckets.length>16||doc.buckets.some(b=>!/^notes\/[0-9a-f]\.json$/.test(b))))throw new Error('云端笔记格式异常，已停止同步。');
+    const items=this.legacy?doc.items:{};const queue=[...(doc.buckets||[])];
+    await Promise.all(Array.from({length:4},async()=>{while(queue.length){const path=queue.shift();Object.assign(items,await this.call('/datasets/'+this.repo+'/resolve/'+info.sha+'/'+path));}}));
+    if(new TextEncoder().encode(JSON.stringify(items)).length>2000000)throw new Error('云端笔记容量异常，已停止同步。');
+    for(const [id,value] of Object.entries(items)){if(id.length>180)throw new Error('无效论文标识');validate(value);}
+    this.items=items;this.head=info.sha;this.meta=doc;this.writes=doc.writes||0;return this.items;
   }
   async save(id,value,base){
     validate(value);if(typeof id!=='string'||id.length>180)throw new Error('无效论文标识');
@@ -91,16 +96,36 @@ export class CloudStore {
         const remote=this.items[id]||emptyAnnotation(), merged=mergeAnnotation(base,value,remote);
         if(jsonEqual(validate(remote),merged))return remote;
         const item={...merged,updated_at:new Date().toISOString()};
-        const doc={schema:1,writes:this.writes+1,items:{...this.items,[id]:item}};
-        const content=JSON.stringify(doc);
-        if(new TextEncoder().encode(content).length>2000000)throw new Error('笔记总量已达2MB，请先导出并整理。');
-        const lines=[{key:'header',value:{summary:'Update reading notes',...(this.head?{parentCommit:this.head}:{})}},{key:'file',value:{path:'annotations.json',content:encoded(content),encoding:'base64'}}];
+        const items={...this.items,[id]:item};
+        if(new TextEncoder().encode(JSON.stringify(items)).length>2000000)throw new Error('笔记总量已达2MB，请先导出并整理。');
+        const parts=this.legacy?[...new Set(Object.keys(items).map(bucket))]:[bucket(id)];
+        const files=parts.map(part=>({path:'notes/'+part+'.json',content:JSON.stringify(Object.fromEntries(Object.entries(items).filter(([key])=>bucket(key)===part)))}));
+        const doc={schema:2,writes:this.writes+1,buckets:[...new Set([...(this.meta?.buckets||[]),...files.map(f=>f.path)])].sort(),history_bytes:(this.meta?.history_bytes||0)+files.reduce((sum,f)=>sum+new TextEncoder().encode(f.content).length,512)};
+        if(doc.history_bytes>100000000)throw new Error('笔记历史达到维护阈值，请先导出备份，并在私有Dataset设置中压缩历史。');
+        const lines=[{key:'header',value:{summary:'Update reading notes',...(this.head?{parentCommit:this.head}:{})}},...files.map(f=>({key:'file',value:{path:f.path,content:encoded(f.content),encoding:'base64'}})),{key:'file',value:{path:'annotations.json',content:encoded(JSON.stringify(doc)),encoding:'base64'}}];
         try{
           await this.call('/api/datasets/'+this.repo+'/commit/main',{method:'POST',headers:{'Content-Type':'application/x-ndjson'},body:lines.map(JSON.stringify).join('\n')+'\n'});
           this.head=null;await this.pull();return this.items[id];
         }catch(e){if(e.status!==409&&e.status!==412)throw e;}
       }
       throw new Error('另一台设备正在频繁更新，请稍后重试。');
+    }finally{this.busy=false;}
+  }
+  async compact(){
+    if(this.busy)throw new Error('请等待当前同步完成。');
+    this.busy=true;
+    try{
+      await this.pull();
+      // Server squashes its current head atomically; never force-push a stale local snapshot.
+      const response=await fetch(HUB+'/api/datasets/'+this.repo+'/super-squash/main',{method:'POST',headers:{Authorization:'Bearer '+this.auth.token,'Content-Type':'application/json'},body:JSON.stringify({message:'Compact reading-note history; retain current notes'}),signal:AbortSignal.timeout(25000)});
+      if(!response.ok)throw new Error('历史整理失败（'+response.status+'），当前笔记仍保留。');
+      for(let attempt=0;attempt<3;attempt++){
+        this.head=null;await this.pull();
+        const doc={...this.meta,history_bytes:0};
+        const lines=[{key:'header',value:{summary:'Reset note history budget',parentCommit:this.head}},{key:'file',value:{path:'annotations.json',content:encoded(JSON.stringify(doc)),encoding:'base64'}}];
+        try{await this.call('/api/datasets/'+this.repo+'/commit/main',{method:'POST',headers:{'Content-Type':'application/x-ndjson'},body:lines.map(JSON.stringify).join('\n')+'\n'});this.head=null;await this.pull();return;}
+        catch(e){if(e.status!==409&&e.status!==412)throw e;}
+      }throw new Error('另一台设备正在更新，整理后请重试。');
     }finally{this.busy=false;}
   }
 }

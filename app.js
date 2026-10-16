@@ -36,7 +36,7 @@ function render(){
     const institutions=node('p',p.institutions.join(' · ')||'机构未注明','institutions');institutions.title=institutions.textContent;card.append(institutions);
     if(a.tags.length)card.append(chips(a.tags,'user'));
     if(a.notes)card.append(node('p',a.notes,'note-preview'));
-    const dates=node('div',undefined,'dates');dates.append(node('span','发表 '+(p.published?.slice(0,10)||'未注明')+(p.version?' · '+p.version:'')),node('span','入库 '+(p.added?.slice(0,10)||'未注明')));card.append(dates);
+    const dates=node('div',undefined,'dates');const published=node('span','发表 '+(p.published?.slice(0,10)||'未注明')+(p.version?' · '+p.version:''));published.title=p.version_verified?'已核对最新版本':'采用原始收录记录；最新版本日期尚未核实';dates.append(published,node('span','入库 '+(p.added?.slice(0,10)||'未注明')));card.append(dates);
     const bottom=node('div',undefined,'paper-bottom');
     bottom.append(node('span',a.rating?'★'.repeat(a.rating)+'☆'.repeat(5-a.rating):'未评分',a.rating?'stars':'unrated'));
     const edit=node('button',a.notes?'编辑笔记':'添加笔记','edit-button');edit.type='button';edit.addEventListener('click',()=>openEditor(p));bottom.append(edit);card.append(bottom);target.append(card);
@@ -117,7 +117,12 @@ $('#prev').onclick=()=>{page--;render();$('#library').scrollIntoView();};$('#nex
 $('#close-editor').onclick=()=>$('#editor').close();$('#close-account').onclick=()=>$('#account-dialog').close();
 $('#login').onclick=()=>$('#account-dialog').showModal();
 $('#start-login').onclick=async()=>{try{await login();}catch(e){$('#login-error').textContent=e.message;}};
-$('#logout').onclick=()=>{logout();auth=null;cloud=null;annotations={};pending={};$('#logout').hidden=true;$('#login').hidden=false;status('');tagOptions();render();};
+$('#logout').onclick=()=>{logout();auth=null;cloud=null;annotations={};pending={};$('#logout').hidden=true;$('#login').hidden=false;manage.hidden=true;status('');tagOptions();render();};
+const manage=node('button','笔记管理');manage.hidden=true;$('.account').append(manage);
+const manager=node('dialog');const managerTitle=node('h2','笔记管理');const backup=node('button','导出笔记');const compact=node('button','整理历史');const closeManager=node('button','关闭');const managerStatus=node('p',undefined,'hint');manager.append(managerTitle,managerStatus,backup,compact,closeManager);document.body.append(manager);
+manage.onclick=()=>{managerStatus.textContent='已同步笔记 '+Object.keys(cloud.items).length+' 篇';manager.showModal();};closeManager.onclick=()=>manager.close();
+backup.onclick=()=>{const blob=new Blob([JSON.stringify({schema:1,exported_at:new Date().toISOString(),notes:cloud.items,pending},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='reading-notes-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+compact.onclick=async()=>{if(!confirm('保留所有当前笔记，删除云端旧版本历史。建议先导出备份。是否继续？'))return;compact.disabled=true;try{await cloud.compact();managerStatus.textContent='历史已整理，当前笔记完整保留。';}catch(e){managerStatus.textContent=e.message;}finally{compact.disabled=false;}};
 $('#annotation-form').onsubmit=async e=>{
   e.preventDefault();if(!cloud||!editing)return;
   try{
@@ -142,7 +147,7 @@ try{
   if(auth){
     cloud=new CloudStore(auth);status('连接云端…');
     pending=JSON.parse(localStorage.getItem(queueKey())||'{}');
-    await cloud.connect();$('#login').hidden=true;$('#logout').hidden=false;await sync();
+    await cloud.connect();$('#login').hidden=true;$('#logout').hidden=false;manage.hidden=false;await sync();
   }else if(new URLSearchParams(location.search).get('login')==='1'){$('#account-dialog').showModal();}
 }catch(e){status('云端未连接');notice(e.message);}
 
