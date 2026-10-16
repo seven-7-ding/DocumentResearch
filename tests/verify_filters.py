@@ -24,6 +24,9 @@ def verify(preview=False):
     store.save(target['id'],{**empty(),'tags':['Continual Learning','Plasticity','重点','待复现'],'rating':5},empty())
     second=next(p for p in rows if p['id']!=target['id'])
     store.save(second['id'],{**empty(),'rating':2},empty())
+    extra=[p for p in rows if p['id'] not in {target['id'],second['id']}][:3]
+    for n,p in enumerate(extra):
+        store.save(p['id'],{**empty(),'tags':['Suggestion '+str(n*20+i).zfill(2) for i in range(20)]},empty())
     for name in ('index.html','app.js','style.css','sync.js'):payload[name]=(publisher.ROOT/'web'/name).read_bytes()
     cards=[{'date':day,'url':'#daily',**portal.report_summary(day,cards,index)} for day,cards in sorted(reports.items(),reverse=True)]
     months=sorted({r['date'][:7] for r in cards},reverse=True)
@@ -119,6 +122,46 @@ def verify(preview=False):
             if preview and width<600:shots.append(browser.call('Page.captureScreenshot',{'format':'jpeg','quality':35})['data'])
             js("document.querySelector('[name=venue]').nextElementSibling.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))")
             assert not js("document.querySelector('[name=venue]').nextElementSibling.open")
+        # Edit-time suggestions must cover every matching saved tag and replace
+        # only the token at the caret. All writes below use the local FakeHub.
+        js("document.querySelector('.edit-button').click();window.tagField=document.querySelector('#edit-tags');window.typeTags=(value,cursor=value.length)=>{tagField.focus();tagField.value=value;tagField.setSelectionRange(cursor,cursor);tagField.dispatchEvent(new Event('input',{bubbles:true}));};typeTags('pLaSt');")
+        assert js("[...document.querySelectorAll('#tag-suggestions [role=option]')].map(e=>e.textContent)")==['Plasticity']
+        assert js("document.querySelector('#tag-suggestions mark').textContent")=='Plast'
+        point=js("(()=>{const e=document.querySelector('#tag-suggestions [role=option]');e.scrollIntoView({block:'nearest'});const r=e.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()")
+        for event in ['mousePressed','mouseReleased']:
+            browser.call('Input.dispatchMouseEvent',{'type':event,**point,'button':'left','clickCount':1})
+        assert js("tagField.value")=='Plasticity，'
+        assert js("document.querySelector('#editor').open")
+        js("typeTags('重点, Plast，待复现',9);document.querySelector('#tag-suggestions [role=option]').click()")
+        assert js("tagField.value")=='重点,Plasticity，待复现'
+        js("typeTags('Plasticity，Plas')")
+        assert js("document.querySelector('#tag-suggestions').hidden")
+        js("typeTags('复现')")
+        assert js("document.querySelector('#tag-suggestions [role=option]').textContent")=='待复现'
+        js("tagField.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));tagField.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}))")
+        assert js("tagField.value")=='待复现，'
+        assert js("document.querySelector('#editor').open")
+        js("typeTags('Suggestion')")
+        assert js("document.querySelectorAll('#tag-suggestions [role=option]').length")==60
+        js("tagField.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}))")
+        assert js("document.querySelector('#tag-suggestions [aria-selected=true]').textContent")=='Suggestion 59'
+        js("tagField.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}))")
+        assert js("document.querySelector('#tag-suggestions').hidden&&document.querySelector('#editor').open")
+        js("typeTags('复');tagField.dispatchEvent(new CompositionEvent('compositionstart'));tagField.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true,cancelable:true}))")
+        assert js("tagField.value==='复'&&document.querySelector('#tag-suggestions').hidden")
+        js("tagField.dispatchEvent(new CompositionEvent('compositionend'))")
+        assert js("!document.querySelector('#tag-suggestions').hidden")
+        assert js("(()=>{const r=document.querySelector('#tag-suggestions').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})()")
+        js("typeTags('Plasticity，重点，Fresh tag');tagField.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}))")
+        assert js("tagField.value==='Plasticity，重点，Fresh tag，'&&document.querySelector('#editor').open")
+        js("document.querySelector('#annotation-form').requestSubmit()")
+        until("!document.querySelector('#editor').open")
+        assert store.items[target['id']]['tags']==['Plasticity','重点','Fresh tag']
+        js("document.querySelector('.edit-button').click();typeTags('fresh')")
+        assert js("document.querySelector('#tag-suggestions [role=option]').textContent")=='Fresh tag'
+        js("document.querySelector('#close-editor').click()")
+        assert js("document.querySelector('#tag-suggestions').hidden")
+        result.update(tagSuggestions=True,allMatches=True,caretReplacement=True,tagKeyboard=True,chineseComposition=True,newTagSave=True)
         assert not js('window.uiErrors')
         result.update(reset=True,literalSearch=True,mobile=True,keyboard=True)
         return {'checks':result,'screenshots':shots}

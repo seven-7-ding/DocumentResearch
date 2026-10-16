@@ -125,8 +125,61 @@ function openEditor(p){
   if(pending[p.id])editBase=pending[p.id].base;
   $('#edit-title').textContent=p.title;$('#edit-tags').value=a.tags.join('，');$('#edit-rating').value=a.rating||'';$('#edit-notes').value=a.notes;
   $('#edit-status').textContent=pending[p.id]?.conflict?'云端有不同版本。当前未同步草稿仍保留；请复制后关闭并刷新云端笔记，再合并。':'';
+  closeTagSuggestions();
   $('#editor').showModal();
 }
+const tagInput=$('#edit-tags'),tagList=$('#tag-suggestions');
+let tagMatches=[],activeTag=-1,composingTag=false;
+function tagContext(){
+  const value=tagInput.value,cursor=tagInput.selectionStart??value.length;
+  let start=cursor,end=cursor;
+  while(start>0&&!/[,，\n]/.test(value[start-1]))start--;
+  while(end<value.length&&!/[,，\n]/.test(value[end]))end++;
+  const others=(value.slice(0,start)+value.slice(end)).split(/[,，\n]/).map(t=>t.trim()).filter(Boolean);
+  return {value,start,end,query:value.slice(start,end).trim(),others};
+}
+function closeTagSuggestions(){tagList.hidden=true;activeTag=-1;tagInput.setAttribute('aria-expanded','false');tagInput.removeAttribute('aria-activedescendant');}
+function selectTag(index){
+  const tag=tagMatches[index];if(!tag)return;
+  const {value,start,end}=tagContext(),suffix=value.slice(end),insert=tag+(suffix?'':'，');
+  const next=value.slice(0,start)+insert+suffix;
+  if(next.length>tagInput.maxLength){$('#edit-status').textContent='标签输入已达长度上限，请先删减。';return;}
+  tagInput.value=next;tagInput.focus();tagInput.setSelectionRange(start+insert.length,start+insert.length);closeTagSuggestions();
+}
+function suggestTags(){
+  if(composingTag||!$('#editor').open||document.activeElement!==tagInput)return closeTagSuggestions();
+  const {query,others}=tagContext();
+  if(!query)return closeTagSuggestions();
+  tagMatches=[...new Set(Object.values(annotations).flatMap(a=>a.tags||[]))].filter(t=>includes(t,query)&&!others.includes(t)).sort((a,b)=>a.localeCompare(b));
+  activeTag=-1;tagList.replaceChildren();tagInput.removeAttribute('aria-activedescendant');
+  for(const [i,tag] of tagMatches.entries()){
+    const option=node('div',undefined,'tag-suggestion');option.id='tag-suggestion-'+i;option.setAttribute('role','option');option.setAttribute('aria-selected','false');
+    option.append(marked('span',tag,'chip tone-'+colorFor(tag),[query]));
+    // Keep focus on the text field while clicking/tapping a candidate.
+    option.addEventListener('pointerdown',e=>e.preventDefault());option.addEventListener('click',()=>selectTag(i));tagList.append(option);
+  }
+  tagList.hidden=!tagMatches.length;tagInput.setAttribute('aria-expanded',String(!!tagMatches.length));
+}
+for(const event of ['input','focus','click'])tagInput.addEventListener(event,suggestTags);
+tagInput.addEventListener('compositionstart',()=>{composingTag=true;closeTagSuggestions();});
+tagInput.addEventListener('compositionend',()=>{composingTag=false;suggestTags();});
+tagInput.addEventListener('blur',closeTagSuggestions);
+tagInput.addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))suggestTags();});
+tagInput.addEventListener('keydown',e=>{
+  if(e.isComposing||composingTag||e.keyCode===229)return;
+  if(e.key==='Escape'&&!tagList.hidden){e.preventDefault();e.stopPropagation();closeTagSuggestions();return;}
+  if(['ArrowDown','ArrowUp'].includes(e.key)){
+    if(tagList.hidden)suggestTags();if(tagList.hidden)return;
+    e.preventDefault();activeTag=activeTag<0?(e.key==='ArrowDown'?0:tagMatches.length-1):(activeTag+(e.key==='ArrowDown'?1:-1)+tagMatches.length)%tagMatches.length;
+    [...tagList.children].forEach((option,i)=>option.setAttribute('aria-selected',String(i===activeTag)));
+    const option=tagList.children[activeTag];tagInput.setAttribute('aria-activedescendant',option.id);option.scrollIntoView({block:'nearest'});return;
+  }
+  if(e.key==='Enter'){
+    e.preventDefault();if(!tagList.hidden){selectTag(activeTag<0?0:activeTag);return;}
+    const {value,end,query}=tagContext();if(query&&end===value.length&&value.length<tagInput.maxLength){tagInput.value=value+'，';tagInput.setSelectionRange(tagInput.value.length,tagInput.value.length);}
+  }
+});
+$('#editor').addEventListener('close',closeTagSuggestions);
 function queueKey(){return 'document-research:pending:'+auth.sub;}
 function persist(){localStorage.setItem(queueKey(),JSON.stringify(pending));}
 function status(text){$('#sync-status').textContent=text;}
@@ -144,7 +197,7 @@ async function sync(){
     const conflicts=Object.values(pending).some(e=>e.conflict);
     status(conflicts?'有笔记需要合并':Object.keys(pending).length?'待同步':auth.user+' · 已同步');
     if(conflicts)notice('另一台设备修改了同一篇笔记。打开该篇笔记可查看未同步草稿；请先复制保留，再点击下方“使用云端版本”后合并。');
-    tagOptions();render();
+    tagOptions();render();suggestTags();
   }catch(e){status(navigator.onLine?'同步失败 · 将重试':'离线 · 待同步');notice(e.message);}
   finally{syncing=false;}
 }
