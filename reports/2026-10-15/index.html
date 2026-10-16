@@ -21,7 +21,7 @@
       <p class="caveat"><strong>阅读提醒：</strong>统一解释和诊断并不等于已解决任意任务序列的持续学习；应重点核对近似成立条件与模型范围。</p><div class="qa-log"></div>
     </section><section class="paper-card is-deep-read" data-deep-read="true" id="paper-2609.10776" data-paper-id="2609.10776" data-category="continual">
       <div class="chips"><span class="chip deep-badge">已精读 · 正文与附录</span><span class="chip">02 · 持续学习 / 可塑性</span><span class="chip">首发 2026-09-09</span><span class="chip">版本更新 2026-09-09</span><span class="chip">arXiv 预印本</span></div>
-      <h2>A Bellman Optimality Equation for Plasticity</h2><p class="formula-shortcut"><a href="#d2-formula-tutorial">新增问答：从零理解核心公式 · 含手算与交互例子</a></p><p class="title-zh">可塑性的 Bellman 最优方程</p>
+      <h2>A Bellman Optimality Equation for Plasticity</h2><p class="figure3-shortcut"><a href="#d2-figure3-qa">新增：Figure 3 两条信息曲线与公开代码核查（2026-10-16）</a></p><p class="formula-shortcut"><a href="#d2-formula-tutorial">新增问答：从零理解核心公式 · 含手算与交互例子</a></p><p class="title-zh">可塑性的 Bellman 最优方程</p>
       <p class="one-line">在基于有向信息的可塑性定义下，建立 MDP 中的 Bellman 最优方程。</p><p><strong>入选依据：</strong>偏好作者 Doina Precup；以信息论定义研究持续 RL 的可塑性优化。</p>
       <dl><dt>第一作者</dt><dd>Jeremy Lucas · Mila</dd><dt>末位作者</dt><dd>Doina Precup · Mila</dd><dt>通讯作者</dt><dd>未明确列出</dd><dt>论文列出机构</dt><dd>Mila</dd></dl>
       <details><summary>全部作者（2）</summary><p>Jeremy Lucas; Doina Precup</p></details>
@@ -185,6 +185,55 @@
 \[\lVert TV_1-TV_2\rVert_\infty\leq\gamma\lVert V_1-V_2\rVert_\infty.\]
 <p>\(\lVert V_1-V_2\rVert_\infty\) 是所有上下文中最大的价值差。固定同一套候选规则时，两次计算的即时信息奖励相同，差别只在未来价值；平均不会扩大最大差，折扣再乘一个小于1的 \(\gamma\)。各自取最大也不会突破这个界。因此迭代会把价值表之间的差距越缩越小，得到唯一不动点。前提是有限表格模型、折扣小于1并准确求解每次规则优化；这个结论不是对任意神经网络近似训练的保证。</p>
 <p>回看核心式时，可以依次问自己：环境下一步可能给什么状态？看到不同状态时我如何行动？这些状态被平均掉后 q 是什么？观察解释了多少动作信息？这样的行动又留下了什么未来机会？这五个问题对应的就是 \(p\)、\(\pi\)、\(q\)、对数比的平均，以及 \(\gamma V\)。</p>
+</article>
+<article class="formula-tutorial" id="d2-figure3-qa">
+<h3>追问 · 2026-10-16：Figure 3 的两条信息曲线，以及 empowerment 为什么为零</h3>
+<p><strong>Q：</strong>这里的 plasticity 和 empowerment 曲线怎么解读，为什么最后 empowerment 变成零了？</p>
+<p><strong>A：</strong>核心原因是：<strong>评估的是当前策略产生的信息量，而当前策略在给定完整输入后总是确定地选择一个动作。此时动作没有再提供额外的下一状态信息，所以代码中的 empowerment 为零。</strong>环境在某些状态下仍允许不同动作导致不同结果；这个潜在的控制能力并没有消失。还要注意图中绿色线几乎从最初就贴着零轴，不宜描述成一条从高处逐步下降到零的曲线。</p>
+<p>这次进一步核查了作者公开仓库的固定版本 <code>eff8b54db81349885b67424ac8ca1a6b381e15a7</code>，并运行一次完整的100轮值迭代、评估默认指标及10000步平均。这里有一项对前面解读的修正：<strong>公开代码的橙色指标不是直接计算完整轨迹的广义有向信息；应把论文术语、Bellman 奖励和实际评估实现分开。</strong>以下先解释曲线，再说明实现差异。</p>
+
+<h4>1. 横轴、左右两张图分别在说什么</h4>
+<p>横轴是外层值迭代次数，不是 agent 在环境中走过的时间，也不是经历了多少个持续学习任务。左图显示不同历史上下文下的折扣价值估计逐渐收敛；右图是在每一轮得到一套策略后，对这套策略重新评估信息指标。图中均值与阴影对应100次试验的均值及标准差，不能把阴影当成置信区间。</p>
+<p>橙色线迅速达到约0.92，随后不再变化，意味着评估指标很快稳定了；左图还在上升，表示多轮未来价值仍在通过递推传播。稳定的策略可以与尚未收敛的价值估计共存。左图约4.8不是右图0.92的简单倍数：二者既不是同一个目标，也不是同一个累计口径；当前代码的 Bellman 求解用自然对数，评估熵用以2为底的对数。</p>
+
+<h4>2. 先看环境：S₀ 没有动作控制，S₁ 有动作控制</h4>
+<div class="table-scroll"><table><thead><tr><th>当前状态</th><th>采取 a₀</th><th>采取 a₁</th></tr></thead><tbody><tr><td>S₀</td><td>各50%到 S₀ / S₁</td><td>各50%到 S₀ / S₁</td></tr><tr><td>S₁</td><td>必定到 S₀</td><td>必定到 S₁</td></tr></tbody></table></div>
+<p>在 S₀，不论采取什么动作，环境都一样随机。因此即使知道动作，也不能更好地预测下一状态。在 S₁，动作能决定去 S₀ 还是留在 S₁；但这个能力是否体现在某个统计信息指标中，还取决于当前策略是否在相同条件下使用不同动作。</p>
+
+<h4>3. 绿色曲线的准确实现：知道动作之后，多知道了多少未来信息</h4>
+<p>把代码输入的增广状态记作 \(X_t=(S_t,S_{t-1},A_{t-1})\)。作者的 <code>empowerment_with_memory</code> 计算下式，再按状态分布和所选评估步数取平均：</p>
+\[E_\pi=I_\pi(A_t;S_{t+1}\mid X_t)=H_\pi(S_{t+1}\mid X_t)-H_\pi(S_{t+1}\mid X_t,A_t).\]
+<p>第一项问：已经知道当前状态和记忆，下一状态还多难预测？第二项问：再告诉你当前动作以后，下一状态还多难预测？二者的差就是动作额外解释的信息。这里既没有对所有策略重新取最大，也没有去比较未执行动作的反事实效果。</p>
+<p>当前实现的 <code>get_policy()</code> 总是返回 one-hot 的确定性策略，可写成 \(A_t=f(X_t)\)。一旦知道 \(X_t\)，动作也已经知道了。再次告知动作没有增加信息，所以：</p>
+\[H_\pi(A_t\mid X_t)=0,\qquad 0\le I_\pi(A_t;S_{t+1}\mid X_t)\le H_\pi(A_t\mid X_t)=0.\]
+\[\boxed{E_\pi=0.}\]
+<p>这个推导与环境是否有噪声无关。如果在 S₀ 下一状态本来就是一半一半，知道动作前后都有1 bit不确定性，差为零；如果在 S₁ 策略固定选择 a₀，那么给定 S₁ 与记忆后就已知道下一状态必为 S₀，两个熵都为零，差也为零。</p>
+<p>因此绿色线为零不是意外的“训练崩溃”，也不需要假设 agent 永远不去 S₁。它是当前指标与确定性条件策略组合后的直接结果。本次运行作者代码100轮，包含初始化在内的101个评估点，绿色指标均为零。</p>
+
+<h4>4. 为什么这不意味着“失去控制环境的能力”</h4>
+<p>在 S₁ 做一个对照：若策略只选择 a₀，当前策略下的互信息为零；若允许策略以各一半的概率选择 a₀、a₁，下一状态就完整揭示采取了哪个动作，互信息是1 bit。环境转移规律没有改变，只改变了用于评估的动作分布。</p>
+\[I_{\pi_{\rm fixed}}(A_t;S_{t+1}\mid S_t=S_1)=0,\]
+\[\max_{\pi(\cdot\mid S_1)}I_\pi(A_t;S_{t+1}\mid S_t=S_1)=1\text{ bit}.\]
+<p>第二个是这个状态的一步信道容量。它表示“如果允许选择动作分布，最多能传递多少信息”；第一个表示“这套固定策略实际传递了多少”。随机选择动作本身并不保证有控制力，例如 S₀ 无论怎样随机化都仍为零。反过来，确定性控制器也完全可能可靠地完成控制任务，只是这里的条件互信息指标不体现未采用动作的潜在能力。</p>
+
+<h4>5. 为什么橙色 plasticity 仍然可以很高</h4>
+<p>当前 <code>plasticity_with_memory</code> 计算的是：</p>
+\[P_\pi=I_\pi(A_t;X_t)=H_\pi(A_t)-H_\pi(A_t\mid X_t).\]
+<p>对确定性策略，第二项为零，于是 \(P_\pi=H_\pi(A_t)\)。给定同一个状态与记忆，动作当然不随机；但不同状态与记忆会触发不同动作，所以把所有情况混在一起看，动作分布可以有很大的熵。这里的高分表示动作能反映输入差异，不表示策略在同一个输入下仍有多种选择。</p>
+<p>两条指标中的条件信息不同：橙色在问“输入 X 对行动 A 提供了多少信息”；绿色在问“已经知道 X 后，再告诉行动 A 对预测下一状态还有多少帮助”。若行动完全由 X 决定，前者可以很大，后者必定为零。</p>
+<p>论文列出的一种高 plasticity Markov 策略是 S₀ 选 a₁、S₁ 选 a₀。该策略下转移矩阵为：</p>
+\[T_\pi=\begin{pmatrix}1/2&amp;1/2\\1&amp;0\end{pmatrix},\qquad d(S_0)=2/3,\quad d(S_1)=1/3.\]
+<p>稳态分布来自 \(d(S_1)=d(S_0)/2\) 和两者和为1。动作 a₁ 占2/3，a₀ 占1/3，于是这种评估口径下：</p>
+\[H(A_t)=-\tfrac23\log_2\tfrac23-\tfrac13\log_2\tfrac13\approx0.9183\text{ bit}.\]
+<p>这解释了约0.92为何是自然的稳态数值，而不是准确率92%。本次把该显式策略与稳态分布输入作者指标函数，也得到0.918295834。作者代码值迭代所得策略可以使用历史记忆，不应直接把它每一行都等同于上述 Markov 策略；但将所得策略按作者评估函数累计10000步，平均值同样约为0.918295。</p>
+
+<h4>6. 重要核查：论文图、当前代码与上一轮讲解需要区分</h4>
+<p>前面公式讲解中的 Bellman 单步奖励为 \(I(S_t;A_t\mid S_{t-1},A_{t-1})\)，会排除旧上下文已经提供的信息；当前橙色评估使用 \(I(A_t;S_t,S_{t-1},A_{t-1})\)，没有排除这一部分。由互信息链式法则：</p>
+\[I(A_t;X_t)=I(A_t;S_{t-1},A_{t-1})+I(A_t;S_t\mid S_{t-1},A_{t-1}).\]
+<p>它们一般不相等，橙色指标也不能直接叫作完整轨迹 GDI 的严格计算。例如对上述显式 Markov 策略，稳态 Bellman 单步信息奖励是2/3 bit，而无条件动作熵是0.9183 bit：在 S₀ 后的新状态提供1 bit，在 S₁ 后的新状态是确定的，提供0 bit，再按2/3与1/3加权即可。</p>
+<p>此外，当前仓库 <code>main.py</code> 调用评估函数时没有传入 <code>steps</code>，默认是1，初始状态又均匀分布。因此直接按当前调用方式运行100轮，最终橙色数值是1 bit，而不是图中的0.92；把评估延长至10000步则接近0.9183。这说明当前公开版本与图中的评估配置存在差异。不能把本次核验称为完全复现了论文图，也不能断言原始作图究竟用了多少评估步。当前实现没有原文所述的随机并列解处理，亦不能直接复原图中的试验间阴影。</p>
+<p><strong>结论：</strong>这幅图支持“所选目标与算法让行为更多地反映环境输入”，但单凭绿色归零，不能推出环境不再可控、agent 不会控制、或所有 plasticity 增长必然消灭 empowerment。这里的归零有更具体的数学原因：给定输入后动作是确定的，而评估恰好条件化于这个输入。</p>
+<p>一手来源：<a href="https://arxiv.org/html/2609.10776v1#S5.SS1" target="_blank" rel="noopener noreferrer">论文 §5.1</a>；<a href="https://github.com/jeremy-lucas-mcgill/A-Bellman-Optimality-Equation-for-Plasticity/blob/eff8b54db81349885b67424ac8ca1a6b381e15a7/metrics.py" target="_blank" rel="noopener noreferrer">指标实现</a>；<a href="https://github.com/jeremy-lucas-mcgill/A-Bellman-Optimality-Equation-for-Plasticity/blob/eff8b54db81349885b67424ac8ca1a6b381e15a7/agent.py" target="_blank" rel="noopener noreferrer">确定性策略与值迭代</a>；<a href="https://github.com/jeremy-lucas-mcgill/A-Bellman-Optimality-Equation-for-Plasticity/blob/eff8b54db81349885b67424ac8ca1a6b381e15a7/main.py" target="_blank" rel="noopener noreferrer">实验调用参数</a>。访问与核验：2026-10-16。</p>
 </article>
 </div>
     </section><section class="paper-card" id="paper-2610.08902" data-paper-id="2610.08902" data-category="continual">
