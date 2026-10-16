@@ -125,6 +125,24 @@ class PublisherTests(unittest.TestCase):
         result = api.publish('gh-pages', 'head', {'a': {'sha': p.sha(b'unchanged')}}, {'a': b'unchanged'}, set())
         self.assertEqual(result['uploaded_bytes'], 0)
 
+    def test_private_portal_leaves_only_public_reports_and_redirect(self):
+        self.write('<title>public daily report</title>')
+        first, _, _ = p.plan([self.file], self.config, {}, None)
+        remote = {path: {'sha': p.sha(data), 'size': len(data), 'data': data} for path, data in first.items()}
+        remote['readings/private.html']={'sha':'old','size':30}
+        self.config['private_portal']=True
+        payload, deleted, _=p.plan([self.file],self.config,remote,lambda item:item['data'])
+        self.assertTrue(all(path.startswith(('reports/','catalog/')) or path in {'index.html','.nojekyll'} for path in payload))
+        self.assertIn(b'https://huggingface.co/spaces/seven-7-ding/DocumentResearch',payload['index.html'])
+        self.assertIn('readings/private.html',deleted)
+        self.assertIn('library/manifest.json',deleted)
+        self.assertEqual(payload['reports/2026-10-15/index.html'],first['reports/2026-10-15/index.html'])
+        final={path:item for path,item in remote.items() if path not in deleted}
+        final.update({path:{'sha':p.sha(data),'size':len(data),'data':data} for path,data in payload.items()})
+        _,deleted,summary=p.plan([self.file],self.config,final,lambda item:item['data'])
+        self.assertFalse(deleted)
+        self.assertEqual(summary['upload_bytes'],0)
+
 
 if __name__ == '__main__':
     with (RUN / 'unittest.txt').open('w', encoding='utf-8') as output:

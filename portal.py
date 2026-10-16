@@ -60,9 +60,31 @@ def list_value(value):
 
 def clean_institutions(values):
     result = []
+    aliases={'Massachusetts Institute of Technology':'MIT','HKUST':'Hong Kong University of Science and Technology',
+        'UC Berkeley':'University of California, Berkeley','UCLA':'University of California, Los Angeles',
+        'Stanford':'Stanford University','Alberta Machine Intelligence Institute':'Amii','Alberta Machine Intelligence Institute (Amii)':'Amii',
+        'AI at Meta':'Meta AI','NVIDIA Research':'NVIDIA','Mila - Quebec AI Institute':'Mila',
+        'Mila - Québec AI Institute':'Mila','Universite de Montreal':'Université de Montréal','University of Montreal':'Université de Montréal',
+        'Nanyang Technical University':'Nanyang Technological University','Shanghai Artificial Intelligence Laboratory':'Shanghai AI Laboratory',
+        'Independent':'Independent Researcher','DeepMind, London':'DeepMind','DeepMind Alberta':'DeepMind',
+        'Department of Mathematics, Imperial College London':'Imperial College London',
+        'Department of Psychology, Princeton University':'Princeton University',
+        'Viterbi School of Engineering, University of Southern California':'University of Southern California',
+        'Seoul National University, Graduate School of Data Science':'Seoul National University'}
+    expanded=[]
     for value in list_value(values):
-        if re.search(r'not explicitly|未明确|未列|未核验|unknown|n/a|待核验|待确认|未提供', value, re.I): continue
+        expanded.extend(re.split(r';|；|\s+/\s+|\s+&\s+(?=Université)',value))
+    for value in expanded:
+        if re.search(r'not explicitly|not listed|未|unknown|n/a|待核验|待确认|不详|not disclosed|related project pages|研究环境', value, re.I): continue
         value = re.sub(r'[*🆕⭐]', '', value).strip()
+        value=aliases.get(value,value)
+        if value.startswith(('FLAIR, University of Oxford','OUCE, University of Oxford','OWL, University of Oxford')):value='University of Oxford'
+        if value.startswith('University of Antwerp，'):value='University of Antwerp'
+        if value.startswith('Mila, '):
+            result.extend(v for v in ['Mila','Université de Montréal'] if v not in result)
+            if 'Google DeepMind' in value and 'Google DeepMind' not in result:result.append('Google DeepMind')
+            continue
+        if value in {'BAIR','Canada CIFAR AI Chair','CIFAR AI Chair'}:continue
         if value and value not in result: result.append(value)
     return result
 
@@ -123,6 +145,10 @@ def source_papers(source):
     raw = json.loads(path.read_text(encoding='utf-8-sig')) if path.exists() else {'papers':[]}
     records = raw.get('papers', []) if isinstance(raw,dict) else raw
     papers = {identity(p):dict(p) for p in records if p.get('deep_read')}
+    additions = source/'library_additions.json'
+    if additions.exists():
+        for p in json.loads(additions.read_text(encoding='utf-8-sig')):
+            papers.setdefault(identity(p),dict(p))
     by_title = {normalized(p.get('title','')):p for p in records}
     reports = {}
     for file in sorted(source.glob('????-??-??.html')):
@@ -167,18 +193,29 @@ def paper_type(p):
 
 
 def venue(p):
-    if p.get('venue'): return p['venue']
-    if p.get('journal_ref'): return p['journal_ref']
-    comment = p.get('comment','')
-    match=re.search(r'(?:accepted (?:to|at|by|for)|published (?:in|at)|to appear in)\s+([^.;\n]{3,120})',comment,re.I)
-    if match: return match[1].strip()
-    return 'arXiv 预印本' if identity(p).startswith('arxiv:') else '未注明'
+    raw=p.get('venue') or p.get('journal_ref') or p.get('comment','')
+    aliases=[('ICML',r'\bICML\b|International Conference on Machine Learning'),
+             ('ICLR',r'\bICLR\b|International Conference on Learning Representations'),
+             ('NeurIPS',r'\bNeurIPS\b|\bNIPS\b|Neural Information Processing Systems'),
+             ('CoLLAs',r'\bCoLLAs\b|Conference on Lifelong Learning Agents'),
+             ('TMLR',r'\bTMLR\b|Transactions on Machine Learning Research'),
+             ('JMLR',r'\bJMLR\b|Journal of Machine Learning Research'),
+             ('CVPR',r'\bCVPR\b|Conference on Computer Vision and Pattern Recognition'),
+             ('AAMAS',r'\bAAMAS\b'),('RLC',r'\bRLC\b|Reinforcement Learning Conference'),
+             ('PNAS',r'\bPNAS\b|Proceedings of the National Academy of Sciences')]
+    for name,pattern in aliases:
+        if re.search(pattern,raw,re.I):
+            return name+' Workshop' if re.search(r'workshop',raw,re.I) else name
+    if p.get('venue') and p['venue'] not in {'未注明','未披露'}:return p['venue']
+    return 'arXiv' if identity(p).startswith('arxiv:') else '其他'
 
 
 def library_records(source):
     papers,reports,index = source_papers(source)
     metadata_path=source/'library_metadata.json'
     metadata=json.loads(metadata_path.read_text(encoding='utf-8-sig')) if metadata_path.exists() else {}
+    from reading_reports import find_readings, key as reading_key, path_for
+    readings=find_readings(source,papers)
     output=[]
     for paper in papers:
         key=identity(paper); cached=metadata.get(key,{})
@@ -192,10 +229,11 @@ def library_records(source):
               'venue':venue(p),'added':paper.get('deep_read_date') or paper.get('date_added',''),
               'url':p.get('url',''),'pdf_url':pdf_url(p),'version':p.get('version',''),
               'topics':list_value(paper.get('topics')),'tags':[],'notes':'','rating':None,
-              'metadata_checked':cached.get('checked_at',''),
-              'version_verified':bool(cached.get('date_updated'))}
+              'metadata_checked':p.get('checked_at',''),
+              'version_verified':bool(cached.get('date_updated') or paper.get('date_updated'))}
         day=paper.get('reading_report')
         if day: item['reading_url']='reports/'+day+'/#'+paper.get('reading_anchor','')
+        elif reading_key(paper['title']) in readings:item['reading_url']=path_for(key)
         output.append(item)
     return sorted(output,key=lambda p:(p['added'],p['id']),reverse=True),reports,index
 
@@ -224,4 +262,12 @@ def library_payload(source):
         name=f'library/{bucket}-{hashlib.sha256(data).hexdigest()[:12]}.json'
         payload[name]=data;shards.append({'url':name,'count':len(rows),'bytes':len(data)})
     payload['library/manifest.json']=encode({'schema':1,'count':len(papers),'shards':shards})
+    from reading_reports import find_readings, key as reading_key, render
+    originals,_,_=source_papers(source);readings=find_readings(source,originals)
+    titles={identity(p):reading_key(p['title']) for p in originals}
+    for p in papers:
+        if p.get('reading_url','').startswith('readings/'):
+            body,file=readings[titles[p['id']]]
+            data,assets=render(body,file,p['title'],p['pdf_url'])
+            payload[p['reading_url']]=data;payload.update(assets)
     return payload,reports,index

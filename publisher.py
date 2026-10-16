@@ -288,6 +288,11 @@ def plan(files, config, remote, read):
     for month, entries in months.items():
         payload[f'catalog/{month}.json'] = encode(sorted(entries.values(), key=lambda item: item['date'], reverse=True))
     payload['catalog/months.json'] = encode(sorted(all_months, reverse=True))
+    if config.get('private_portal'):
+        # GitHub holds only existing public reports/catalogs and the private portal entry.
+        payload={path:data for path,data in payload.items() if path.startswith(('reports/','catalog/')) or path=='.nojekyll'}
+        payload['index.html']=(ROOT/'web'/'redirect.html').read_bytes()
+        deleted.update(path for path in remote if path.startswith(('library/','readings/')) or path in {'app.js','style.css','sync.js','oauth-client.json'})
     total = sum(item.get('size', 0) for path, item in remote.items() if path not in payload and path not in deleted) + sum(map(len, payload.values()))
     changed = {path: data for path, data in payload.items() if remote.get(path, {}).get('sha') != sha(data)}
     upload = sum(map(len, changed.values()))

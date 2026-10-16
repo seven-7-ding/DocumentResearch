@@ -39,8 +39,9 @@ def main():
                         raise ValueError('HTTP mismatch: ' + path)
                 result['files_verified'] += 1
         reports = sorted((args.site / 'reports').iterdir())
-        cases = [('desktop', '', 1440, 1000), ('mobile', '', 390, 844),
-                 ('latest-report', 'reports/' + reports[-1].name + '/', 390, 844)]
+        redirect='https://huggingface.co/spaces/seven-7-ding/DocumentResearch' in (args.site/'index.html').read_text(encoding='utf-8')
+        route='reports/'+reports[-1].name+'/' if redirect else ''
+        cases = [('desktop', route, 1440, 1000), ('mobile', route, 390, 844)]
         browser = Browser(args.browser, run / 'chromium')
         try:
             for name, route, width, height in cases:
@@ -49,6 +50,11 @@ def main():
                     raise ValueError(name + ': render error or horizontal page overflow: ' + str(data))
                 if not route and not data['cards']: raise ValueError('Catalog is empty')
                 result['browser'].append({'case': name, **data})
+            if redirect:
+                result['private_portal_redirect']=True
+                (run / 'result.json').write_bytes(p.encode(result))
+                print(json.dumps({'run_dir':str(run),**result},indent=2))
+                return
             browser.call('Page.navigate', {'url': base})
             # Reuse the loaded catalog to test an actual UI event.
             browser.capture(base, 'filter-before', 390, 844)

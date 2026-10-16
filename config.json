@@ -4,6 +4,7 @@
   "branch": "gh-pages",
   "publication_enabled": true,
   "space_enabled": true,
+  "private_portal": true,
   "refresh_metadata": true,
   "max_file_mb": 15,
   "max_site_mb": 750,

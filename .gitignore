@@ -10,3 +10,4 @@ __pycache__/
 *.pyc
 paper_index.json
 library_metadata.json
+library_additions.json

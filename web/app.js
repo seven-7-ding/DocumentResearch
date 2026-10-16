@@ -1,4 +1,4 @@
-import {CloudStore,session,login,logout,emptyAnnotation,validate,Conflict} from './sync.js';
+import {CloudStore,session,emptyAnnotation,validate,Conflict} from './sync.js';
 const $=s=>document.querySelector(s);
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
 const SIZE=12;
@@ -15,9 +15,14 @@ export function matches(p,f,a=emptyAnnotation()){
   for(const k of ['first_author','last_author','venue','type'])if(f[k]&&p[k]!==f[k])return false;
   if(f.institution&&!p.institutions.includes(f.institution))return false;
   if(f.tag&&!a.tags.includes(f.tag))return false;
+  if(f.unrated==='only'&&a.rating!==null)return false;
+  if((f.rating_min||f.rating_max)&&(a.rating===null||f.rating_min&&a.rating<Number(f.rating_min)||f.rating_max&&a.rating>Number(f.rating_max)))return false;
   for(const key of ['published','added']){
     const d=(p[key]||'').slice(0,10),lo=f[key+'_from'],hi=f[key+'_to'];
-    if((lo||hi)&&!d||lo&&d<lo||hi&&d>hi)return false;
+    let start=d,end=d;
+    if(/^\d{4}$/.test(d)){start=d+'-01-01';end=d+'-12-31';}
+    else if(/^\d{4}-\d{2}$/.test(d)){start=d+'-01';end=d+'-'+new Date(Number(d.slice(0,4)),Number(d.slice(5)),0).getDate();}
+    if((lo||hi)&&!d||lo&&end<lo||hi&&start>hi)return false;
   }return true;
 }
 function render(){
@@ -33,11 +38,17 @@ function render(){
     const venue=node('span',p.venue,'venue');venue.title=p.venue;type.append(venue);card.append(type);
     const h=node('h3'),link=node('a',p.title,'paper-link');link.href=p.pdf_url;link.target='_blank';link.rel='noopener noreferrer';link.title='打开论文 PDF';h.append(link);card.append(h);
     const authors=node('p',p.authors.join(', ')||'作者未注明','authors');authors.title=p.authors.join(', ');card.append(authors);
-    const institutions=node('p',p.institutions.join(' · ')||'机构未注明','institutions');institutions.title=institutions.textContent;card.append(institutions);
+    if(p.institutions.length){const institutions=node('p',p.institutions.join(' · '),'institutions');institutions.title=institutions.textContent;card.append(institutions);}
     if(a.tags.length)card.append(chips(a.tags,'user'));
     if(a.notes)card.append(node('p',a.notes,'note-preview'));
     const dates=node('div',undefined,'dates');const published=node('span','发表 '+(p.published?.slice(0,10)||'未注明')+(p.version?' · '+p.version:''));published.title=p.version_verified?'已核对最新版本':'采用原始收录记录；最新版本日期尚未核实';dates.append(published,node('span','入库 '+(p.added?.slice(0,10)||'未注明')));card.append(dates);
     const bottom=node('div',undefined,'paper-bottom');
+    const links=node('div',undefined,'paper-actions');
+    for(const [label,url] of [[p.pdf_url?'PDF':'原文',p.pdf_url||p.url],['精读报告',p.reading_url]]){
+      if(!url)continue;const a=node('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';links.append(a);
+    }
+    if(!p.reading_url)links.append(node('span','暂无精读报告','hint'));
+    card.append(links);
     bottom.append(node('span',a.rating?'★'.repeat(a.rating)+'☆'.repeat(5-a.rating):'未评分',a.rating?'stars':'unrated'));
     const edit=node('button',a.notes?'编辑笔记':'添加笔记','edit-button');edit.type='button';edit.addEventListener('click',()=>openEditor(p));bottom.append(edit);card.append(bottom);target.append(card);
   }
@@ -45,7 +56,7 @@ function render(){
   $('#page-label').textContent=page+' / '+pages;$('#prev').disabled=page<=1;$('#next').disabled=page>=pages;
 }
 function openEditor(p){
-  if(!auth){$('#account-dialog').showModal();return;}
+  if(!cloud){notice('云端尚未连接，请稍后重试。');return;}
   editing=p;editBase=structuredClone(cloud.items[p.id]||emptyAnnotation());
   const a=pending[p.id]?.value||annotations[p.id]||emptyAnnotation();
   if(pending[p.id])editBase=pending[p.id].base;
@@ -114,10 +125,7 @@ filters.addEventListener('submit',e=>e.preventDefault());
 filters.addEventListener('input',()=>{page=1;render();});
 filters.addEventListener('reset',()=>{queueMicrotask(()=>{page=1;render();});});
 $('#prev').onclick=()=>{page--;render();$('#library').scrollIntoView();};$('#next').onclick=()=>{page++;render();$('#library').scrollIntoView();};
-$('#close-editor').onclick=()=>$('#editor').close();$('#close-account').onclick=()=>$('#account-dialog').close();
-$('#login').onclick=()=>$('#account-dialog').showModal();
-$('#start-login').onclick=async()=>{try{await login();}catch(e){$('#login-error').textContent=e.message;}};
-$('#logout').onclick=()=>{logout();auth=null;cloud=null;annotations={};pending={};$('#logout').hidden=true;$('#login').hidden=false;manage.hidden=true;status('');tagOptions();render();};
+$('#close-editor').onclick=()=>$('#editor').close();
 const manage=node('button','笔记管理');manage.hidden=true;$('.account').append(manage);
 const manager=node('dialog');const managerTitle=node('h2','笔记管理');const backup=node('button','导出笔记');const compact=node('button','整理历史');const closeManager=node('button','关闭');const managerStatus=node('p',undefined,'hint');manager.append(managerTitle,managerStatus,backup,compact,closeManager);document.body.append(manager);
 manage.onclick=()=>{managerStatus.textContent='已同步笔记 '+Object.keys(cloud.items).length+' 篇';manager.showModal();};closeManager.onclick=()=>manager.close();
@@ -147,6 +155,6 @@ try{
   if(auth){
     cloud=new CloudStore(auth);status('连接云端…');
     pending=JSON.parse(localStorage.getItem(queueKey())||'{}');
-    await cloud.connect();$('#login').hidden=true;$('#logout').hidden=false;manage.hidden=false;await sync();
-  }else if(new URLSearchParams(location.search).get('login')==='1'){$('#account-dialog').showModal();}
+    await cloud.connect();manage.hidden=false;await sync();
+  }
 }catch(e){status('云端未连接');notice(e.message);}
