@@ -34,7 +34,7 @@ def refresh(source,run):
         batch=ids[start:start+20]
         url='https://export.arxiv.org/api/query?'+urllib.parse.urlencode({'id_list':','.join(batch),'max_results':len(batch)})
         try:
-            data=fetch(url);(run/f'arxiv-{start}.xml').write_bytes(data)
+            data=fetch(url)
             for entry in ET.fromstring(data).findall('a:entry',ns):
                 get=lambda k:' '.join(entry.findtext(k,'',ns).split())
                 identifier=portal.ARXIV.search(get('a:id'))
@@ -59,7 +59,7 @@ def refresh(source,run):
         ident=key.split(':',1)[1]
         try:
             url='https://api2.openreview.net/notes?id='+urllib.parse.quote(ident)
-            data=fetch(url);(run/(ident+'.json')).write_bytes(data);notes=json.loads(data)['notes']
+            data=fetch(url);notes=json.loads(data)['notes']
             if not notes:raise ValueError('No public note returned')
             note=notes[0];content=note['content']
             def field(k,default=''):
@@ -74,7 +74,6 @@ def refresh(source,run):
         cache.setdefault(key,{})['last_attempt']=today
     cache_path.write_text(json.dumps(cache,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     result={'refreshed':refreshed,'total':len(papers),'errors':errors}
-    (run/'metadata_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(result,ensure_ascii=False));return result
 
 if __name__=='__main__':

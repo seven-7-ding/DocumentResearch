@@ -15,7 +15,7 @@ class Browser:
     def __init__(self, executable, directory):
         self.directory = directory
         directory.mkdir(parents=True)
-        self.stderr = (directory / 'browser.stderr.txt').open('wb')
+        self.stderr = open(os.devnull, 'wb')
         self.proc = subprocess.Popen([executable, '--headless=new', '--disable-gpu', '--no-first-run',
             '--no-default-browser-check', '--remote-debugging-port=0',
             '--user-data-dir=' + str(directory / 'profile'), 'about:blank'], stdout=self.stderr, stderr=self.stderr)
@@ -104,7 +104,7 @@ class Browser:
         data = self.evaluate("({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,cards:document.querySelectorAll('.card').length,katex:document.querySelectorAll('.katex').length,errors:document.querySelectorAll('.katex-error').length})")
         self.call('Page.enable')
         shot = self.call('Page.captureScreenshot', {'format': 'png'})
-        (self.directory / (name + '.png')).write_bytes(base64.b64decode(shot['data']))
+        self.last_screenshot = base64.b64decode(shot['data'])
         return data
 
     def close(self):

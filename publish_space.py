@@ -110,7 +110,7 @@ def publish():
     if 'NOTES_HF_TOKEN' not in secrets:
         hub.call('/api/spaces/'+SPACE+'/secrets','POST',{'key':'NOTES_HF_TOKEN','value':hub.token})
     result={'space':SPACE,'url':HOST,'bytes':total,'upload_bytes':changed,'commit':git(checkout,'rev-parse','HEAD'),'stage':info.get('runtime',{}).get('stage')}
-    (run/'result.json').write_bytes(p.encode(result));p.trace('Private HF portal deployed: '+result['commit'])
+    p.trace('Private HF portal deployed: '+result['commit'])
     print(json.dumps(result,ensure_ascii=False,indent=2));return result
 
 if __name__=='__main__':

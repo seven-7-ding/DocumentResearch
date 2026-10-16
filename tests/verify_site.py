@@ -1,4 +1,4 @@
-"""Real Chromium rendering and HTTP verification, with all evidence in one run."""
+"""Real Chromium rendering and HTTP verification; results go to stdout only."""
 import argparse
 import functools
 import http.server
@@ -52,8 +52,7 @@ def main():
                 result['browser'].append({'case': name, **data})
             if redirect:
                 result['private_portal_redirect']=True
-                (run / 'result.json').write_bytes(p.encode(result))
-                print(json.dumps({'run_dir':str(run),**result},indent=2))
+                print(json.dumps(result,indent=2))
                 return
             browser.call('Page.navigate', {'url': base})
             # Reuse the loaded catalog to test an actual UI event.
@@ -64,8 +63,7 @@ def main():
             result['month_filter_matches']=found
         finally:
             browser.close()
-        (run / 'result.json').write_bytes(p.encode(result))
-        print(json.dumps({'run_dir': str(run), **result}, indent=2))
+        print(json.dumps(result, indent=2))
     finally:
         server.shutdown()
         server.server_close()

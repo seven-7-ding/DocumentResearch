@@ -96,8 +96,7 @@ def verify():
         until("document.readyState==='complete'&&document.querySelector('main')")
         until("document.querySelector('mjx-container')")
         result['readingMath']=js("document.querySelectorAll('mjx-container').length")
-        shot=browser.call('Page.captureScreenshot',{'format':'png'});(run/'reading.png').write_bytes(base64.b64decode(shot['data']))
-        (run/'result.json').write_bytes(publisher.encode(result));print(json.dumps(result,ensure_ascii=False,indent=2),flush=True)
+        print(json.dumps(result,ensure_ascii=False,indent=2),flush=True)
     finally:
         if browser:browser.close()
         if server:server.shutdown();server.server_close()

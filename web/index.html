@@ -9,20 +9,20 @@
 <main>
 <section id="daily"><div class="section-heading"><div><span class="eyebrow">DAILY PAPERS</span><h1>每日论文</h1></div><label class="month-label">月份<select id="month" aria-label="汇报月份"></select></label></div><div id="reports" class="report-grid" aria-live="polite"><p>正在载入汇报…</p></div></section>
 <section id="library"><div class="section-heading"><div><span class="eyebrow">READING LIBRARY</span><h2>精读图书馆 <span id="total" class="count"></span></h2></div><span id="result-count" role="status"></span></div>
-<form id="filters" autocomplete="off"><div class="search-row"><label class="search">标题<input name="title" type="search" placeholder="搜索论文标题" list="titles"></label><label>作者<input name="author" type="search" placeholder="输入或选择作者" list="authors"></label><button type="reset" class="subtle">清空筛选</button></div>
+<form id="filters" autocomplete="off"><div class="search-row"><label class="search">标题<input name="title" type="search" placeholder="搜索论文标题" list="titles"></label><label>作者关键词<input name="author_query" type="search" placeholder="输入或选择作者" list="authors"></label><button type="reset" class="subtle">清空筛选</button></div>
 <datalist id="titles"></datalist><datalist id="authors"></datalist>
-<details class="filter-panel"><summary>更多筛选 <span id="active-filters"></span></summary><div class="filter-grid">
-<label>第一作者<select name="first_author"><option value="">全部</option></select></label>
-<label>尾作<select name="last_author"><option value="">全部</option></select></label>
-<label>机构<select name="institution"><option value="">全部</option></select></label>
-<label>会议 / 期刊<select name="venue"><option value="">全部</option></select></label>
-<label>标签<select name="tag"><option value="">全部</option></select></label>
-<label>类型<select name="type"><option value="">全部</option></select></label>
+<details class="filter-panel"><summary>更多筛选 <span id="active-filters"></span></summary><div class="filter-grid"><div class="multi-field"><span class="field-label">作者</span><select name="author" multiple data-label="作者" aria-label="作者"></select></div>
+<div class="multi-field"><span class="field-label">第一作者</span><select name="first_author" multiple data-label="第一作者" aria-label="第一作者"></select></div>
+<div class="multi-field"><span class="field-label">尾作</span><select name="last_author" multiple data-label="尾作" aria-label="尾作"></select></div>
+<div class="multi-field"><span class="field-label">机构</span><select name="institution" multiple data-label="机构" aria-label="机构"></select></div>
+<div class="multi-field"><span class="field-label">会议 / 期刊</span><select name="venue" multiple data-label="会议 / 期刊" aria-label="会议 / 期刊"></select></div>
+<div class="multi-field"><span class="field-label">标签</span><select name="tag" multiple data-label="标签" aria-label="标签"></select></div>
+<div class="multi-field"><span class="field-label">类型</span><select name="type" multiple data-label="类型" aria-label="类型"></select></div>
 <fieldset><legend>评分范围</legend><select name="rating_min" aria-label="最低评分"><option value="">不限</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><span>—</span><select name="rating_max" aria-label="最高评分"><option value="">不限</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></fieldset>
 <label>评分状态<select name="unrated"><option value="">全部</option><option value="only">仅未评分</option></select></label>
 <fieldset><legend>发表时间 · 最新版本</legend><input name="published_from" type="date" aria-label="发表起始日期"><span>—</span><input name="published_to" type="date" aria-label="发表截止日期"></fieldset>
 <fieldset><legend>加入图书馆时间</legend><input name="added_from" type="date" aria-label="入库起始日期"><span>—</span><input name="added_to" type="date" aria-label="入库截止日期"></fieldset>
-</div></details></form>
+</div><p class="filter-help">同一字段任选其一，不同字段同时满足。</p></details></form>
 <p id="notice" role="status" hidden></p><div id="papers" class="paper-grid" aria-live="polite"><p>正在载入图书馆…</p></div>
 <div class="pagination"><button id="prev">上一页</button><span id="page-label"></span><button id="next">下一页</button></div>
 </section></main>

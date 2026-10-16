@@ -16,6 +16,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+import tempfile
+import atexit
 
 ROOT = Path(__file__).resolve().parent
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -31,10 +33,15 @@ def sha(data):
 
 
 def new_run(label):
-    path = ROOT / 'logdir' / (dt.datetime.now().strftime('%Y%m%d_%H%M%S_') + label + '_' + uuid.uuid4().hex[:8])
-    path.mkdir(parents=True)
-    for key in ('TEMP', 'TMP', 'TMPDIR'):
-        os.environ[key] = str(path)
+    # Temporary build inputs/checkouts only; never create repository logdir or test logs.
+    base = Path(tempfile.gettempdir()).resolve()
+    scratch = tempfile.TemporaryDirectory(prefix='documentresearch-', dir=base)
+    path = Path(scratch.name).resolve()
+    def cleanup():
+        if path.parent != base or not path.name.startswith('documentresearch-'):
+            raise ValueError('Unsafe temporary cleanup target')
+        scratch.cleanup()
+    atexit.register(cleanup)
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
     return path
 
@@ -233,7 +240,10 @@ def build_report(file, max_file, allow_missing=False, previous=None):
     parser = Report(file, max_file, allow_missing, previous)
     parser.feed(text)
     parser.close()
-    data = ''.join(parser.output).encode('utf-8')
+    rendered = ''.join(parser.output)
+    font = '<style id="portal-font">html,body,button,input,select,textarea{font-family:"Times New Roman","Noto Serif CJK SC","SimSun",serif!important}</style>'
+    rendered = rendered.replace('</head>', font+'</head>', 1) if '</head>' in rendered else font+rendered
+    data = rendered.encode('utf-8')
     if len(data) > max_file:
         raise ValueError(f'{file.name}: HTML exceeds max_file_mb')
     payload = {f'reports/{file.stem}/index.html': data,
@@ -344,7 +354,7 @@ def main():
                 target = run / 'site' / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(data)
-            result = {'run_dir': str(run), **summary}
+            result = dict(summary)
             if api:
                 result.update(api.publish(config['branch'], head, remote, payload, deleted))
                 result['url'] = 'https://' + config['repository'].split('/')[0] + '.github.io/' + config['repository'].split('/')[1] + '/'
@@ -354,19 +364,16 @@ def main():
                         result['space'] = publish_space.publish()
                     except Exception as error:
                         result['space_error'] = str(error)
-                        (run / 'result.json').write_bytes(encode(result))
                         trace('GitHub published; HF sync failed; retry publish_space.py')
                         print(json.dumps(result, ensure_ascii=False, indent=2))
                         return 1
-        (run / 'result.json').write_bytes(encode(result))
-        trace(f'{args.command}: success; evidence {run.name}')
+        trace(f'{args.command}: success; temporary workspace automatically cleaned')
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except Exception as error:
         # API errors are deliberately sanitized; no headers or credential output.
-        result = {'error': str(error), 'run_dir': str(run)}
-        (run / 'result.json').write_bytes(encode(result))
-        trace(f'{args.command}: failed; evidence {run.name}')
+        result = {'error': str(error)}
+        trace(f'{args.command}: failed; temporary workspace automatically cleaned')
         print(json.dumps(result, ensure_ascii=False), file=sys.stderr)
         return 1
 

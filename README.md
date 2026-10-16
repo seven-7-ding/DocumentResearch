@@ -2,7 +2,7 @@
 
 [门户入口](https://seven-7-ding.github.io/DocumentResearch/) → [私有 Hugging Face Space](https://huggingface.co/spaces/seven-7-ding/DocumentResearch)。只有有权访问 Space 的 HF 账号能进入；进入后直接编辑，不再进行应用内 OAuth 登录。既有公开日报 URL 保持不变。
 
-上方展示每日汇报、论文数、精读数和主题。下方图书馆支持标题、作者、首尾作者、机构、时间段、会议期刊、标签和 **1–5 分范围**组合筛选，也可单独筛选未评分论文。卡片包含 PDF 和已有精读报告链接；没有报告的条目明确标示，不生成占位精读。
+上方展示每日汇报、论文数、精读数和主题。作者、首尾作者、机构、会议、标签和类型支持带搜索的多选：同一字段按“或”匹配，不同字段按“且”匹配。卡片高亮匹配文本与字段；标签按名称稳定分配八种颜色。界面及报告优先使用 Times New Roman，中文和缺少该字体的设备使用系统衬线字体回退。下方图书馆支持标题、作者、首尾作者、机构、时间段、会议期刊、标签和 **1–5 分范围**组合筛选，也可单独筛选未评分论文。卡片包含 PDF 和已有精读报告链接；没有报告的条目明确标示，不生成占位精读。
 
 ## 发布
 
@@ -54,10 +54,11 @@ arXiv 使用最新版本的作者、updated 日期和 PDF；机构按论文首�
 
 ```bat
 conda run -n bit python -B tests\verify_private.py
+conda run -n bit python -B tests\verify_filters.py
 ```
 
-此验证使用已有 Edge、真实图书馆和一个随机命名的私有测试 Dataset，覆盖云端持久化、并发合并、冲突、重复保存、匿名拒绝、手机桌面、评分筛选、直接编辑、断网草稿恢复和精读公式。测试后删除测试 Dataset，不改动生产笔记。它在本地运行与云端相同的服务；HF 实例的实际启动状态须另外核查。
+`verify_private.py` 使用已有 Edge、真实图书馆和一个随机命名的私有测试 Dataset，覆盖云端持久化、并发合并、冲突、重复保存、匿名拒绝、手机桌面、评分筛选、直接编辑、断网草稿恢复和精读公式。测试后删除测试 Dataset，不改动生产笔记。`verify_filters.py` 使用本地测试笔记验证多选、高亮、配色、字体和手机布局，不写云端数据。两者均在本地运行；HF 实例的实际启动状态须另外核查。
 
-所有运行产物进入 `logdir/<run>/`。按本仓库约定，交付时删除整个本地 logdir，不留占位；`task_checklist.md` 仅任务勾选，`codex-executor.log` 最多五条近期记录加一条重要历史记录，均不提交。`codex-prompt.txt` 不修改。
+本仓库不创建 `logdir/`、不保存测试日志或截图；验证结果直接输出到终端。必要的构建检出、测试输入和浏览器配置使用系统临时目录，进程退出时自动清理；`task_checklist.md` 仅任务勾选，`codex-executor.log` 最多五条近期记录加一条重要历史记录，均不提交。`codex-prompt.txt` 不修改。
 
 参考：[HF Space 可见性和计算计划](https://huggingface.co/docs/hub/spaces-overview)、[Docker Spaces](https://huggingface.co/docs/hub/spaces-sdks-docker)、[GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)。

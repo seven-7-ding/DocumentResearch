@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import subprocess
 import threading
 import unittest
 import urllib.request
@@ -125,6 +126,15 @@ class PublisherTests(unittest.TestCase):
         result = api.publish('gh-pages', 'head', {'a': {'sha': p.sha(b'unchanged')}}, {'a': b'unchanged'}, set())
         self.assertEqual(result['uploaded_bytes'], 0)
 
+    def test_temporary_workspaces_are_removed_without_logdir(self):
+        existed=(p.ROOT/'logdir').exists()
+        code="import publisher; p=publisher.new_run('cleanup'); (p/'fixture.txt').write_text('test input'); print(p)"
+        result=subprocess.run([sys.executable,'-B','-c',code],cwd=p.ROOT,capture_output=True,text=True,check=True)
+        scratch=Path(result.stdout.strip())
+        self.assertFalse(scratch.is_relative_to(p.ROOT))
+        self.assertFalse(scratch.exists())
+        self.assertEqual((p.ROOT/'logdir').exists(),existed)
+
     def test_private_portal_leaves_only_public_reports_and_redirect(self):
         self.write('<title>public daily report</title>')
         first, _, _ = p.plan([self.file], self.config, {}, None)
@@ -145,9 +155,4 @@ class PublisherTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    with (RUN / 'unittest.txt').open('w', encoding='utf-8') as output:
-        suite = unittest.defaultTestLoader.loadTestsFromTestCase(PublisherTests)
-        result = unittest.TextTestRunner(stream=output, verbosity=2).run(suite)
-    print((RUN / 'unittest.txt').read_text(encoding='utf-8'))
-    print('Evidence:', RUN)
-    sys.exit(0 if result.wasSuccessful() else 1)
+    unittest.main(verbosity=2)

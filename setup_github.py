@@ -40,7 +40,6 @@ def main():
         result['url'] = pages['html_url']
         config['publication_enabled'] = True
         (p.ROOT / 'config.json').write_text(json.dumps(config, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    (run / 'result.json').write_bytes(p.encode(result))
     print(json.dumps(result, indent=2))
 
 

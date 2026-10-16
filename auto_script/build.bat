@@ -1,5 +1,5 @@
 @echo off
 setlocal
-rem Offline build; output path is printed. Shared parameters: ..\config.json
+rem Validate an offline build in automatically cleaned temporary storage.
 call conda run --no-capture-output -n bit python -B "%~dp0..\publisher.py" build %*
 exit /b %errorlevel%
