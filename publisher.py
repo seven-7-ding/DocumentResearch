@@ -1,4 +1,4 @@
-"""Dependency-free, incremental daily-paper publisher. Python 3.10+ in conda bit."""
+"""Dependency-free, incremental daily-paper publisher. Python 3.10+ in Miniconda base."""
 import argparse
 import base64
 import datetime as dt

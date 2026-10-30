@@ -80,7 +80,7 @@ def path_for(ident):
 
 
 def render(body, source, title, pdf):
-    import markdown  # Already available in conda bit; build-time only.
+    import markdown  # Build-time dependency; install from requirements-build.txt into base.
     # Exclude appended conversation/execution logs. Only the selected paper section is exported.
     body = re.split(r'^#{1,4}\s+.*(?:对话记录|用户追问|执行日志|User:|Assistant:)', body, maxsplit=1, flags=re.M)[0]
     body = re.sub(r'(?:file:///)?[A-Za-z]:[\\/][^\s)\]<>]+', '[本地路径]', body)

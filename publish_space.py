@@ -1,5 +1,7 @@
 """Publish private HF portal; public daily reports remain on GitHub Pages."""
 import hashlib
+import base64
+import collections
 import json
 import os
 from pathlib import Path
@@ -39,7 +41,12 @@ def credential():
     return token
 
 def git(directory,*args):
-    r=subprocess.run(['git','-C',str(directory),*args],capture_output=True,text=True,encoding='utf-8',env={**os.environ,'GIT_TERMINAL_PROMPT':'0','GCM_INTERACTIVE':'never'})
+    # Reuse the local HF credential without storing it in URLs or git config.
+    auth=base64.b64encode((SPACE.split('/')[0]+':'+credential()).encode()).decode()
+    env={**os.environ,'GIT_TERMINAL_PROMPT':'0','GCM_INTERACTIVE':'never',
+         'GIT_CONFIG_COUNT':'1','GIT_CONFIG_KEY_0':'http.https://huggingface.co/.extraheader',
+         'GIT_CONFIG_VALUE_0':'Authorization: Basic '+auth}
+    r=subprocess.run(['git','-C',str(directory),*args],capture_output=True,text=True,encoding='utf-8',env=env)
     if r.returncode:raise RuntimeError('Git operation failed (exit '+str(r.returncode)+')')
     return r.stdout.strip()
 
@@ -64,6 +71,55 @@ def site_payload(source,remote,read):
     payload['library/manifest.json']=p.encode(manifest)
     return payload
 
+def preserve_deployed_library(payload,checkout):
+    """A new workstation must not delete readings whose originals stayed behind."""
+    old_manifest=checkout/'site/library/manifest.json'
+    if not old_manifest.is_file():return payload
+    allowed={'id','title','title_zh','authors','first_author','last_author','type',
+             'institutions','published','venue','added','url','pdf_url','version',
+             'topics','metadata_checked','version_verified','reading_url'}
+    def rows(manifest,read):
+        result={}
+        for shard in manifest['shards']:
+            name=shard['url']
+            if not name.startswith('library/') or '..' in name.split('/'):
+                raise ValueError('Invalid library shard path')
+            for row in json.loads(read(name)):
+                item={k:v for k,v in row.items() if k in allowed}
+                item.update(tags=[],notes='',rating=None)
+                result[item['id']]=item
+        return result
+    old=rows(json.loads(old_manifest.read_bytes()),lambda name:(checkout/'site'/name).read_bytes())
+    manifest=json.loads(payload['site/library/manifest.json'])
+    new=rows(manifest,lambda name:payload['site/'+name])
+    # Metadata refresh may change an OpenReview URL to arXiv while annotations
+    # still use the original deployed ID. Preserve that ID to avoid duplicates
+    # and orphaned notes; matching requires the same canonical paper URL.
+    aliases={portal.identity(item):ident for ident,item in old.items() if item.get('url')}
+    for ident,item in new.items():
+        if ident not in old and item.get('url'):
+            ident=aliases.get(portal.identity(item),ident)
+            item={**item,'id':ident}
+        prior=old.get(ident,{})
+        old[ident]={**prior,**{k:v for k,v in item.items() if v not in ('',None,[]) or k not in prior}}
+    for shard in manifest['shards']:payload.pop('site/'+shard['url'])
+    if len(p.encode(list(old.values())))>5*1024*1024:raise ValueError('Merged library exceeds 5 MiB')
+    buckets=collections.defaultdict(list)
+    for item in old.values():buckets[hashlib.sha256(item['id'].encode()).hexdigest()[0]].append(item)
+    shards=[]
+    for bucket,items in sorted(buckets.items()):
+        data=p.encode(sorted(items,key=lambda item:item['id']))
+        name=f'library/{bucket}-{hashlib.sha256(data).hexdigest()[:12]}.json'
+        payload['site/'+name]=data;shards.append({'url':name,'count':len(items),'bytes':len(data)})
+    payload['site/library/manifest.json']=p.encode({'schema':1,'count':len(old),'shards':shards})
+    # Preserve only deployed reading HTML and image assets, never notes or indexes.
+    for file in (checkout/'site/readings').rglob('*'):
+        if file.is_file() and not file.is_symlink() and file.suffix.lower() in p.IMAGES|{'.html'}:
+            if not file.resolve().is_relative_to((checkout/'site/readings').resolve()):
+                raise ValueError('Reading asset escaped its directory')
+            payload.setdefault(file.relative_to(checkout).as_posix(),file.read_bytes())
+    return payload
+
 def publish():
     run=p.new_run('space');hub=Hub(credential());info=hub.call('/api/spaces/'+SPACE)
     if info.get('private') is not True:
@@ -76,6 +132,7 @@ def publish():
     payload['README.md']=README.encode('utf-8')
     # Compare deployed bytes, not Windows checkout line-ending conversions.
     checkout=run/'space';git(run,'clone','-c','core.autocrlf=false','--depth','1','https://huggingface.co/spaces/'+SPACE,str(checkout))
+    payload=preserve_deployed_library(payload,checkout)
     previous=set()
     old_manifest=checkout/'site/library/manifest.json'
     history=checkout/'site/library/previous.json'

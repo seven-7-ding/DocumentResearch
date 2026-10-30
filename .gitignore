@@ -11,3 +11,6 @@ __pycache__/
 paper_index.json
 library_metadata.json
 library_additions.json
+
+/hf-space/
+/LOCAL_MAINTENANCE.md

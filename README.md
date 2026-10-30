@@ -10,7 +10,16 @@
 
 ## 发布
 
-本机仅使用已有 conda `bit`；无需新建环境。历史报告转换使用 bit 中已有的 Python Markdown，后端仅依赖标准库。
+本机使用 Miniconda `base`：`/Users/seven_ding/AppData/miniconda3/bin/python`，不新建环境。历史 Markdown 转换的构建依赖见 `requirements-build.txt`；后端仅依赖标准库。大型扩展包必须先经用户审核。
+
+Mac 维护目录为 `/Users/seven_ding/Mine/Research/_LiteratureReview/DocumentResearch`；日报及索引位于相邻的 `EveryDayPaper`。`hf-space/` 是被 Git 忽略的独立 HF 部署检出，不与 GitHub 源码分支混合。
+
+```bash
+./auto_script/publish.sh --date 2026-10-30
+/Users/seven_ding/AppData/miniconda3/bin/python -B -m unittest discover -s tests
+```
+
+发布器从本机凭据管理器或已有 HF token 文件取凭据；不把令牌写入 remote URL。换机后缺少历史 Markdown 原稿时，已部署的历史阅读页与图片会保留。下面的 `.bat` 入口仅供原 Windows 机器使用：
 
 ```bat
 auto_script\publish.bat
@@ -63,6 +72,6 @@ conda run -n bit python -B tests\verify_filters.py
 
 `verify_private.py` 使用已有 Edge、真实图书馆和一个随机命名的私有测试 Dataset，覆盖云端持久化、并发合并、冲突、重复保存、匿名拒绝、手机桌面、评分筛选、直接编辑、断网草稿恢复和精读公式。测试后删除测试 Dataset，不改动生产笔记。`verify_filters.py` 使用本地测试笔记验证多选、高亮、配色、字体和手机布局，不写云端数据。两者均在本地运行；HF 实例的实际启动状态须另外核查。
 
-本仓库不创建 `logdir/`、不保存测试日志或截图；验证结果直接输出到终端。必要的构建检出、测试输入和浏览器配置使用系统临时目录，进程退出时自动清理；`task_checklist.md` 仅任务勾选，`codex-executor.log` 最多五条近期记录加一条重要历史记录，均不提交。`codex-prompt.txt` 不修改。
+本仓库不创建 `logdir/`、不保存测试日志；日报技能要求的渲染截图保存在相邻 `EveryDayPaper/temp`，不提交。其他仓库测试不保存截图；验证结果直接输出到终端。必要的构建检出、测试输入和浏览器配置使用系统临时目录，进程退出时自动清理；`task_checklist.md` 仅任务勾选，`codex-executor.log` 最多五条近期记录加一条重要历史记录，均不提交。`codex-prompt.txt` 不修改。
 
 参考：[HF Space 可见性和计算计划](https://huggingface.co/docs/hub/spaces-overview)、[Docker Spaces](https://huggingface.co/docs/hub/spaces-sdks-docker)、[GitHub Pages 限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)。
