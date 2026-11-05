@@ -1,0 +1,884 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-11-05 · 扩散模型基础 / 美团调研 / 近期 RL</title>
+<style>
+:root{--ink:#172b3a;--muted:#566b7a;--line:#d5e1e8;--teal:#087f8c;--amber:#a94d0a;--bg:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:24px 30px 80px}header{padding:48px 0 28px;border-bottom:2px solid var(--ink)}h1{font-size:36px;line-height:1.35;letter-spacing:-.5px;max-width:940px}h2{font-size:28px;line-height:1.5;margin-top:20px}h3{font-size:23px;line-height:1.5;margin-top:40px;border-top:1px solid var(--line);padding-top:24px}h4{font-size:19px;margin-top:32px}p{margin:15px 0}a{color:#1763ad;text-decoration-thickness:1px;text-underline-offset:3px}a:visited{color:#6550a1}strong{font-weight:650}.kicker{text-transform:uppercase;color:var(--teal);font:700 13px/1.5 system-ui;letter-spacing:2px}.lede{font-size:20px;max-width:920px}.muted,.meta,figcaption{color:var(--muted);font-size:14px}.sticky-nav{position:sticky;top:0;z-index:20;background:#fffef8f5;border-bottom:1px solid var(--line);backdrop-filter:blur(10px);padding:10px 24px;display:flex;gap:15px;align-items:center;overflow-x:auto;white-space:nowrap;font-size:14px}.sticky-nav a{text-decoration:none}.section,.paper-card{background:white;border:1px solid var(--line);border-radius:12px;padding:32px 40px;margin:32px 0}.paper-card.is-deep-read{border-left:5px solid #e99632;background:linear-gradient(90deg,#fff7ed,#fff 24rem)}a.is-deep-read-link,a[data-deep-read="true"]{color:var(--amber);font-weight:750;text-decoration:underline;text-decoration-thickness:2px}.chip{display:inline-block;background:#e9f3f5;color:#266572;font-size:12px;padding:3px 9px;border-radius:5px;margin:3px 5px 3px 0}.deep-label{color:#a94d0a;background:#ffead3}.notice{border-left:3px solid var(--teal);padding:12px 20px;background:#f0f8f8}.table-scroll{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:15px}th,td{border:1px solid var(--line);padding:12px 14px;vertical-align:top;min-width:105px}th{background:#edf4f6;text-align:left}tr:nth-child(even){background:#fafcfd}table.catalog{min-width:1300px}table.catalog td:first-child{min-width:50px}table.catalog td:nth-child(2){min-width:300px}blockquote{border-left:3px solid #b7cad6;padding:8px 20px;margin:15px 0;background:#f7f9fa;color:#4a5f6e;font-size:15px}.figure-block{margin:28px 0}.figure-tools{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:8px}.figure-viewport{overflow:auto;max-height:70vh;min-height:100px;resize:both;max-width:100%;border:1px solid var(--line);background:#f9fbfc;cursor:grab}.figure-viewport img{display:block;max-width:none;height:auto;transform:none}.figure-viewport.is-dragging{cursor:grabbing}figcaption{margin-top:10px}.katex-display{overflow-x:auto;overflow-y:hidden;padding:8px 0}.katex{font-size:1.04em}.tutorial-toc{columns:2;font-size:15px}.tutorial-toc a{display:block;break-inside:avoid;margin:5px 0}.interactive{padding:22px;border:1px solid #a3cbd1;background:#f4fafb;border-radius:10px;margin:28px 0}.interactive canvas{width:100%;height:auto;display:block;background:white;border-radius:6px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:15px;margin:14px 0}.controls input[type=range]{min-width:210px;flex:1}select,button{font:inherit;padding:6px 10px;border:1px solid #9ab5bf;border-radius:5px;background:white;color:var(--ink)}.read-route{display:flex;flex-wrap:wrap;gap:10px}.read-route a{border:1px solid var(--line);border-radius:6px;padding:6px 12px}.number{color:var(--teal);font-weight:700}.qa-log{font-size:14px;border-top:1px dashed var(--line);margin-top:30px;padding-top:10px}footer{color:var(--muted);font-size:13px;padding-top:20px}details{margin:14px 0}summary{cursor:pointer;font-weight:600}@media(max-width:700px){main{padding:12px}.section,.paper-card{padding:22px 18px}h1{font-size:28px}h2{font-size:24px}h3{font-size:21px}body{font-size:16px}.tutorial-toc{columns:1}.sticky-nav{gap:14px;padding:10px 12px}header{padding:28px 10px}.interactive{padding:12px}}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script><style id="portal-font">html,body,button,input,select,textarea{font-family:"Times New Roman","Noto Serif CJK SC","SimSun",serif!important}</style></head><body>
+<nav class="sticky-nav" aria-label="快速导航"><a href="#top">11·05</a><a href="#tutorial">独立基础教程</a><a href="#catalog">10 篇目录</a><a href="#paper-auad2026">1</a><a href="#paper-2502.16862">2</a><a href="#paper-ssrn6349239">3</a><a href="#paper-ssrn5202084">4</a><a href="#paper-calibrated-dispatch2026">5</a><a href="#paper-2610.28480" class="is-deep-read-link" data-deep-read="true">6</a><a href="#paper-2611.02160" class="is-deep-read-link" data-deep-read="true">7</a><a href="#paper-2610.12135">8</a><a href="#paper-2611.03296">9</a><a href="#paper-2611.03301">10</a></nav><main id="top">
+<header><div class="kicker">RESEARCH NOTE · 2026.11.05 · ASIA/HONG_KONG</div><h1>先理解扩散模型，再读今天的论文</h1><p class="lede">一份独立的 DDPM / Flow Matching 渐进教程；5 篇使用美团挑战数据的工作；5 篇近期 RL 论文，其中 SuperMimic 与 Value Forcing 已精读。</p><p class="meta">中文解释 · 英文主题标签 · 原图可缩放 · 论文事实、教学例子和研究建议分开标识</p><div class="read-route"><a href="#tutorial">从零学习与公式汇总</a><a href="#dataset">美团数据范围</a><a href="#catalog">浏览论文目录</a>
+<a href="#paper-2610.28480" class="is-deep-read-link" data-deep-read="true">直接读 SuperMimic</a>
+<a href="#paper-2611.02160" class="is-deep-read-link" data-deep-read="true">直接读 Value Forcing</a>
+</div></header>
+<section class="section" id="tutorial"><div class="kicker">FOUNDATIONS · INDEPENDENT TUTORIAL</div><h2>从一个双峰例子理解 DDPM 与 Flow Matching</h2><p>本节是论文讲解之前的独立基础教程。先建立生成模型的知识，再介绍科研建模时必须明确的问题；不要求后面的论文采用扩散方法。</p><div class="tutorial-toc"><a href="#tutorial-0">0. 贯穿例子：为什么平均“准时”会骗人</a><a href="#tutorial-1">1. 先约定两套时钟，避免公式读反</a><a href="#tutorial-2">2. DDPM 的前向过程：每次保留一点信号，加一点噪声</a><a href="#tutorial-3">3. 反向过程为什么可学：先算一个训练时知道的答案</a><a href="#tutorial-4">4. DDPM 的损失为什么是预测噪声</a><a href="#tutorial-5">5. DDPM 怎样真的生成一个样本</a><a href="#tutorial-6">6. Score：不是“样本分数”，而是密度往哪里增大</a><a href="#tutorial-7">7. Flow Matching：先造一条容易监督的路径</a><a href="#tutorial-8">8. 平均速度为什么能搬运整个分布</a><a href="#tutorial-9">9. Flow Matching 不只支持直线</a><a href="#tutorial-10">10. 两套方法怎样接起来：同一条路径上的 score 与速度</a><a href="#tutorial-11">11. 从生成模型到优化问题：先分清“描述真实情况”和“挑选好方案”</a><a href="#tutorial-12">12. 终点样本不知道时：需要额外结构，而不只是更换网络</a><a href="#tutorial-13">13. 科研建模流程：把“想用扩散”改成可检验的问题</a><a href="#tutorial-14">14. 重要公式汇总与使用前检查</a></div><h3 id="tutorial-0">0. 贯穿例子：为什么平均“准时”会骗人</h3>
+<p>假设只看一种订单：同一商家、同一送达区域、同一时段。历史记录有两种情况：厨房顺利时提前约 2 分钟，厨房拥堵时迟到约 2 分钟，两种各占一半。令 \(Y\) 表示“实际送达时刻减去承诺时刻”，负数表示提前。为方便画图，我们人为设定：</p>
+<p>\[Y\sim\tfrac12\mathcal N(-2,0.3^2)+\tfrac12\mathcal N(2,0.3^2).\]</p>
+<p>先读懂记号：\(\mathcal N(\mu,\sigma^2)\) 是均值为 \(\mu\)、标准差为 \(\sigma\) 的高斯分布；\(\sim\) 表示“服从这个分布”。前面的两个 \(1/2\) 表示先以各一半概率选左峰或右峰，再在所选峰附近抽一个数。密度曲线的高度不是某一点的概率，某个区间下方的面积才是落在该区间的概率。\(\mathbb E\) 表示按概率加权的平均；\(I\) 是多维情况下的单位矩阵，本例一维时就是 1；\(\|x\|^2\) 在一维就是平方，多维时是各分量平方之和。</p>
+<p><strong>这是教学用的分布，不是对美团数据的拟合结果。</strong> 预测均值会得到 0 分钟，但现实中恰好准时反而少见。如果平台关心“迟到超过 1 分钟的概率”，只知道均值不够；如果模拟器总用均值生成订单，也会把真实存在的早到和晚到情况抹掉。</p>
+<p>生成模型要做的是：给它一个随机数，它吐出一个可能的送达偏差；反复生成后，约一半在 −2 附近，一半在 +2 附近。它不必猜中某个订单不可预知的厨房事故。条件 \(c\) 可以包含商家、路程、时段、当前排队长度；本例固定 \(c\)，暂时省略。真实任务只能输入决策时已经知道的信息，不能把事后取餐时间放进条件。</p>
+<p>接下来两种方法都从容易抽样的标准高斯开始。DDPM 先研究“怎样逐步把数据弄乱”，再学会反着去噪；Flow Matching 先规定“噪声和数据之间的分布如何变化”，再学习让样本沿着这种变化移动的速度。两者都能生成随机样本，但训练目标和采样更新并不相同。</p>
+<div class="interactive" id="distribution-demo"><h4>一个模型要生成两个峰，不能只输出平均值 0</h4><div class="controls"><label for="path-mode">路径</label><select id="path-mode"><option value="fm">Flow Matching：直线插值</option><option value="ddpm">DDPM：信号逐步恢复</option></select><label for="progress">生成进度</label><input id="progress" type="range" min="0" max="100" value="50"><output id="progress-label">0.50</output></div><canvas id="density-canvas" width="1100" height="410" aria-label="双峰分布从高斯噪声到数据的变化图" role="img"></canvas><p id="density-readout" aria-live="polite"></p><p class="muted">实线：当前精确密度；虚线：最终目标密度。DDPM 滑块控制累计信号比例，不等于某个固定训练日程的均匀离散步。图中没有训练模型，也没有把单个真实订单的结果变好。</p></div>
+<p>图中的曲线是本例可以直接计算的精确概率密度；拖动滑块观察两个峰怎样出现或消失。没有训练神经网络，也不能用这张图证明真实模型的效果。横轴单位是标准化前的“分钟数值”；真实建模通常先标准化，最后再逆变换回分钟。</p>
+<h3 id="tutorial-1">1. 先约定两套时钟，避免公式读反</h3>
+<p>DDPM 使用 \(x_0=Y\) 表示干净数据，\(x_T\) 表示近似纯噪声，<strong>生成时从 \(T\) 走回 0</strong>。Flow Matching 本教程使用 \(z_0=\epsilon\) 表示噪声，\(z_1=Y\) 表示数据，<strong>生成时从 0 走到 1</strong>。因此 \(x\) 的下标增大表示更乱，\(z\) 的时间增大表示更接近数据。阅读其他论文时也要先核对作者采用哪一种时间方向。</p>
+<p>如果将它们用于 RL，还存在环境时刻 \(k\)：骑手从路口走到商家，是环境变化；在固定订单条件下把一个高斯数生成成“迟到 2 分钟”，是生成时间变化。生成 20 步不意味着骑手实际走了 20 步。</p>
+<h3 id="tutorial-2">2. DDPM 的前向过程：每次保留一点信号，加一点噪声</h3>
+<p>定义 \(\beta_t\in(0,1)\) 为第 \(t\) 步加噪强度，\(\alpha_t=1-\beta_t\)，\(\bar\alpha_t=\prod_{j=1}^t\alpha_j\)。前向加噪为：</p>
+<p>\[q(x_t\mid x_{t-1})=\mathcal N(\sqrt{\alpha_t}x_{t-1},\beta_t I),\qquad x_t=\sqrt{\alpha_t}x_{t-1}+\sqrt{\beta_t}\epsilon_t.\]</p>
+<p>每步的 \(\epsilon_t\) 独立且服从标准高斯。平方根很重要：缩放系数的平方才作用于方差。如果输入已经是标准高斯，输出方差仍是 \(\alpha_t+\beta_t=1\)，不会无止境膨胀。</p>
+<p>把两步展开：\(x_2=\sqrt{\alpha_2\alpha_1}x_0+\sqrt{\alpha_2\beta_1}\epsilon_1+\sqrt{\beta_2}\epsilon_2\)。后两项相加仍是高斯，方差为 \(\alpha_2\beta_1+\beta_2=1-\alpha_1\alpha_2\)。依此递推，得到直接跳到任意时间的公式：</p>
+<p>\[q(x_t\mid x_0)=\mathcal N(\sqrt{\bar\alpha_t}x_0,(1-\bar\alpha_t)I),\qquad x_t=\sqrt{\bar\alpha_t}x_0+\sqrt{1-\bar\alpha_t}\epsilon.\]</p>
+<p>教学算例：\(x_0=2\)、\(\bar\alpha_t=0.25\)、抽到 \(\epsilon=-1\)，则 \(x_t=1-\sqrt{0.75}\approx0.134\)。看到 0.134，不能直接断定原数据接近 0：它可能来自迟到 2 分钟加上负噪声，也可能来自另一种数据和噪声组合。</p>
+<p>本例的带噪分布可以精确写出：两个高斯峰的均值为 \(\pm2\sqrt{\bar\alpha_t}\)，共同方差为 \(0.09\bar\alpha_t+1-\bar\alpha_t\)。当 \(\bar\alpha_T\) 接近 0，两个峰混成近似标准高斯。有限步 DDPM 通常只是“近似”，不是任意噪声日程都能在终点精确抹掉数据。</p>
+<h3 id="tutorial-3">3. 反向过程为什么可学：先算一个训练时知道的答案</h3>
+<p>我们真正需要的是 \(q(x_{t-1}\mid x_t)\)：看到较乱的数，前一步较干净的数可能是什么？它依赖未知数据分布，不能直接写出。但<strong>训练时知道原始样本 \(x_0\)</strong>，所以可以计算较容易的后验 \(q(x_{t-1}\mid x_t,x_0)\)。</p>
+<p>令 \(u=x_{t-1}\)。由 Bayes 公式，忽略与 \(u\) 无关的归一化常数：</p>
+<p>\[\log q(u\mid x_t,x_0)=-\frac{\|x_t-\sqrt{\alpha_t}u\|^2}{2\beta_t}-\frac{\|u-\sqrt{\bar\alpha_{t-1}}x_0\|^2}{2(1-\bar\alpha_{t-1})}+C.\]</p>
+<p>这是两个关于 \(u\) 的二次式。展开后，\(u^2\) 的系数给出精度，即方差的倒数：\(\alpha_t/\beta_t+1/(1-\bar\alpha_{t-1})\)；一次项除以该精度得到均值。配方结果是：</p>
+<p>\[\tilde\beta_t=\frac{1-\bar\alpha_{t-1}}{1-\bar\alpha_t}\beta_t,\]</p>
+<p>\[\tilde\mu_t(x_t,x_0)=\frac{\sqrt{\bar\alpha_{t-1}}\beta_t}{1-\bar\alpha_t}x_0+\frac{\sqrt{\alpha_t}(1-\bar\alpha_{t-1})}{1-\bar\alpha_t}x_t.\]</p>
+<p>例如 \(t=1\) 且知道 \(x_0\) 时，后验退化到这个已知 \(x_0\)，所以 \(\tilde\beta_1=0\)；实际模型的最后一步重建项要单独处理，不能把零方差直接塞进普通高斯 KL 公式。</p>
+<p>生成时没有 \(x_0\)。于是用神经网络预测前向过程中加入的噪声 \(\epsilon_\theta(x_t,t,c)\)，并用它反推出一个干净样本估计：</p>
+<p>\[\hat{x}_0=\frac{x_t-\sqrt{1-\bar\alpha_t}\epsilon_\theta(x_t,t,c)}{\sqrt{\bar\alpha_t}}.\]</p>
+<p>把它代入上面的后验均值并整理，就得到常见的 DDPM 反向均值：</p>
+<p>\[\mu_\theta(x_t,t,c)=\frac1{\sqrt{\alpha_t}}\left(x_t-\frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\epsilon_\theta(x_t,t,c)\right).\]</p>
+<p>因此网络并不是神秘地“一眼生成结果”：它估计当前混合状态中的噪声方向，解析公式负责把估计换成下一步的均值。</p>
+<h3 id="tutorial-4">4. DDPM 的损失为什么是预测噪声</h3>
+<p>一次训练只需四件事：抽一个历史样本 \(x_0\)，随机抽一个时间 \(t\)，抽一个噪声 \(\epsilon\)，按闭式公式合成 \(x_t\)。标签就是刚才自己抽的 \(\epsilon\)：</p>
+<p>\[\mathcal L_{\mathrm{simple}}=\mathbb E_{x_0,t,\epsilon}\|\epsilon-\epsilon_\theta(x_t,t,c)\|^2.\]</p>
+<p>训练不必真的从第 1 步模拟到第 \(t\) 步。相同 \(x_t\) 可能对应多个 \((x_0,\epsilon)\)，平方损失的理想预测是 \(\mathbb E[\epsilon\mid x_t,t,c]\)，不是恢复每个样本真正抽到的、无法唯一辨认的噪声。这一点解释了为什么训练损失不必为零，模型仍能学到正确分布。</p>
+<p>更深一层：设生成链为 \(p_\theta(x_{0:T})=p(x_T)\prod_{t=1}^Tp_\theta(x_{t-1}\mid x_t)\)。把前向链 \(q(x_{1:T}\mid x_0)\) 当作辅助分布，用 Jensen 不等式得到负对数似然的上界。重新整理后是：</p>
+<p>\[-\log p_\theta(x_0)\le\mathbb E_q\left[D_{\mathrm{KL}}(q(x_T\mid x_0)\|p(x_T))+\sum_{t=2}^TD_{\mathrm{KL}}(q(x_{t-1}\mid x_t,x_0)\|p_\theta(x_{t-1}\mid x_t))-\log p_\theta(x_0\mid x_1)\right].\]</p>
+<p>这里 \(D_{\mathrm{KL}}(q\|p)\) 衡量用模型分布 \(p\) 代替目标分布 \(q\) 的差异，非负且通常不对称；两者一致时为零。Jensen 不等式在这里把难以直接计算的对数边缘概率，变成可对已知前向路径取样求平均的界。</p>
+<p>第一项检查最后加噪后是否接近所选高斯先验；中间每项要求反向模型匹配一步真实后验；最后一项要求从最轻的噪声重建数据。若反向方差 \(\sigma_t^2\) 固定且不训练，两个高斯之间的 KL 中与均值有关的部分就是平方误差。代入噪声参数化后，第 \(t\) 项变成：</p>
+<p>\[\frac{\beta_t^2}{2\sigma_t^2\alpha_t(1-\bar\alpha_t)}\mathbb E\|\epsilon-\epsilon_\theta(x_t,t,c)\|^2+\text{与均值网络无关的项}.\]</p>
+<p>这说明噪声预测和概率建模之间的联系。DDPM 常用的 simple loss <strong>去掉了这个随时间变化的权重</strong>，是一种重新加权的训练目标，不能说它逐项等于精确负对数似然。如果连方差也学习，还要保留相应方差项。原始图像论文对离散像素的最终重建有专门处理；本例连续分钟变量不需要照搬像素离散化。</p>
+<h3 id="tutorial-5">5. DDPM 怎样真的生成一个样本</h3>
+<p>先抽 \(x_T\sim\mathcal N(0,I)\)，然后对 \(t=T,T-1,\ldots,1\) 重复：</p>
+<p>\[x_{t-1}=\mu_\theta(x_t,t,c)+\sigma_t\xi_t,\qquad \xi_t\sim\mathcal N(0,I).\]</p>
+<p>最后一步通常不再加入随机噪声。输出 \(x_0\) 才是一份模拟的送达偏差。不同初始噪声和中间噪声给出不同结果；重复抽样才得到迟到概率。不能把一次生成的 +2 分钟当作确定预测，也不能把“每步去噪”理解为每次都必须更接近某个事先指定的订单样本。</p>
+<p>为什么不是一步扣掉全部噪声？对于本例，重噪声状态无法确定自己来自左峰还是右峰，一步均值估计可能落在两个峰之间。多步生成逐步减少不确定性；但它有计算成本，而且网络误差、步数和采样器都会影响最终分布。DDIM、连续时间 score 模型等提供其他采样方式，这里不把它们与原始 DDPM 更新混为一谈。</p>
+<h3 id="tutorial-6">6. Score：不是“样本分数”，而是密度往哪里增大</h3>
+<p>定义 \(s_t(x)=\nabla_x\log p_t(x)\)。在一维中，它告诉我们当前位置向左还是向右移动会使对数概率密度增大。对前向条件高斯求导，再对可能的 \(x_0\) 取条件平均：</p>
+<p>\[s_t(x_t)=\mathbb E\left[-\frac{x_t-\sqrt{\bar\alpha_t}x_0}{1-\bar\alpha_t}\mid x_t\right]=-\frac{\mathbb E[\epsilon\mid x_t]}{\sqrt{1-\bar\alpha_t}}.\]</p>
+<p>所以预测噪声也在间接学习 score。注意它依赖当前噪声时刻的密度；不是最终数据分布的梯度直接套用到所有时间。对称双峰的正中间 score 可能为零，因此“沿最终密度梯度爬坡”本身不足以说明整个生成过程。</p>
+<h3 id="tutorial-7">7. Flow Matching：先造一条容易监督的路径</h3>
+<p>重新使用噪声到数据的时间 \(\tau\in[0,1]\)。独立抽取 \(\epsilon\sim\mathcal N(0,I)\) 和历史样本 \(Y\)，连成直线：</p>
+<p>\[z_\tau=(1-\tau)\epsilon+\tau Y,\qquad \frac{d z_\tau}{d\tau}=Y-\epsilon.\]</p>
+<p>教学算例：噪声 \(\epsilon=1\)，数据 \(Y=-2\)，则半路位置 \(z_{0.5}=-0.5\)，整条直线的速度都是 −3。网络的输入是位置 −0.5、时间 0.5 和订单条件 \(c\)；标签是 −3。训练目标为：</p>
+<p>\[\mathcal L_{\mathrm{CFM}}=\mathbb E\|v_\theta(z_\tau,\tau,c)-(Y-\epsilon)\|^2.\]</p>
+<p>这里的速度是“生成变量每单位生成时间的变化”，不是骑手的 km/h。网络不输入终点 \(Y\)，否则生成时拿不到这个答案。训练时用真实终点制作标签，和分类训练用真实类别制作标签一样合理。</p>
+<p>不同样本对的直线会交叉。同一个位置和时间可能遇到向左和向右的训练标签，网络无法同时照做；它学的是该位置的<strong>条件平均速度</strong>：</p>
+<p>\[u(z,\tau)=\mathbb E[Y-\epsilon\mid z_\tau=z].\]</p>
+<p>为什么这个平均值是正确目标？令 \(U=Y-\epsilon\)，把 \(v-U=(v-\mathbb E[U\mid z])+ (\mathbb E[U\mid z]-U)\) 展开平方，交叉项的条件期望为零，于是：</p>
+<p>\[\mathbb E\|v(z,\tau)-U\|^2=\mathbb E\|v(z,\tau)-u(z,\tau)\|^2+\mathbb E\|U-u(z,\tau)\|^2.\]</p>
+<p>第二项与网络无关。最小化容易计算的配对损失，等价于学习难以直接计算的平均速度。这是 Conditional Flow Matching 的关键，不是要求每条实际生成轨迹都复现某一条训练直线。</p>
+<h3 id="tutorial-8">8. 平均速度为什么能搬运整个分布</h3>
+<p>设 \(p_\tau(z)\) 为上述插值的概率密度。一个速度场让密度改变时，满足连续性方程：</p>
+<p>\[\partial_\tau p_\tau(z)+\nabla_z\cdot[p_\tau(z)u(z,\tau)]=0.\]</p>
+<p>可以把一小段横轴看成一个街区：区内概率增加，必须是左边流入比右边流出多。\(p u\) 是概率流量，散度计算净流出，因此前面是负号。更严格地，取任意平滑测试函数 \(f\)：</p>
+<p>\[\frac d{d\tau}\mathbb E[f(z_\tau)]=\mathbb E[\nabla f(z_\tau)\cdot(Y-\epsilon)]=\int\nabla f(z)\cdot u(z,\tau)p_\tau(z)\,dz.\]</p>
+<p>在边界项消失时分部积分，得到连续性方程。这解释了“先对每对样本造路径，再取平均速度”为什么仍产生目标边际分布。所需正则性、尾部衰减与解的存在不能省略；神经网络近似和有限步积分也不会自动继承精确等式。</p>
+<p>生成时解 ODE：</p>
+<p>\[\frac{d z_\tau}{d\tau}=v_\theta(z_\tau,\tau,c),\qquad z_0\sim\mathcal N(0,I).\]</p>
+<p>最简单 Euler 步为 \(z_{\tau+h}=z_\tau+h v_\theta(z_\tau,\tau,c)\)。固定初始噪声后轨迹可以完全确定；输出多样性来自随机初始值。实际 ODE 轨迹通常是弯的，因为每到一个新位置都会重新查询平均速度。满足唯一解条件时，实际流的轨迹不会在同一时刻相交，虽然用于监督的配对直线可以相交。</p>
+<h4>把这个双峰例子真的生成到终点</h4>
+<p>本例足够简单，可以解析算出理想速度，而不训练网络。设 \(D_\tau=0.09\tau^2+(1-\tau)^2\)。当前点来自右峰的条件概率为：</p>
+<p>\[w_+(z,\tau)=\frac{\exp[-(z-2\tau)^2/(2D_\tau)]}{\exp[-(z-2\tau)^2/(2D_\tau)]+\exp[-(z+2\tau)^2/(2D_\tau)]}.\]</p>
+<p>这是 Bayes 规则：看左右两种来源各自有多可能产生当前点，再归一化；共同的高斯系数与相等先验抵消。令 \(\bar{m}=2w_+-2(1-w_+)\)，先在每个高斯成分内做条件平均，再对两种来源加权，得到：</p>
+<p>\[u(z,\tau)=\bar{m}+\frac{0.09\tau-(1-\tau)}{D_\tau}(z-\tau\bar{m}).\]</p>
+<p>系数的分子是该成分内 \(Y-\epsilon\) 与 \(z_\tau\) 的协方差，分母是 \(z_\tau\) 的方差；这正是高斯条件均值的“协方差除以方差”。若不熟悉这个结论，可以先把它当作本教学例子的精确答案，训练网络的目标就是逼近这样的函数。</p>
+<p>现在从一个噪声开始，每次查询当前位置的 \(u\)，用步长 0.001 做 1,000 次 Euler 更新。本地数值计算得到下表；这是解析玩具模型的演示，不是任何论文的实验结果。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>初始噪声</th>
+<th style="text-align: right;">进度 0</th>
+<th style="text-align: right;">进度 0.25</th>
+<th style="text-align: right;">进度 0.50</th>
+<th style="text-align: right;">进度 0.75</th>
+<th style="text-align: right;">进度 1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.5</td>
+<td style="text-align: right;">0.500</td>
+<td style="text-align: right;">0.467</td>
+<td style="text-align: right;">0.843</td>
+<td style="text-align: right;">1.399</td>
+<td style="text-align: right;">1.910</td>
+</tr>
+<tr>
+<td>−0.5</td>
+<td style="text-align: right;">−0.500</td>
+<td style="text-align: right;">−0.467</td>
+<td style="text-align: right;">−0.843</td>
+<td style="text-align: right;">−1.399</td>
+<td style="text-align: right;">−1.910</td>
+</tr>
+<tr>
+<td>1.5</td>
+<td style="text-align: right;">1.500</td>
+<td style="text-align: right;">1.360</td>
+<td style="text-align: right;">1.578</td>
+<td style="text-align: right;">1.872</td>
+<td style="text-align: right;">2.332</td>
+</tr>
+</tbody>
+</table></div>
+<p>第一行起初略向中间走，随后进入右侧峰，最终生成“迟到约 1.91 分钟”。第三行生成同一个右峰里更靠尾部的样本；第二行对称地生成提前样本。三条轨迹说明更新过程，但只有从标准高斯反复抽取大量初始值，才是在检验最终分布；手选三点不能证明频率各一半。这个简单模型允许解析计算，真实高维数据才需要网络替代未知的条件平均速度。</p>
+<h3 id="tutorial-9">9. Flow Matching 不只支持直线</h3>
+<p>更一般地设 \(z_\tau=a(\tau)Y+b(\tau)\epsilon\)，要求起点接近噪声、终点接近数据。已知样本对的速度标签是：</p>
+<p>\[U_\tau=a&#x27;(\tau)Y+b&#x27;(\tau)\epsilon.\]</p>
+<p>对固定 \(Y\)，路径是均值 \(aY\)、标准差 \(b\) 的高斯。在 \(b&gt;0\) 时也可以写为：</p>
+<p>\[u(z,\tau\mid Y)=a&#x27;(\tau)Y+\frac{b&#x27;(\tau)}{b(\tau)}[z-a(\tau)Y].\]</p>
+<p>原始 Flow Matching 论文把这种条件高斯路径与边际速度联系起来，并比较扩散路径与 Optimal Transport 条件路径。常见实现让终点保留很小的 \(\sigma_{\min}&gt;0\) 以免方差严格为零，此时生成的是轻微平滑的数据分布。独立抽样噪声与数据、每一对连直线，并不意味着在任意维度都找到了两个完整分布之间的全局最优运输配对。</p>
+<p>“速度预测”还可能指扩散模型里的另一种 \(v\) 参数化，例如信号和噪声的特定线性组合；看到字母 \(v\) 不能直接当作这里 \(dz/d\tau\)，必须查清作者对路径及时间的定义。</p>
+<h3 id="tutorial-10">10. 两套方法怎样接起来：同一条路径上的 score 与速度</h3>
+<p>回到直线路径 \(z_\tau=\tau Y+(1-\tau)\epsilon\)。令 \(m(z,\tau)=\mathbb E[Y\mid z_\tau=z]\)。对条件高斯求导可得：</p>
+<p>\[s(z,\tau)=\nabla_z\log p_\tau(z)=-\frac{z-\tau m(z,\tau)}{(1-\tau)^2}.\]</p>
+<p>另一方面，由 \(\epsilon=(z-\tau Y)/(1-\tau)\)，有 \(u=(m-z)/(1-\tau)\)。消去 \(m\)：</p>
+<p>\[u(z,\tau)=\frac z\tau+\frac{1-\tau}{\tau}s(z,\tau),\qquad 0&lt;\tau&lt;1.\]</p>
+<p>这不是宣称任意 DDPM 噪声网络都能原样替换任意 FM 网络。两者必须对应同一条概率路径、同一时间约定和一致缩放；端点处分式可能数值不稳定，需要取正确极限或使用安全参数化。</p>
+<p>还可以给 ODE 加随机性，但不能只“随便加一团噪声”。在本教程向数据增加的时间中，若 \(g(\tau)\) 只依赖时间，则以下 SDE 具有同样的理想边际分布：</p>
+<p>\[dZ_\tau=\left[u(Z_\tau,\tau)+\tfrac12g(\tau)^2s(Z_\tau,\tau)\right]d\tau+g(\tau)dW_\tau.\]</p>
+<p>\(W_\tau\) 是 Brownian motion：很短时间 \(h\) 内的增量是均值 0、方差 \(h\) 的高斯，所以离散随机项是 \(g\sqrt h\,\xi\)，不是 \(gh\xi\)。SDE 表示每步除确定性移动外，还增加这种随机扰动。</p>
+<p>原因来自 Fokker–Planck 方程：随机噪声贡献 \(+\tfrac12g^2\Delta p\)，额外漂移贡献 \(-\tfrac12g^2\nabla\cdot(ps)=-\tfrac12g^2\Delta p\)，恰好抵消，剩下与 ODE 相同的连续性方程。没有 score 漂移补偿，分布就会被额外扩散。这里是精确速度和 score 的连续时间结论；离散步长及网络误差仍会改变实际样本。</p>
+<h3 id="tutorial-11">11. 从生成模型到优化问题：先分清“描述真实情况”和“挑选好方案”</h3>
+<p>前面的双峰例子是在<strong>描述现实的不确定性</strong>。如果真实订单一半会迟到，那么正确的模型也应该生成大约一半迟到样本。不能给“提前送达样本”更高奖励，再把模型训练成只生成提前样本，就声称物流变好了：改变的是预测，真实厨房和骑手并没有改变。</p>
+<p>另一类任务是在<strong>选择可以执行的方案</strong>。这时生成变量可以是动作或设计方案，奖励评价这个方案实际执行后的效果。研究开始前必须先分清这两类目标；“输出看起来更好”和“更准确地描述现实”往往不是同一回事。</p>
+<p>若要用策略梯度优化生成过程，上一节 SDE 给出一个有用接口。令 \(b_\theta=u_\theta+g^2s_\theta/2\)，用正步长 \(h\) 离散化后：</p>
+<p>\[Z_{j+1}\mid Z_j,c\sim\mathcal N(Z_j+h b_\theta(Z_j,\tau_j,c),\ g_j^2hI).\]</p>
+<p>给定当前生成位置，下一位置不再是一个唯一的点，而是一团可计算密度的高斯。设维数为 \(d\)、均值为 \(\mu_\theta\)，则：</p>
+<p>\[\log\pi_\theta(Z_{j+1}\mid Z_j,c)=-\frac{\|Z_{j+1}-\mu_\theta\|^2}{2g_j^2h}-\frac d2\log(2\pi g_j^2h).\]</p>
+<p>它回答“当前模型多愿意采取这个已经抽到的生成步骤”。确定性 ODE 的转移是点质量，不能直接套用这条普通高斯密度公式。RL 方法因此可能需要随机生成步骤，也可能采用不依赖这种概率比的其他梯度估计方式。</p>
+<p>例如，把最终方案奖励分配给生成它的步骤，可以比较同一个旧样本在新旧模型下的概率：</p>
+<p>\[\rho_{i,j}=\frac{\pi_\theta(Z_{i,j+1}\mid Z_{i,j},c)}{\pi_{\mathrm{old}}(Z_{i,j+1}\mid Z_{i,j},c)}.\]</p>
+<p>若某个方案好于同条件下其他方案，更新可提高其生成步骤的概率；若较差则降低。组内优势可定义为 \(A_i=(R_i-\bar{R})/(\operatorname{std}(R)+\varepsilon)\)，裁剪目标使用 \(\min(\rho A,\operatorname{clip}(\rho,1-\delta,1+\delta)A)\) 限制更新幅度。全组奖励一样时，就没有有效的组内区分信号。old 是采样时冻结的模型；若还加参考模型 KL 约束，reference 是另一个用途不同的对象。</p>
+<p>这只说明数学接口，不保证奖励合理、采样高效或方案可行。尤其要记住：这个概率比是<strong>同一个已采样的下一潜变量</strong>的新旧密度比，不是两张不同最终样本之间的比，也不是最终输出的精确似然。生成模型原本用于拟合分布，接入奖励后优化目标已经改变，需要重新定义评价标准。</p>
+<h3 id="tutorial-12">12. 终点样本不知道时：需要额外结构，而不只是更换网络</h3>
+<p>FM 的监督依赖已知样本 \(Y\)。如果只知道过程的一小步，却想生成很久以后的结果，就缺少训练终点。可以收集完整轨迹；也可以引入模型、动态规划或其他一致性关系，但这些选择各自增加假设。</p>
+<p>仍用配送例子：数据只记录“现在接单，下一分钟到了哪里”，不能凭空知道这次决策最后会带来多少总延误。若用下一状态模型的预测补全未来，这叫自举；预测错误会进入新的训练标签。扩散或 FM 能表达复杂分布，并不自动提供缺失的因果信息或长期标签。</p>
+<p>这时一个通用推导办法是：先用现有信息构造可采样的随机过程 \(X(\tau)\)，明确起点和终点；再求导 \(\partial_\tau X\)，用它回归 \(\mathbb E[\partial_\tau X\mid X=z]\)。第 7–8 节已经证明这种回归为何对应边际速度。但<strong>什么过程值得构造、其终点是否真是所需分布</strong>，仍需要新的问题假设或定理，不能由 FM 的损失自动保证。</p>
+<h3 id="tutorial-13">13. 科研建模流程：把“想用扩散”改成可检验的问题</h3>
+<p>先用一句话写清任务、模型输出和评价标准。例如“给定订单条件，估计送达偏差的完整分布”和“生成一个降低延误的可执行方案”，是两个不同课题。下表以配送为示例列出通用问题；它不是把今天的各篇论文改写成扩散方法。若有一栏答不上来，通常还不能直接开始套模型。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>必须明确什么</th>
+<th>在订单任务中具体写什么</th>
+<th>为什么会卡住</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. 要生成的随机变量</td>
+<td>是单个延误、总成本、订单—骑手匹配矩阵，还是未来状态序列？确定维度、单位、取值范围</td>
+<td>生成回报、生成动作、生成世界状态是三种模型；损失和用途不同</td>
+</tr>
+<tr>
+<td>2. 条件信息与决策时间</td>
+<td>当前待分配订单、骑手位置、容量、已承诺路线；只使用此刻可知信息</td>
+<td>使用事后取餐时间会造成数据泄漏，离线效果无法上线复现</td>
+</tr>
+<tr>
+<td>3. 目标分布</td>
+<td>模仿历史动作、接近专家方案、给定策略的回报分布，还是按奖励改善的生成分布？</td>
+<td>“高质量分布”没有定义就无法判断学到了什么</td>
+</tr>
+<tr>
+<td>4. 训练样本或替代监督</td>
+<td>有完整专家方案可做 FM/DDPM；只有转移则需要 Bellman 等一致性结构；有终局奖励可考虑 RL 微调</td>
+<td>Value Forcing 的自举不是凭空获得真实回报标签，可能传播估计错误</td>
+</tr>
+<tr>
+<td>5. 表示和硬约束</td>
+<td>匹配矩阵每单至多一个骑手、容量限制、路线时序；用可行解码器/匹配求解器检查与修复</td>
+<td>连续高斯数直接取整会发生重复派单；修复还可能改变奖励和概率解释</td>
+</tr>
+<tr>
+<td>6. 噪声与路径</td>
+<td>起点分布、时间方向、端点、条件路径、样本配对；数据和噪声尺度是否匹配</td>
+<td>回报是 −1000、噪声标准差 1 时，网络需跨越悬殊尺度；端点可能奇异</td>
+</tr>
+<tr>
+<td>7. 网络输入输出与监督</td>
+<td>输入带噪变量、生成时间和条件；输出噪声/score/速度中的哪一个？写出标签公式</td>
+<td>不同参数化混用会让采样器方向、系数全错</td>
+</tr>
+<tr>
+<td>8. 优化目标与梯度</td>
+<td>MSE、似然界、Bellman 回归或 GRPO？哪些目标停止梯度，哪些网络冻结？</td>
+<td>用自己的预测监督自己可能坍缩；裁剪概率比需要合法转移密度</td>
+</tr>
+<tr>
+<td>9. 推理如何做决策</td>
+<td>生成多少候选、多少步；由谁排序、谁检查可行；总体必须在调度期限内</td>
+<td>样本质量提高但超过 10 秒，仍无法满足实时调度</td>
+</tr>
+<tr>
+<td>10. 验证与失败条件</td>
+<td>固定数据量/调用次数/算力，与标量 Q、普通策略和传统求解器比较；测延误、成本、违约、尾部、漂移</td>
+<td>模拟器偏差、分布外订单和奖励漏洞可能让离线提高无法转移</td>
+</tr>
+</tbody>
+</table></div>
+<p>下面仅用用户提到的 Value Forcing 和 Flow-GRPO 校验这份流程能否问到关键问题，不在这里精读论文，也不要求其他被调研论文使用扩散模型。它们的共同点是从噪声产生样本，区别在于样本是什么、监督从哪里来。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>选择</th>
+<th>生成变量与条件</th>
+<th>训练信号</th>
+<th>采样后做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Value Forcing</td>
+<td>标量累计回报；条件为状态或状态—动作</td>
+<td>转移数据、分布式 Bellman、自举速度目标</td>
+<td>对回报样本取均值来评估动作；本文并非直接做风险约束</td>
+</tr>
+<tr>
+<td>Flow-GRPO</td>
+<td>图像潜变量；条件为提示词</td>
+<td>最终奖励、组内优势、随机生成步骤的新旧概率比</td>
+<td>解码图像；评估正确性及奖励投机</td>
+</tr>
+<tr>
+<td>教学提案：配送成本分布</td>
+<td>未来总延误；条件为当前系统与候选方案</td>
+<td>有完整后续记录时做监督 FM；缺反事实时需另建评估假设</td>
+<td>从样本估计均值/分位数，再交给方案选择器；不能把观测相关性当方案因果收益</td>
+</tr>
+</tbody>
+</table></div>
+<p>如果真正要生成离散分配方案，第三行就不够了：还要解决可行表示、解码、不同订单数量及候选集合变化。一个低成本起步方案是先保留已有可行调度器，只用生成模型评估其候选方案，再验证“分布信息是否比一个均值更有用”。这是本报告的研究建议，不是已被以上论文验证的美团方案。</p>
+<h3 id="tutorial-14">14. 重要公式汇总与使用前检查</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>公式</th>
+<th>用来回答什么</th>
+<th>使用条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>\(x_t=\sqrt{\bar\alpha_t}x_0+\sqrt{1-\bar\alpha_t}\epsilon\)</td>
+<td>如何直接制作 DDPM 训练输入</td>
+<td>独立高斯前向噪声；\(x_0\) 为数据</td>
+</tr>
+<tr>
+<td>\(\mathbb E\|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\)</td>
+<td>DDPM simple loss 的标签是什么</td>
+<td>与精确似然界之间有时间权重区别</td>
+</tr>
+<tr>
+<td>\(\mu_\theta=\alpha_t^{-1/2}(x_t-\beta_t\epsilon_\theta/\sqrt{1-\bar\alpha_t})\)</td>
+<td>预测噪声怎样变成反向均值</td>
+<td>与训练日程及方差选择保持一致</td>
+</tr>
+<tr>
+<td>\(s_t=-\mathbb E[\epsilon\mid x_t]/\sqrt{1-\bar\alpha_t}\)</td>
+<td>噪声预测与密度梯度怎样对应</td>
+<td>对应同一个带噪分布</td>
+</tr>
+<tr>
+<td>\(z_\tau=(1-\tau)\epsilon+\tau Y\)</td>
+<td>怎样制作 FM 的训练位置</td>
+<td>本节时间从噪声到数据</td>
+</tr>
+<tr>
+<td>\(\mathcal L_{\mathrm{CFM}}=\mathbb E\|v_\theta-(Y-\epsilon)\|^2\)</td>
+<td>为什么无需已知边际速度</td>
+<td>网络最优解为条件平均标签</td>
+</tr>
+<tr>
+<td>\(\partial_\tau p+\nabla\cdot(pu)=0\)</td>
+<td>速度场如何改变密度</td>
+<td>足够的正则性与边界条件</td>
+</tr>
+<tr>
+<td>\(z_{\tau+h}=z_\tau+h v_\theta\)</td>
+<td>怎样用 Euler 生成样本</td>
+<td>有离散化误差；步数是预算的一部分</td>
+</tr>
+<tr>
+<td>\(U_\tau=a&#x27;Y+b&#x27;\epsilon\)</td>
+<td>怎样换成一般高斯路径</td>
+<td>必须与 \(z_\tau=aY+b\epsilon\) 配套</td>
+</tr>
+<tr>
+<td>\(u=z/\tau+(1-\tau)s/\tau\)</td>
+<td>直线 FM 的速度与 score 关系</td>
+<td>\(0&lt;\tau&lt;1\)；端点另处理</td>
+</tr>
+<tr>
+<td>\(dZ=(u+g^2s/2)d\tau+g\,dW\)</td>
+<td>怎样增加随机转移而保持理想边际</td>
+<td>精确场、时间依赖的 \(g\)、连续时间</td>
+</tr>
+<tr>
+<td>\(\rho=\pi_\theta(z&#x27;\mid z,c)/\pi_{\mathrm{old}}(z&#x27;\mid z,c)\)</td>
+<td>RL 更新究竟比较什么概率</td>
+<td>同一旧样本；有效随机转移密度</td>
+</tr>
+<tr>
+<td>\(u(z,\tau)=\mathbb E[\partial_\tau X(\tau)\mid X(\tau)=z]\)</td>
+<td>自定义路径怎样产生速度监督</td>
+<td>需先证明路径的端点及边际符合任务目标</td>
+</tr>
+</tbody>
+</table></div>
+<p>检查推导时先做三个小测试。<strong>端点测试</strong>：时间为 0 和 1 时是否回到你声称的噪声和数据？<strong>方差测试</strong>：独立高斯相加要平方系数再相加；折扣噪声会缩方差。<strong>单位与信息测试</strong>：速度是生成变量/生成时间；网络输入不能含生成时拿不到的终点。它们往往比直接堆网络更早暴露建模错误。</p>
+<p>基础来源：<a href="https://arxiv.org/abs/2006.11239" target="_blank" rel="noopener noreferrer">Ho et al., Denoising Diffusion Probabilistic Models</a>（前向闭式、后验、ELBO 与噪声参数化）；<a href="https://arxiv.org/abs/2210.02747" target="_blank" rel="noopener noreferrer">Lipman et al., Flow Matching for Generative Modeling</a>（条件速度到边际速度、Gaussian paths、CFM 等价性）；<a href="https://arxiv.org/abs/2505.05470" target="_blank" rel="noopener noreferrer">Flow-GRPO</a>（科研建模流程中生成过程 RL 的实例）。双峰订单例子、统一时间重写及科研建模表为本报告的解释与推导，不是这些论文的订单实验。三篇基础材料是教程参考，不计入今天的 10 篇推荐。</p></section>
+<section class="section" id="dataset"><h2>美团项目范围：这 5 篇为什么属于同一条数据线</h2>
+<p>本次先读了 introduction 目录中的挑战说明与补充说明，定位到 <a href="https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge" target="_blank" rel="noopener noreferrer">Meituan–INFORMS TSL Research Challenge</a>。以下 5 篇均有论文正文、公开摘要或正式参考文献确认使用这批挑战数据；不是按“美团作者”或标题里有 delivery 粗略筛选。</p>
+<p>原始说明包含 2022-10-17 至 10-24 共 8 天、568,546 个订单、654,343 条 waybill、4,955 名骑手、4,962 家商家和 23 个区。<strong>订单不等于派单记录</strong>：同一订单可能多次 offer 或重派，因此约 63 万 offers 的评估数据与约 56.9 万 orders 不应直接判成冲突。各论文还有自己的清洗规则。</p>
+<p>决策快照只有每天午间三个、合计 24 个 checkpoint，而不是完整连续的全城候选动作日志。线上调度约每 30 秒至 1 分钟运行，组合分配与路线可行性要在很短时间内处理。把历史数据接成 RL 环境前，要先明确哪些事件能恢复，哪些行为必须由模拟器补全。</p>
+<p>补充说明中特别容易影响建模的字段：候选表 dispatch_time 是快照时间；预估出餐不是实际出餐；拒单记录中取餐/送达时间与坐标的 0 应视为缺失；wave 的标识需结合日期与骑手，开始时刻应按已接单记录重算；坐标做了平移而非缩放，行政区会有地理重叠。这些处理会影响行程、奖励和训练/测试信息边界。</p>
+<p>阅读顺序建议：先看 #1 的“RL 估未来成本、搜索负责路线”，再看 #2 的简单机会成本基线；#3–#4 检查接单行为和供给假设；#5 最后反问“模拟器评出的提升是否可信”。五篇解决的子问题不同，不应把其指标放在一张排行榜里直接比较。</p></section>
+<section class="section" id="catalog"><div class="kicker">PAPER CATALOG</div><h2>今日目录：美团 5 篇 + 近期 RL 5 篇</h2><p>#1–#5 为同一挑战数据的既有工作；#6–#10 为 2026-10-08 至 11-02 首发的近期 RL。首次发表、最新修订、会议年份在各卡片中分别列出。已与本地历史索引去重。</p><div class="table-scroll"><table class="catalog"><thead><tr><th>#</th><th>论文</th><th>首发 / 渠道</th><th>第一作者 / 机构</th><th>通讯或联系作者</th><th>末作者 / 机构</th><th>推荐原因</th><th>一句话内容</th><th>阅读状态</th></tr></thead><tbody><tr><td>1</td><td><a href="#paper-auad2026">Data-Driven Optimization for Meal Delivery: A Reinforcement Learning Approach for Order-Courier Assignment and Routing at Meituan</a><br><span class="muted">用强化学习与启发式搜索协同优化美团派单和路线</span></td><td>2026-04-27<br>Transportation Science</td><td>Ramón Auad<br>Amazon / Universidad Católica del Norte</td><td>Ramón Auad</td><td>Tomás Lagos<br>University of Sydney</td><td>当前明确任务：同一 Meituan TSL 数据；近期精读偏好：RL for logistics。</td><td>学习什么时候暂缓派单，并用传统路线搜索产生可执行方案。</td><td>调研</td></tr><tr><td>2</td><td><a href="#paper-2502.16862">Potential-Based Greedy Matching for Dynamic Delivery Pooling</a><br><span class="muted">用订单距离估计机会成本的动态拼单</span></td><td>2025-02-24<br>arXiv v3</td><td>Hongyao Ma<br>Columbia Business School</td><td>not explicitly listed</td><td>Matias Romero<br>Columbia Business School</td><td>当前明确任务：同一 Meituan TSL 数据；主题：online optimization。</td><td>给贪心拼单扣除机会成本，不预测未来订单也能减少短视决策。</td><td>调研</td></tr><tr><td>3</td><td><a href="#paper-ssrn6349239">Behaviorally Informed Dispatch Decisions for Real-Time Order-Courier Assignment</a><br><span class="muted">考虑骑手接单行为与工作量的实时派单</span></td><td>2026-04-20<br>SSRN working paper</td><td>Golman Rahmanifar<br>Eindhoven University of Technology</td><td>Golman Rahmanifar (SSRN Contact Author)</td><td>Stefan Minner<br>Technical University of Munich</td><td>当前明确任务：同一 Meituan TSL 数据；关注拒单与实时可行性。</td><td>把接单概率、路线占用和工作量公平放入派单成本。</td><td>调研</td></tr><tr><td>4</td><td><a href="#paper-ssrn5202084">Mixed-Type Courier Dispatching and Pricing for Online Food Delivery Platforms</a><br><span class="muted">混合全职与兼职骑手的定价和派单</span></td><td>2025-05-06<br>SSRN working paper</td><td>Junlin Chen<br>University of California, Berkeley</td><td>Manxi Wu (SSRN Contact Author)</td><td>Zhanhao Zhang<br>Cornell University</td><td>当前明确任务：同一 Meituan TSL 数据；长期机构偏好：Berkeley / Cornell。</td><td>把兼职骑手的接单、进入和退出行为与平台派单一起建模。</td><td>调研</td></tr><tr><td>5</td><td><a href="#paper-calibrated-dispatch2026">Calibrated Counterfactual Evaluation of Dispatch Policies Under Cascading Divergence</a><br><span class="muted">用历史行为校准派单策略的反事实仿真评估</span></td><td>2026-10-17<br>ECML PKDD 2026 / LNCS</td><td>Amr Abdelbaky<br>The American University in Cairo</td><td>Amr Abdelbaky</td><td>Nourhan Sakr<br>The American University in Cairo</td><td>当前明确任务：同一 Meituan TSL 数据；近期偏好：RL evaluation。</td><td>单步模仿很准，也可能在连续派单后产生很大的状态漂移。</td><td>调研</td></tr><tr><td>6</td><td><a href="#paper-2610.28480" class="is-deep-read-link" data-deep-read="true">SuperMimic: Scaling Humanoid Whole-Body Control with One Differentiable World Model</a><br><span class="muted">用一个可微世界模型扩展人形机器人全身控制</span></td><td>2026-10-20<br>CoRL 2026 Oral（作者主页）</td><td>Qiayuan Liao<br>University of California, Berkeley</td><td>not explicitly listed</td><td>Koushil Sreenath<br>University of California, Berkeley</td><td>用户指定精读；长期机构偏好：Berkeley；主题：model-based RL。</td><td>共享动力学模型，再通过短段想象轨迹的梯度学习动作跟踪。</td><td>已精读</td></tr><tr><td>7</td><td><a href="#paper-2611.02160" class="is-deep-read-link" data-deep-read="true">Value Forcing: Aligning Return Distributions at All Noise Levels</a><br><span class="muted">让每个噪声层级上的回报分布满足 Bellman 一致性</span></td><td>2026-11-01<br>arXiv preprint</td><td>Chongyi Zheng<br>Princeton University</td><td>not explicitly listed</td><td>Sergey Levine<br>University of California, Berkeley</td><td>用户指定精读；长期作者偏好：Benjamin Eysenbach；机构：Princeton / Berkeley。</td><td>为回报 flow 构造中间噪声状态的 Bellman 监督，缓解小数据下分布坍缩。</td><td>已精读</td></tr><tr><td>8</td><td><a href="#paper-2610.12135">Q-Shaped Options for Hierarchical Reinforcement Learning</a><br><span class="muted">用上下两层 Q 函数共同学习 option 表示</span></td><td>2026-10-08<br>arXiv preprint</td><td>Clarisse Wibault<br>University of Oxford</td><td>not explicitly listed</td><td>Jakob Foerster<br>University of Oxford</td><td>长期作者偏好：Jakob Foerster；主题：hierarchical RL；补充长时决策方向。</td><td>低层保留执行所需区别，高层合并与最终任务无关的区别。</td><td>调研</td></tr><tr><td>9</td><td><a href="#paper-2611.03296">Inferring Transferable Rewards via Active Inverse Reinforcement Learning</a><br><span class="muted">主动选择环境动力学以学习可迁移奖励</span></td><td>2026-11-02<br>arXiv preprint</td><td>Victor Villin<br>University of Neuchâtel</td><td>not explicitly listed</td><td>Giorgia Ramponi<br>University of Zurich</td><td>近期新论文；主题：inverse RL / sample efficiency；补充行为建模视角。</td><td>不是盲目多收演示，而是选择最能区分候选奖励的环境来问专家。</td><td>调研</td></tr><tr><td>10</td><td><a href="#paper-2611.03301">An Axiomatic Framework for Reinforcement Learning in Open Multi-Agent Systems</a><br><span class="muted">为只能控制部分智能体的系统建立价值学习规则</span></td><td>2026-11-02<br>NeurIPS 2026</td><td>Jianhong Wang<br>University of Bristol</td><td>Jianhong Wang; Yang Li</td><td>Jonathan Lawry<br>University of Bristol</td><td>近期新论文；主题：multi-agent RL；与部分可控的现实系统相关。</td><td>用合作博弈公理约束个体价值，处理未知或变化的队友。</td><td>调研</td></tr></tbody></table></div><p class="muted">not explicitly listed 表示来源没有明确标注通讯作者；不凭末作者位置或单个邮箱推断。摘要区使用简短英文原文摘录与中文概述，完整摘要请打开原文。</p></section>
+<section class="paper-card" id="paper-auad2026" data-paper-id="auad2026" data-deep-read="false"><div class="kicker">MEITUAN DATASET · 01</div><h2>Data-Driven Optimization for Meal Delivery: A Reinforcement Learning Approach for Order-Courier Assignment and Routing at Meituan</h2><p class="lede">用强化学习与启发式搜索协同优化美团派单和路线</p><div><span class="chip">reinforcement learning</span><span class="chip">order dispatching</span><span class="chip">vehicle routing</span><span class="chip">value function approximation</span></div>
+<div class="paper-summary"><p class="meta">Ramón Auad；Felipe Lagos；Tomás Lagos<br>Amazon / Universidad Católica del Norte / Universidad Adolfo Ibáñez / University of Sydney</p><p><strong>首发：</strong>2026-04-27；<strong>当前版本日期：</strong>2026-04-27；Transportation Science<br><strong>通讯 / 联系作者：</strong>Ramón Auad</p><p><a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://optimization-online.org/wp-content/uploads/2025/10/Meituan_INFORMS_TSL_OO.pdf" target="_blank" rel="noopener noreferrer">PDF</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；近期精读偏好：RL for logistics。</p><p class="notice"><strong>中文摘要概述：</strong>学习什么时候暂缓派单，并用传统路线搜索产生可执行方案。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>The rapid growth of online meal delivery has introduced complex logistical challenges</blockquote><p><a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：公开作者全文 + 期刊元数据；调研，未标记完整精读。</p></div>
+<h4>它实际解决什么</h4>
+<p>午高峰来了新订单，最近的骑手可能正赶着送另一单。现在分配能少等一分钟，却可能让后续多单一起超时。论文把当前时段、活跃订单、骑手上下班、已拒单记录和现有路线放入状态；动作同时决定给谁发单、哪些订单暂缓、取送任务插到路线哪里。一个骑手每个决策时刻最多接到一份新 offer；已经执行中的首任务固定，取餐必须先于送达，拒过的订单不会再发给同一人。</p>
+<p><strong>RL 与求解器分工明确。</strong> n-step SARSA 学一个线性的状态—动作价值近似：已有短期成本模型加上拥堵、未分配订单量、空闲骑手等特征的加权和。多臂赌博机选择七种底层搜索算子，构造和改进具体派单/路线。奖励惩罚迟到、路程和因等待过久丢失的订单；“未来会更堵”由价值项帮助评估，路线合法性仍由动作构造承担。不是神经网络一次输出所有骑手的最优路线。</p>
+<h4>数据、结果及可迁移部分</h4>
+<p>全文明确使用 First INFORMS TSL Meituan 数据，拟合到单、骑手行为及服务时间的仿真器。作者报告，对 simple policy 约降低 12% 总成本，重要原因是允许有策略地等待，而非一来单就发。对比还显示骑手供给增加 10% 的收益可超过算法改善：高峰期没有运力时，聪明派单不能创造运力。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/7631e000af70833b2cf08755.png" alt="作者预印本的需求与运力日内曲线。订单高峰和在线骑手曲线并不同步，因此只比较平均全天负载会掩盖最困难时段。图是仿真校准背景，不是 12% 收益的直接证明。" loading="lazy"></div><figcaption>作者预印本的需求与运力日内曲线。订单高峰和在线骑手曲线并不同步，因此只比较平均全天负载会掩盖最困难时段。图是仿真校准背景，不是 12% 收益的直接证明。</figcaption></figure>
+<p>最值得复用的是“可行路线搜索 + 学到的未来成本”这一接口，以及延迟分配的对照组。局限是收益来自数据校准的仿真；拒单、服务时间或运力模型改变后应重测。全文技术依据是公开作者预印本，发表日期与通讯作者以期刊页为准；不声称预印本和最终排版逐字一致。</p>
+</section>
+<section class="paper-card" id="paper-2502.16862" data-paper-id="2502.16862" data-deep-read="false"><div class="kicker">MEITUAN DATASET · 02</div><h2>Potential-Based Greedy Matching for Dynamic Delivery Pooling</h2><p class="lede">用订单距离估计机会成本的动态拼单</p><div><span class="chip">online optimization</span><span class="chip">order pooling</span><span class="chip">opportunity cost</span></div>
+<div class="paper-summary"><p class="meta">Hongyao Ma；Will Ma；Matias Romero<br>Columbia Business School</p><p><strong>首发：</strong>2025-02-24；<strong>当前版本日期：</strong>2026-01-11；arXiv v3<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2502.16862" target="_blank" rel="noopener noreferrer">PDF</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；主题：online optimization。</p><p class="notice"><strong>中文摘要概述：</strong>给贪心拼单扣除机会成本，不预测未来订单也能减少短视决策。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>We study the dynamic pooling of multiple orders into a single trip, a strategy widely adopted by online …</blockquote><p><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：全文 v3；挑战赛数据联系见实验部分；调研。</p></div>
+<h4>从两张订单看机会成本</h4>
+<p>订单 i 已经等到必须发走；订单 j 和它合送可以省路，但 j 很长，留着也可能与下一张订单产生更大的节省。普通贪心只看“现在合送省多少”，PB 则选使“当前节省距离减去候选 j 单独配送距离的一半”最大的伙伴，并与不拼单的选择比较。这里的 potential 具体就是半个单独配送距离，不是另训练一个含义不明的评分网络。</p>
+<p>理论证明在一维、市场足够密等假设下，每单最坏 regret 随密度增大趋零，而朴素贪心仍可有常数损失。证明不是一般城市路网下的性能保证。实验另用二维 Meituan 挑战数据，把可以等待拼单的窗口从 30 秒扩到 3 分钟；较长窗口提供更多配对机会，但也付出等待成本。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/86b95260c0a3845ccdcc7900.png" alt="原文 Figure 5 的 Meituan 结果。左边 regret 越低越好，右边相对事后最优的收益比越高越好。PB 的收益比在 3 分钟附近约 0.9；不能把这解释为整个平台总成本下降 90%。" loading="lazy"></div><figcaption>原文 Figure 5 的 Meituan 结果。左边 regret 越低越好，右边相对事后最优的收益比越高越好。PB 的收益比在 3 分钟附近约 0.9；不能把这解释为整个平台总成本下降 90%。</figcaption></figure>
+<p>作者还报告较高拼单率及相对单送约 30% 的距离节省。更重的 batching 优化可以更好，但计算量高得多。本文适合做“简单、快速且考虑未来机会”的基线；它研究配对与出发时机，没有同时还原完整骑手路线、拒单、容量和全部服务约束。PDF 的实验文字有“569 million orders”量级笔误，本报告以原始数据说明的 568,546 个订单为准，不沿用该数字。</p>
+</section>
+<section class="paper-card" id="paper-ssrn6349239" data-paper-id="ssrn6349239" data-deep-read="false"><div class="kicker">MEITUAN DATASET · 03</div><h2>Behaviorally Informed Dispatch Decisions for Real-Time Order-Courier Assignment</h2><p class="lede">考虑骑手接单行为与工作量的实时派单</p><div><span class="chip">order dispatching</span><span class="chip">courier behavior</span><span class="chip">workload fairness</span></div>
+<div class="paper-summary"><p class="meta">Golman Rahmanifar；Mostafa Mohammadi；Nicolas Kuttruff；Stefan Minner<br>Eindhoven University of Technology / Norwegian University of Science and Technology / Technical University of Munich</p><p><strong>首发：</strong>2026-04-20；<strong>当前版本日期：</strong>2026-04-20；SSRN working paper<br><strong>通讯 / 联系作者：</strong>Golman Rahmanifar (SSRN Contact Author)</p><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6349239" target="_blank" rel="noopener noreferrer">论文 / 摘要</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；关注拒单与实时可行性。</p><p class="notice"><strong>中文摘要概述：</strong>把接单概率、路线占用和工作量公平放入派单成本。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Real-time order-courier assignment in online food-delivery platforms is inherently a multi-objective decision problem.</blockquote><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6349239" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：摘要与作者元数据；全文未取得；未精读。</p></div>
+<h4>公开材料能确认的机制与结果</h4>
+<p>一个距离近但已很忙的骑手可能拒单；反复发给他会浪费时间。作者的事件驱动 semi-Markov 模型先过滤不可行骑手，再以接单预测修正成本，并加入路线占用、工作量公平和适当推迟派单。这里 CFA 指可调整的成本函数近似；仅凭公开摘要不能断言它使用深度 Q 网络。</p>
+<p>摘要明确使用 TSL-Meituan Challenge：处理后 564,704 单、4,000 多名骑手、8 天。作者报告准时率 85.0%→92.4%，平均迟到 0.73→0.55 分钟，Jain 公平指数 0.68→约 0.69，决策时间低于 1 秒。公平改善明显小于准时率改善，不能用“多目标全面大幅改善”概括。</p>
+<p><strong>证据边界：</strong> 工作论文写于 2026-03-05、4 月 20 日上线；全文下载受限，当前依据为 SSRN 的公开摘要与作者信息。具体训练划分、目标权重、置信区间及反事实仿真的可靠性未能核验，不能把这些数字写成线上 A/B 结果。</p>
+<p>原图状态：main visual not retrievable from the available paper source。未用自制图冒充论文结果。</p>
+</section>
+<section class="paper-card" id="paper-ssrn5202084" data-paper-id="ssrn5202084" data-deep-read="false"><div class="kicker">MEITUAN DATASET · 04</div><h2>Mixed-Type Courier Dispatching and Pricing for Online Food Delivery Platforms</h2><p class="lede">混合全职与兼职骑手的定价和派单</p><div><span class="chip">order dispatching</span><span class="chip">incentive design</span><span class="chip">courier pricing</span></div>
+<div class="paper-summary"><p class="meta">Junlin Chen；Manxi Wu；Chiwei Yan；Zhanhao Zhang<br>University of California, Berkeley / Cornell University</p><p><strong>首发：</strong>2025-05-06；<strong>当前版本日期：</strong>2026-01-31；SSRN working paper<br><strong>通讯 / 联系作者：</strong>Manxi Wu (SSRN Contact Author)</p><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">论文 / 摘要</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；长期机构偏好：Berkeley / Cornell。</p><p class="notice"><strong>中文摘要概述：</strong>把兼职骑手的接单、进入和退出行为与平台派单一起建模。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Many online food delivery platforms employ a hybrid workforce combining full-time couriers</blockquote><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：SSRN 摘要/版本/作者信息及作者论文目录；全文未取得；未精读。</p></div>
+<h4>为什么两种骑手不能当成同一种资源</h4>
+<p>全职骑手按固定班次工作；兼职骑手可能因报酬不足不接单、换区域或下线。平台除了决定“这单给谁”，还要决定全职规模和兼职报酬。本文先分析单商家的激励相容定价与两类骑手分配，再扩展到多商家与拼单优化。</p>
+<p>SSRN 摘要明确用 First INFORMS TSL Data-Driven Research Challenge 的 Meituan 数据验证，报告成本和取餐等待低于若干基线，但公开材料没有足够可核验的具体改善比例。它提醒本项目：若策略改变兼职收益，历史在线人数不能简单视为永远不变的外生供给。</p>
+<p>版本信息为 2025-05-06 上线、2026-01-31 修订；写作日期 2025-04-01。当前未取得全文，不能核验完整均衡假设、求解复杂度及统计设计，因此不把摘要中的结构结论推广到所有多餐厅网络。它是运筹优化与激励设计工作，不硬归类为 RL。</p>
+<p>原图状态：main visual not retrievable from the available paper source。未用自制图冒充论文结果。</p>
+</section>
+<section class="paper-card" id="paper-calibrated-dispatch2026" data-paper-id="calibrated-dispatch2026" data-deep-read="false"><div class="kicker">MEITUAN DATASET · 05</div><h2>Calibrated Counterfactual Evaluation of Dispatch Policies Under Cascading Divergence</h2><p class="lede">用历史行为校准派单策略的反事实仿真评估</p><div><span class="chip">counterfactual evaluation</span><span class="chip">order dispatching</span><span class="chip">simulator drift</span></div>
+<div class="paper-summary"><p class="meta">Amr Abdelbaky；Zhiwei Qin；Nourhan Sakr<br>The American University in Cairo / Santa Clara University</p><p><strong>首发：</strong>2026-10-17；<strong>当前版本日期：</strong>2026-10-17；ECML PKDD 2026 / LNCS<br><strong>通讯 / 联系作者：</strong>Amr Abdelbaky</p><p><a href="https://doi.org/10.1007/978-3-032-37679-4_11" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence" target="_blank" rel="noopener noreferrer">作者代码</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；近期偏好：RL evaluation。</p><p class="notice"><strong>中文摘要概述：</strong>单步模仿很准，也可能在连续派单后产生很大的状态漂移。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>On-demand meal-delivery platforms make dispatch decisions over courier–order offers in real time</blockquote><p><a href="https://doi.org/10.1007/978-3-032-37679-4_11" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：出版社摘要/元数据/数据引用及作者仓库；全文未取得；未精读。</p></div>
+<h4>为什么模仿准确率不足以验证模拟器</h4>
+<p>某一单改给骑手 B，之后 B 的位置、负载和可接订单都改变；下一次派单已不处于历史状态。作者用事件驱动反事实模拟器处理这种累积偏离，并用接近历史行为的 BC 策略作为校准参照。</p>
+<p>在约 63 万次 courier–order offers 上，BC 单步匹配率 97.1%，连续 rollout 的事件偏离仍达 52.5%。DDQN 相对校准参照的完成率为 95.5%→98.9%，丢单率 4.5%→1.1%，准时表现相近。这些是模拟器内结果；校准参照不是消除所有因果偏差的保证。</p>
+<p>出版页引用同一 Meituan 挑战数据，并提供作者代码。全文订阅受限，本卡依据公开摘要与元数据；论文集书目年份为 2027，但首次在线日期为 2026-10-17，会议为 ECML PKDD 2026，三者不应混写。</p>
+<p>原图状态：main visual not retrievable from the available paper source。未用自制图冒充论文结果。</p>
+</section>
+<section class="paper-card is-deep-read" id="paper-2610.28480" data-paper-id="2610.28480" data-deep-read="true"><div class="kicker">RECENT RL · 06</div><h2>SuperMimic: Scaling Humanoid Whole-Body Control with One Differentiable World Model</h2><p class="lede">用一个可微世界模型扩展人形机器人全身控制</p><div><span class="chip">model-based reinforcement learning</span><span class="chip">world models</span><span class="chip">humanoid control</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Qiayuan Liao；Yiyang Shao；Junfeng Long；Kevin Zakka；Roberto Horowitz；Pieter Abbeel；Koushil Sreenath<br>University of California, Berkeley</p><p><strong>首发：</strong>2026-10-20；<strong>当前版本日期：</strong>2026-10-20；CoRL 2026 Oral（作者主页）<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2610.28480" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2610.28480" target="_blank" rel="noopener noreferrer">PDF</a> · <a href="https://supermimic.github.io/" target="_blank" rel="noopener noreferrer">项目页</a></p><p><strong>推荐理由：</strong>用户指定精读；长期机构偏好：Berkeley；主题：model-based RL。</p><p class="notice"><strong>中文摘要概述：</strong>共享动力学模型，再通过短段想象轨迹的梯度学习动作跟踪。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Tracking large human-motion datasets has become the dominant route to general, expressive humanoid whole-body control, but scaling across …</blockquote><p><a href="https://arxiv.org/abs/2610.28480" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：全文 19 页及技术附录 A–G 已覆盖；完整精读。</p></div>
+<div class="deep-reading-content"><h3>1. 摘要与阅读入口</h3>
+<p>设想让同一台 G1 学会跑步、侧滚和后空翻。每个动作的目标姿态不同，但机器人的质量、关节和接触规律没有随动作更换。SuperMimic 利用这个共同点：从普通物理仿真器记录的状态转移中学习一个可微动力学模型，再让控制策略在模型中试动作，并沿着预测回报对动作求导。世界模型与策略交替更新，模型不是预训练后永远冻结。</p>
+<p>作者报告，单张 H100 训练 3 小时后，策略的归一化回报超过 SONIC 发布的检查点；在 129,514 段训练动作组成的统一评测中，失败数从 SONIC 的 179 降到 25；两张 GPU 训练 9.8 小时后为 0。模型在 1–264 小时动作库上的预测误差保持接近，训练出的策略还在真实 G1 上展示了四类动作。这些结果支持“这套系统大幅降低训练计算量”，不能直接解释成对任意机器人、地形或未见动作都有千倍加速。</p>
+<p>阅读依据：<a href="https://arxiv.org/pdf/2610.28480" target="_blank" rel="noopener noreferrer">论文 v1，正文与附录 A–G</a>、<a href="https://supermimic.github.io/" target="_blank" rel="noopener noreferrer">项目页</a>。下面的机器人情景用于解释算法；数值结果均单独标为作者实验。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文署名机构</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qiayuan Liao</td>
+<td>University of California, Berkeley</td>
+<td>第一作者；新关注作者</td>
+</tr>
+<tr>
+<td>Yiyang Shao、Junfeng Long</td>
+<td>University of California, Berkeley</td>
+<td>两人标记 equal contribution</td>
+</tr>
+<tr>
+<td>Kevin Zakka、Roberto Horowitz</td>
+<td>University of California, Berkeley</td>
+<td>作者</td>
+</tr>
+<tr>
+<td>Pieter Abbeel、Koushil Sreenath</td>
+<td>University of California, Berkeley</td>
+<td>equal advising；不能据此推断通讯作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>Berkeley 是长期机构偏好。第一作者<a href="https://qiayuanl.github.io/" target="_blank" rel="noopener noreferrer">个人主页</a>列出人形机器人全身控制、数据与硬件协同设计等研究，并将本文列为 CoRL 2026 Oral。可顺着他的 <a href="https://beyondmimic.github.io/" target="_blank" rel="noopener noreferrer">BeyondMimic</a>、<a href="https://playground.mujoco.org/" target="_blank" rel="noopener noreferrer">MuJoCo Playground</a>、<a href="https://berkeley-humanoid.com/" target="_blank" rel="noopener noreferrer">Berkeley Humanoid</a>理解其控制系统积累。论文明确本工作在 Berkeley 完成，不能因导师兼任 Amazon Scholar 就写成 Amazon 项目。通讯作者：not explicitly listed。</p>
+<h3>3. 详细技术讲解</h3>
+<h4>3.1 输入、动作与现实约束</h4>
+<p>机器人每 0.02 秒决策一次，即 50 Hz。它看到的是自身传感器，而不是仿真器的全部真实状态。单帧观测包括 29 维关节位置偏差、29 维关节速度、3 维机身角速度、3 维重力方向和 29 维上次动作，共 93 维；策略接收最近 10 帧，帮助判断运动趋势。动作跟踪的目标输入是未来 10 帧参考动作，不只是“现在站到这里”。例如落地前的参考序列会预告接下来需要屈膝。</p>
+<p>动作不是直接给出下一帧姿态，而是 29 个归一化关节设定量：</p>
+<p>\[q^{\mathrm{sp}}=q_0+\alpha a_t.\]</p>
+<p>\(q_0\) 是默认关节姿态，\(\alpha\) 把归一化动作换成关节设定值。低增益 PD 控制器据此施加力矩，因此这个设定值更接近调节力矩的接口，并不保证关节立刻达到该角度。物理仿真负责接触和运动，不存在组合优化求解器负责证明动作可行；关节越界通过惩罚处理，也不是硬可行性保证。</p>
+<p>训练时世界模型额外得到每回合固定的仿真参数 \(\xi\)：摩擦、关节校准偏差、躯干质心偏移。部署的 actor 不需要看到这些真实参数。这样，同一个“脚往后蹬”的动作在摩擦不同的地面上可以有不同预测，而不是迫使一个不知道摩擦的确定性模型取平均。</p>
+<h4>3.2 一次训练循环到底做什么</h4>
+<ol>
+<li><strong>收集真实仿真转移。</strong> 当前确定性策略输出动作，再加标准差 0.1 的高斯动作噪声，在 MuJoCo Warp 中执行。回放池存入实际执行的带噪动作。否则模型会被要求用“没执行过的动作”解释结果。</li>
+<li><strong>拟合世界模型。</strong> 从回放池取 8 步窗口。只在开头给真实状态，后续输入模型自己的预测状态和记录中的动作。这样训练会遇到自身累积的偏差；若每一步都重新喂真实状态，单步预测好不代表连续预测稳定。</li>
+<li><strong>更新策略。</strong> 从池中抽一个起始状态，在当前世界模型里向前模拟 32 步，计算回报及其对策略参数的导数，更新 actor，再拟合 critic。此阶段冻结模型参数，但保留模型输出对状态和动作的导数；“冻结参数”不等于切断梯度。</li>
+</ol>
+<p>旧策略收集的数据仍能训练模型，因为动力学本身不依赖“哪一版策略选了这个动作”。但旧数据未必覆盖新策略将访问的状态，所以必须持续收集，不能据此认为任意离线数据都足够。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/e8308982df993c4fd43aaf80.png" alt="原文 Figure 2。左边的普通仿真器只产出训练数据；虚线梯度出现在中间的模型拟合和右边的策略学习中。策略梯度不穿过左边的物理仿真器。" loading="lazy"></div><figcaption>原文 Figure 2。左边的普通仿真器只产出训练数据；虚线梯度出现在中间的模型拟合和右边的策略学习中。策略梯度不穿过左边的物理仿真器。</figcaption></figure>
+<h4>3.3 世界模型学哪些量，为什么把噪声拿出去</h4>
+<p>模型用 \(\hat{s}_{t+1}=f_\omega(\hat{s}_t,a_t,\xi)\) 预测下一状态，另有奖励、无噪观测和终止概率的映射。部分映射可以按已知公式计算；只有学习得到的部分需要监督损失。原文没有完整列出每个头最终采取了哪一种实现，也没有给出完整状态向量及所有归一化细节，不能只凭 MLP 宽度宣称完全复现。</p>
+<p>\[\mathcal L_{\mathrm{WM}}=\mathbb E_{\mathcal B}\sum_{j=1}^{k}\left[\|\hat{s}_j-s_j\|^2+(\hat{r}_j-r_j)^2+\|\hat{\bar{o}}_j-\bar{o}_j\|^2+\operatorname{BCE}(\hat{d}_j,d_j)\right],\quad k=8.\]</p>
+<p>每项分别问：位置速度预测得对不对、奖励对不对、传感器无噪读数对不对、会不会触发终止。解析计算的头删掉对应拟合项。\(\operatorname{BCE}\) 是二元交叉熵，用仿真中的 0/1 终止标签学习连续概率。所有这些项一起训练，不代表各项天然同尺度；文中 Figure 3 的误差另有名义误差归一化，不能把 0.007 当作米数。</p>
+<p>观测写成 \(o_t=\bar{o}_t+\eta_t\)。网络预测 \(\bar{o}_t\)，随后外部采样 \(\eta_t\)，还原 actor 可能见到的传感器噪声。这避免网络学习一个不可预测的随机噪声值。关节位置、速度、机身角速度、重力方向的均匀噪声幅度依次为 0.01 rad、0.5 rad/s、0.2 rad/s、0.05。</p>
+<h4>3.4 如何让“摔倒”也能给出梯度</h4>
+<p>真实仿真中，机器人超出高度或倾角阈值就终止；这个开关不平滑。在想象轨迹中用连续的存活权重：</p>
+<p>\[\hat{c}_0=1,\qquad \hat{c}_{t+1}=\hat{c}_t(1-\hat{d}_{t+1}).\]</p>
+<p>若下一步终止概率是 0.2，此后的回报先乘 0.8；多步连续相乘。其含义是降低“很可能已摔倒以后还能拿到的奖励”，不是在真实机器上允许按概率摔倒。终止概率预测错时，这个可微替代也会误导策略。</p>
+<p>策略最大化：</p>
+<p>\[\hat{J}(\theta)=\mathbb E\left[\sum_{t=0}^{H-1}\gamma^t\hat{c}_t\hat{r}_{t+1}+\gamma^H\hat{c}_HV_\psi(\hat{s}_H,g_H,\xi)\right],\quad H=32.\]</p>
+<p>前半段奖励当前 32 步内的动作，最后的 \(V_\psi\) 估计更远的后果。32 步只有 0.64 秒：一个看起来马上能跟上参考动作、但一秒后会失去平衡的动作，需要 critic 才可能被提前扣分。</p>
+<p>反向传播穿过时间（BPTT）可用链式法则理解：动作改变下一状态，下一状态改变后续动作和奖励，所有影响相加成为策略参数梯度。PPO 则用抽样动作的优势乘上对数概率梯度，不直接使用动力学导数。前者在这里更省采样，但导数是<strong>学习模型的导数</strong>，不是物理真实梯度；模型误差可能被策略利用。</p>
+<h4>3.5 critic 的目标与更新顺序</h4>
+<p>\[\hat{R}_H=V_H,\qquad \hat{R}_t=\hat{r}_{t+1}+\gamma(1-\hat{d}_{t+1})\left[(1-\lambda)V_{t+1}+\lambda\hat{R}_{t+1}\right].\]</p>
+<p>\[\mathcal L_V=\mathbb E\sum_{t=0}^{H-1}(V_t-\operatorname{stopgrad}(\hat{R}_t))^2,\qquad \lambda=0.95.\]</p>
+<p>从末尾倒着计算：一部分相信下一状态的 critic，一部分继续用更长的多步回报。\(\lambda\) 控制两种目标的混合，终止概率阻止跨越终止继续累计。每条想象轨迹的目标只计算一次，在 critic 的多轮拟合中固定。本文 critic 仅用想象转移训练，没有指数滑动平均目标网络；不能把其他 actor–critic 的 target-network 设置自动补进来。</p>
+<h4>3.6 奖励、终止和域随机化不是附带细节</h4>
+<p>跟踪奖励有六项：身体位置、身体姿态、身体线速度、身体角速度、根部位置、根部姿态。前四项权重 1，后两项权重 0.5；位置、姿态、线速度、角速度误差尺度分别为 0.3、0.4、1.0、3.14。以身体位置为例：</p>
+<p>\[r_{\mathrm{pos}}=\exp\left[-\frac{|\mathcal T|^{-1}\sum_{b\in\mathcal T}\|p_b-p_b^{\mathrm{des}}\|^2}{0.3^2}\right].\]</p>
+<p>\(\mathcal T\) 是被跟踪的身体部位集合，\(p_b^{\mathrm{des}}\) 是参考位置。误差小则奖励接近 1，误差大则趋近 0。姿态项用旋转误差的对数向量衡量角度，速度项用同类指数函数；尺度控制多大误差会明显掉分。动作变化平方项权重 −0.1，关节越限的线性距离惩罚权重 −2，所有项乘 0.02 秒控制周期。</p>
+<p>相对 BeyondMimic，关节限位惩罚由 −10 降到 −2，删除 self-collision 惩罚。作者解释，随机策略可能通过把相邻身体部位压在一起抑制动作噪声、获取更好的速度跟踪奖励；确定性想象策略没有同样收益。这个解释针对该奖励漏洞，并不意味着机器人永远不会自碰撞。</p>
+<p>高度偏差超过 0.25 m，或重力方向 z 分量差超过 0.8，就触发跟踪终止；删除了末端执行器偏差终止。因此“未失败”不等于手脚处处精确对齐。摩擦在 0.3–1.2 间随机，关节校准偏差 ±0.01 rad，质心 x 偏移 ±0.025 m、y/z ±0.05 m。作者删去突发根速度扰动训练，因为未输入扰动时，确定性模型无法预测不连续的外力变化。后面的推搡实验检验恢复表现，但不能称为训练已覆盖所有外力。</p>
+<h4>3.7 模型容量、难动作抽样与训练预算</h4>
+<p>动力学网络为三层 2048 的 MLP；动作编码器和共享 decoder 宽度为 2048/1024/512/256；潜变量 32 维并用 tanh 有界化；速度编码器 256/256；每个接口的 critic 为 256/128。大模型用于复杂动力学和动作表达，较小 critic 只输出一个回报估计。这是实现选择，文中没有逐层容量消融证明这些宽度最优。</p>
+<p>动作时间轴切成 1 秒小段。重置时 50% 均匀抽取，40% 按低回报优先的 softmax 抽样，10% 按过去困难程度抽样：</p>
+<p>\[P_{\mathrm{hard}}(b)\propto\exp(-25G_b/G_{\max}).\]</p>
+<p>\(G_b\) 是第 \(b\) 段当前估计回报。均匀部分保覆盖，当前困难部分集中练不会的动作，历史部分减少刚学会又遗忘。训练回报随这种起点分布变化，所以不能直接等同于“所有完整片段都从第一帧开始”的评测回报。</p>
+<p>复现相关设置：每 GPU 4096 个仿真环境，每环境保留 1000 步；模型每次更新使用 10 批、每批 2048 个 8 步窗口；actor 每次 4096 条 32 步想象轨迹；每次模型更新对应一次策略更新；update-to-data ratio 0.4。Adam 学习率单 GPU 为 0.0002，双 GPU 乘 \(\sqrt 2\)；actor Adam 的 beta 为 0.9/0.95；模型和 critic 梯度范数裁剪为 1，actor 在此之后再逐元素裁剪到 0.1。critic 每轨迹做 5 个 epoch、每个 4 个 minibatch；折扣 0.99；学习率在 250,000 次迭代内余弦降到 3%，总计 320,000 次。双 GPU 数据并行并平均梯度。3 小时是达标检查点，不是“所有实验的总训练预算”。</p>
+<h4>3.8 数据过滤决定“129,514”的含义</h4>
+<p>BONES-SEED 的 G1 重定向原始版本有 142,220 段，先按名字去掉楼梯、梯子、椅子、箱子等不符合平地条件的 12,553 段；再通过正向运动学删掉 153 段，留下 129,514 段。几何过滤包括：最低身体点高于 0.20 m 持续 0.6 s；穿地低于 −0.12 m，或超过 80% 时段低于 −0.08 m；以及站立且近乎静止时双脚离地超过 0.02 m 持续 0.5 s。最后一条用脚碰撞几何到地面的距离，不是关节中心高度，并排除弹跳。这些阈值为 G1 和 50 Hz 调整，不应原样迁移到不同尺寸机器人。</p>
+<h4>3.9 实验结果、对照与边界</h4>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>比较</th>
+<th>作者结果</th>
+<th>这能说明什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BONES-SEED 统一动作集</td>
+<td>SONIC 179 失败；SuperMimic 单卡 3 h 为 25；双卡 9.8 h 为 0</td>
+<td>已见动作覆盖改善</td>
+</tr>
+<tr>
+<td>LAFAN1，同观察/奖励/终止/随机化/网络大小</td>
+<td>单卡 SuperMimic 1.2 h 到 0.82；PPO 18 h 后单/4/8卡为 0.60/0.70/0.72</td>
+<td>更接近受控的算法比较</td>
+</tr>
+<tr>
+<td>同模型内 PPO-WM vs BPTT</td>
+<td>达到 PPO-WM 最佳训练回报约少 64 倍想象步</td>
+<td>收益不只是模型 rollout 快</td>
+</tr>
+<tr>
+<td>模型 vs MuJoCo Warp 吞吐</td>
+<td>实用批量区间 &gt;10 倍；64k 环境时 62 倍</td>
+<td>神经网络预测比该仿真配置便宜</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/64b4c1cd797fbe62cbc140b1.png" alt="原文 Figure 3：左图按 GPU-hours 比较；右图是数据量增加时的达标计算量及 8 步状态误差。误差为在线策略分布上的归一化指标，不是未见动力学的验证误差。" loading="lazy"></div><figcaption>原文 Figure 3：左图按 GPU-hours 比较；右图是数据量增加时的达标计算量及 8 步状态误差。误差为在线策略分布上的归一化指标，不是未见动力学的验证误差。</figcaption></figure>
+<p>SONIC 计算量来自作者报告的 128 张 L40 ×168 h；SuperMimic 用 H100，且动作数据为 264.56 h，对方为 611 h。原始 GPU-hours 比值约 7200，墙钟比值约 56，但这不是相同硬件的 FLOPs 实测。3 小时包括采集、模型训练、策略训练，不含训练后检查点评测。论文承认硬件峰值和数据量差别，并提供 LAFAN1 对照增加可信度；没有控制所有工程实现因素。</p>
+<p>基准每段动作只从第一帧执行一次，摩擦 1.0、无观测噪声和域随机化，统一使用 SuperMimic 的终止规则，但各策略保留自己的执行器增益和动作缩放。SONIC 自身标准还检查末端高度，和本文不一样。SONIC v1.1 在该统一标准下为 239 次失败。所有动作都是双方训练动作，因此不能用零失败证明未见动作泛化。</p>
+<p>扩展数据量为 1/7/40/264 h，模型 8 步误差为 0.007–0.011，支持共享动力学可以复用的解释，但没有给出严密 scaling-law 拟合或任意规模保证。作者说运行多个种子较稳定，却未在主图报告种子误差条；读者不能据此自行构造置信区间。</p>
+<h4>3.10 critic 消融与真实部署</h4>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/4519ca88ccda01f5b211714d.png" alt="原文 Figure 4。右边比较有无 critic 及不同想象长度。训练回报与左边完整片段评测的起点分布不同，阅读时需分清。" loading="lazy"></div><figcaption>原文 Figure 4。右边比较有无 critic 及不同想象长度。训练回报与左边完整片段评测的起点分布不同，阅读时需分清。</figcaption></figure>
+<p>无 critic 时，16 步及以下失败；有 critic 的 16 步可接近无 critic 的 32 步，但 8 步仍失败。32 步最快达到目标；从 64 增到 128 步，时间接近三倍、最终回报还更低，128 步已是 H100 显存可容纳的最长设置。原因不是“长视野总有害”，而是反传计算量、误差累积和优化难度的共同代价。</p>
+<p>在 T-pose 的 0.5–4 m/s 速度推搡实验中，有 critic 的策略 0.5–2.4 秒恢复稳定；无 critic 版本即使 0.5 m/s 也持续踉跄，4 m/s 会倒。这比名义跟踪回报更直接检验“是否考虑稍远的平衡后果”。实机展示跳步、侧滚、90° 翻转和 360° 翻转；是同一策略、没有逐动作调参。论文未提供大规模实机随机试验成功率，所以视频不能替代长期可靠性统计。</p>
+<h4>3.11 速度接口：共享什么，冻结什么</h4>
+<p>多个接口采用 \(z=\operatorname{enc}_i(g)\)、\(a=\operatorname{dec}(z,o)\)。每个接口有自己的 goal/reward/termination/critic，共享动力学和 decoder。跟踪目标训练 decoder；速度目标的梯度穿过 decoder 传到速度 encoder，但不更新 decoder 的参数。这不是“所有任务共同优化整个网络”。</p>
+<p>对照的蒸馏 encoder 用参考动作中提取的速度命令，却仍按全身跟踪奖励训练；RL encoder 直接追踪速度命令。每个独立运行都从头训练 100,000 次，仿真和想象 batch 一半给跟踪、一半给速度。RL 每 5 秒或重置时换命令来源：一半取参考运动的 25 帧中心均值，另一半随机抽 \(v_x\in[-1.5,2]\)、\(v_y\in[-1.32,1.32]\) m/s、\(\omega_z\in[-3.35,3.35]\) rad/s，随机命令有 10% 归零。参考命令时加权重 0.1 的潜变量对齐损失，并停止对参考潜变量求导。</p>
+<p>速度奖励中，平面速度指数项和 yaw-rate 指数项权重均为 2；动作平滑 −0.3、关节限位 −2、侧倾平方正弦 −4、躯干 roll/pitch 角速度平方 −0.05。前倾不惩罚，因为跑动时合理；根部低于 0.35 m 或重力方向判定约 73° 倾倒时终止。自己的速度任务奖励能支持库外转弯命令，但潜变量和固定 decoder 仍限制可执行动作范围。</p>
+<p>评测为三个二维命令平面上的 15×15 网格，排除静止后共 672 条命令。每条从站立执行 5 秒、重复 4 次，用最后 2 秒平均速度误差除以命令模长，再取未摔倒 trial 的中位数。图中误差超过 0.9 截断；四次全倒也画在上限。RL 在 650 条更好，蒸馏在 15 条更好，7 条蒸馏全倒；中位相对误差分别 0.16 和 0.49。每个策略只有一个训练种子，且这里同时改变命令覆盖、奖励和终止条件，不能把收益全归因于某一个损失项。</p>
+<h3>4. 与相关工作的具体区别</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>相关工作</th>
+<th>连接与差别</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://beyondmimic.github.io/" target="_blank" rel="noopener noreferrer">BeyondMimic</a></td>
+<td>继承观测和奖励的基本设置，但更换学习方法、参考输入长度、惩罚和终止条件</td>
+</tr>
+<tr>
+<td><a href="https://doi.org/10.1126/scirobotics.aed4592" target="_blank" rel="noopener noreferrer">SONIC</a></td>
+<td>同为广泛动作跟踪，SONIC 用大规模 PPO；本文用共享可微模型及 BPTT</td>
+</tr>
+<tr>
+<td><a href="https://openreview.net/forum?id=ZSKRQMvttc" target="_blank" rel="noopener noreferrer">SHAC</a></td>
+<td>同样短视野反传加终端价值；SHAC 需要可微仿真，本方法对学习模型求导</td>
+</tr>
+<tr>
+<td><a href="https://arxiv.org/abs/2501.10100" target="_blank" rel="noopener noreferrer">Robotic World Model</a></td>
+<td>都在神经模型中学习策略；RWM 用 PPO 和其他策略的预训练数据，本文边采集边建模并用解析梯度</td>
+</tr>
+</tbody>
+</table></div>
+<p>贡献应表述为：把共享神经动力学、短视野解析梯度和适合实机的控制设计组合起来，并用大动作库、受控对照和实机展示验证。可微模型控制本身不是本文首次提出。</p>
+<h3>5. 局限、后续引用与美团项目启示</h3>
+<p>模型只学仿真数据，只考虑平地，没有物体交互；真实参数超出随机化范围、未知地形接触或者模型局部导数错误时都可能失败。多接口是否必须同时训练尚未验证，因为速度任务本来就不更新共享 decoder。没有找到可核验的后续正式引用论文；不能把同名的 2006 年蛋白质软件论文引用数算进来。</p>
+<p>对美团项目，可借鉴的是“学习状态转移，并明确模型误差如何影响长时决策”的研究思路。派单中的骑手拒单、出餐和道路变化，并不像本文的仿真噪声那样都已知；订单分配又是离散组合动作，直接套连续 BPTT 不成立。若要迁移，先决定哪些状态可被数据识别、怎样生成合法候选分配，再比较模型 rollout 的决策收益与误差，不能据此承诺训练加速比例。</p>
+<h3>6. 社交讨论与证据状态</h3>
+<p>已检索 X、Reddit、知乎、小红书的论文名，未取得可核验的实质性评论，因此不编造评论或跨平台共识。作者主页与项目页是作者自述，不是第三方复现证据。精读覆盖正文 1–6、附录 A–G；参考文献仅按相关性查阅。</p></div><div class="qa-log"><strong>后续问答</strong><p>本次按用户指定完成精读；后续问答追加在本论文模块内。</p></div>
+</section>
+<section class="paper-card is-deep-read" id="paper-2611.02160" data-paper-id="2611.02160" data-deep-read="true"><div class="kicker">RECENT RL · 07</div><h2>Value Forcing: Aligning Return Distributions at All Noise Levels</h2><p class="lede">让每个噪声层级上的回报分布满足 Bellman 一致性</p><div><span class="chip">offline reinforcement learning</span><span class="chip">distributional reinforcement learning</span><span class="chip">flow matching</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Chongyi Zheng；Zhiyuan Zhou；Qiyang Li；Benjamin Eysenbach；Sergey Levine<br>Princeton University / University of California, Berkeley</p><p><strong>首发：</strong>2026-11-01；<strong>当前版本日期：</strong>2026-11-01；arXiv preprint<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2611.02160" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2611.02160" target="_blank" rel="noopener noreferrer">PDF</a> · <a href="https://chongyi-zheng.github.io/value-forcing/" target="_blank" rel="noopener noreferrer">项目页</a></p><p><strong>推荐理由：</strong>用户指定精读；长期作者偏好：Benjamin Eysenbach；机构：Princeton / Berkeley。</p><p class="notice"><strong>中文摘要概述：</strong>为回报 flow 构造中间噪声状态的 Bellman 监督，缓解小数据下分布坍缩。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Learning accurate value functions is central to reinforcement learning (RL), yet remains challenging because supervision is limited and …</blockquote><p><a href="https://arxiv.org/abs/2611.02160" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：全文 33 页及技术附录 A–D 已覆盖；完整精读。</p></div>
+<div class="deep-reading-content"><h3>1. 摘要与贯穿例子</h3>
+<p>想象机器人必须连续摆好三块积木：当前这次抓取即使没立即失败，也可能留下一个难以完成的局面。价值函数希望回答“采取这个动作后，最终通常能获得多少回报”，可数据只告诉它这一步的奖励，并没有正确的长期价值标签。</p>
+<p>Value Forcing 用 Flow Matching 学习<strong>累计回报的分布</strong>。它的重点不是把一个普通 Q 网络换成更大的生成网络，而是让每个噪声程度上的回报分布都遵守相应的 Bellman 关系。为避免折扣因子把初始高斯噪声越缩越窄，作者加入独立高斯校正。算法有显式选择动作的 VF 和用数据动作进行加权学习的 IVF，在 26 个离线长时任务上评测；小数据预算下的平均收益较突出，但部分困难任务仍接近零成功率。</p>
+<p>阅读依据：<a href="https://arxiv.org/pdf/2611.02160" target="_blank" rel="noopener noreferrer">全文 v1（33 页）</a>、<a href="https://chongyi-zheng.github.io/value-forcing/" target="_blank" rel="noopener noreferrer">项目页</a>、<a href="https://github.com/chongyi-zheng/value-forcing" target="_blank" rel="noopener noreferrer">作者代码</a>。如果尚不熟悉扩散和 Flow Matching，先读本报告前面的基础教程；这里沿用其中“用噪声生成一个标量”的理解。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文署名机构</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chongyi Zheng</td>
+<td>Princeton University</td>
+<td>第一作者；新关注作者</td>
+</tr>
+<tr>
+<td>Zhiyuan Zhou、Qiyang Li</td>
+<td>University of California, Berkeley</td>
+<td>作者</td>
+</tr>
+<tr>
+<td>Benjamin Eysenbach</td>
+<td>Princeton University</td>
+<td>长期偏好作者</td>
+</tr>
+<tr>
+<td>Sergey Levine</td>
+<td>University of California, Berkeley</td>
+<td>末作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>Princeton 和 Berkeley 均为长期偏好机构。论文只列第一作者联系邮箱，没有明确标记 corresponding author，因此该字段仍为 not explicitly listed。<a href="https://chongyi-zheng.github.io/" target="_blank" rel="noopener noreferrer">Chongyi Zheng 的主页</a>介绍其无监督 RL、目标条件 RL 和控制表征研究，并列出前作 <a href="https://pd-perry.github.io/" target="_blank" rel="noopener noreferrer">Value Flows</a>、<a href="https://chongyi-zheng.github.io/" target="_blank" rel="noopener noreferrer">Intention-Conditioned Flow Occupancy Models</a>、<a href="https://chongyi-zheng.github.io/" target="_blank" rel="noopener noreferrer">Stabilizing Contrastive RL</a>。后两项链接通向已核验的论文目录，不假造项目地址。</p>
+<h3>3. 详细技术讲解</h3>
+<h4>3.1 学回报分布与学动作分布，是两件事</h4>
+<p>本文有三种网络用途。BC flow policy 在给定状态后生成一个动作序列；Q-flow 在给定状态和动作后生成一个累计回报；V-flow 在只给状态时生成累计回报。后两种的输出都是标量回报，即使机器人动作有很多维，也不要把“回报流的速度”理解为关节速度。</p>
+<p>用讲解用的假想例子：动作 A 有一半概率得到 −1、一半 +1；动作 B 总得到 0。二者均值相同，分布不同。保留分布可以提供更丰富的监督，但本文最后仍主要按<strong>期望回报</strong>选动作，并未自动优化风险厌恶、尾部损失或安全概率。</p>
+<p>形式上假定无限时域 MDP，\(\gamma\in[0,1)\)，奖励 \(r(s,a)\) 有界且确定；随机性可来自状态转移和策略。训练数据固定为 \((s,a,r,s&#x27;)\)，不能向环境索取额外训练转移。环境时刻 \(t\) 和生成过程的时间 \(\tau\) 必须分开：在同一个固定状态 \(s_t\)，都可以从 \(\tau=0\) 的噪声生成到 \(\tau=1\) 的回报。</p>
+<h4>3.2 从 Bellman 分布方程到 flow</h4>
+<p>累计回报随机变量及其关系是：</p>
+<p>\[Z^\pi(s,a)=\sum_{t=0}^{\infty}\gamma^tr(S_t,A_t),\qquad Z^\pi(s,a)\overset d= r(s,a)+\gamma Z^\pi(S&#x27;,A&#x27;).\]</p>
+<p>\(\overset d=\) 表示两边概率分布相同，不是每个独立采样得到的数必须逐个相等。均值 \(Q^\pi=\mathbb E Z^\pi\) 给出熟悉的标量 Bellman 方程。</p>
+<p>生成一个回报样本的 ODE 为：</p>
+<p>\[\frac{d\phi(z_0,\tau)}{d\tau}=v(\phi(z_0,\tau),\tau),\qquad \phi(z_0,0)=z_0,\quad z_0\sim\mathcal N(0,1).\]</p>
+<p>普通条件 Flow Matching 在训练时取已知目标样本 \(z_1\)，组成 \(z_\tau=(1-\tau)z_0+\tau z_1\)，拟合速度 \(z_1-z_0\)。它之所以成立，不是每个采样对都要被单独复现，而是平方损失最优解等于条件平均速度。原文 Lemma 1 将其推广为任意可微随机过程 \(X(\tau)\)：</p>
+<p>\[u(z,\tau)=\mathbb E[\partial_\tau X(\tau)\mid X(\tau)=z].\]</p>
+<p>若能采样 \(X\) 并算出 \(\partial_\tau X\)，就可以通过回归训练边际分布的速度场。这条连接是后面构造 Q-loss 的依据。</p>
+<h4>3.3 为什么不能直接在噪声上套普通 Bellman</h4>
+<p>在 \(\tau=0\) 时，当前和下一状态的回报生成器都应从标准高斯开始。如果只写“当前噪声等于折扣后的下一噪声”，右侧方差是 \(\gamma^2\)，左侧是 1；反复应用就会收缩。数据越少，模型越难从别的信号修正这个错误。</p>
+<p>作者定义：</p>
+<p>\[Z^\pi(s,a,\tau)\overset d=\tau r(s,a)+\gamma Z^\pi(S&#x27;,A&#x27;,\tau)+(1-\tau)\sqrt{1-\gamma^2}\,N,\quad N\sim\mathcal N(0,1).\]</p>
+<p>\(N\) 必须独立于下一状态回报噪声。\(\tau=0\) 时总方差为 \(\gamma^2+(1-\gamma^2)=1\)；\(\tau=1\) 时校正消失，恢复真实回报 Bellman。中间时刻同时缩放奖励和噪声。若使用其他初始噪声分布，不能照搬这个高斯校正系数。</p>
+<p>注意“每个噪声程度满足关系”是分布约束，不是把前后两个 ODE 都用同一个初始噪声后，强迫两条轨迹逐点相等。后者人为选定了样本配对，未必给出作者需要的边际分布关系。</p>
+<h4>3.4 固定点定理到底保证什么</h4>
+<p>对固定策略、固定 \(\tau\)、\(p\ge1\) 及具有一致有界 p 阶矩的分布，新的算子满足：</p>
+<p>\[W_p^{\sup}(\mathcal T_\tau^\pi Z_1,\mathcal T_\tau^\pi Z_2)\le\gamma W_p^{\sup}(Z_1,Z_2).\]</p>
+<p>\(W_p\) 衡量把一个分布搬成另一个分布的距离；上标 sup 是对所有状态动作取最坏情况。附录 A.1 的证明先让两个下一状态分布用相同分位数配对，再给两者同一个奖励及同一个独立校正噪声。相减时公共项消掉，只剩 \(\gamma\) 倍的原距离。取最优配对和最坏状态后得到收缩，再由不动点定理得到唯一固定点。</p>
+<p>这证明的是<strong>理想分布算子</strong>，没有证明神经网络、有限数据、Euler 数值误差和不断变化的策略一定收敛。作者结论部分也把实际算法收敛列为开放问题。</p>
+<h4>3.5 为什么拆成 V-flow 和 Q-flow</h4>
+<p>\[Z_V(s,\tau)\overset d=Z_Q(s,A,\tau),\qquad Z_Q(s,a,\tau)\overset d=\tau r+\gamma Z_V(S&#x27;,\tau)+(1-\tau)c_\gamma N,\]</p>
+<p>其中 \(c_\gamma=\sqrt{1-\gamma^2}\)。V 是在当前状态下把策略可能选的动作混起来；Q 则是先指定当前动作，再看下一状态。拆开之后，“如何改进策略”和“如何跨时间传播回报”分别落到 V 的动作加权和 Q 的 Bellman 更新上，IVF 才能只使用数据动作。</p>
+<p>对 V，随机过程直接取当前 Q-flow 的样本，导数就是 Q 的速度；对 Q，定义：</p>
+<p>\[X_Q(\tau)=\tau r+\gamma\phi_V(N_V\mid s&#x27;,\tau)+(1-\tau)c_\gamma N,\]</p>
+<p>\[\partial_\tau X_Q=r+\gamma v_V(\phi_V(N_V\mid s&#x27;,\tau)\mid s&#x27;,\tau)-c_\gamma N.\]</p>
+<p>第一式给网络输入中“带噪回报”的位置，第二式给监督标签。负号来自 \((1-\tau)\) 的导数，不能把位置的校正项原封不动加到速度标签里。两种高斯 \(N_V,N\) 独立，才能匹配前面的方差推导。</p>
+<h4>3.6 实际损失，逐项解释</h4>
+<p>实践将奖励乘 \(1-\gamma\)。令 \(\bar{r}=(1-\gamma)r\)，从下一状态 V-flow 取 \(z_\tau\)，再抽独立 \(\epsilon\)，构造：</p>
+<p>\[\tilde{z}_\tau=\tau\bar{r}+\gamma z_\tau+(1-\tau)c_\gamma\epsilon,\qquad y_\tau=\bar{r}+\gamma v_V(z_\tau\mid s&#x27;,\tau)-c_\gamma\epsilon.\]</p>
+<p>\[\mathcal L_Q=\mathbb E[(v_Q(\tilde{z}_\tau\mid s,a,\tau)-\operatorname{stopgrad}(y_\tau))^2].\]</p>
+<p>\(\tilde{z}_\tau\) 是当前 Q 应经过的位置，\(y_\tau\) 是该位置应该沿哪个方向移动。数据给 \(r,s&#x27;\)，当前 V 网络补全不知道的未来。它仍然 bootstraps，不是获得了额外真实长期标签。</p>
+<p>\[\mathcal L_V=\mathbb E_{a\sim\pi,\ z_\tau\sim p_Q(\cdot\mid s,a,\tau)}[(v_V(z_\tau\mid s,\tau)-\operatorname{stopgrad}(v_Q(z_\tau\mid s,a,\tau)))^2].\]</p>
+<p>两项交替更新，目标网络在对应更新内固定。\(\tau\) 从 0–1 均匀抽取，意味着训练统计上覆盖所有噪声程度，并不是每条转移实际枚举无限多个时刻。</p>
+<p>为什么缩放奖励如此重要？当 \(\gamma=0.999\) 时，持续 −1 的回报尺度可到 −1000，初始噪声却只有标准差 1。乘 \(1-\gamma\) 把回报拉回可比较尺度。它不改变单一任务内正比例缩放下的最优策略，却改变网络回归的数值条件；原文消融显示这是决定性实现细节。</p>
+<h4>3.7 VF 如何选动作</h4>
+<p>从行为克隆 flow policy 采样 \(K\) 个动作序列，每个动作用 \(M\) 个回报样本的平均值评分，选择最高者：</p>
+<p>\[a^{\mathrm{pick}}=\arg\max_{a_i\sim\pi_\beta(\cdot\mid s),\ i=1,\ldots,K}\hat{Q}(s,a_i),\qquad \hat{Q}(s,a)=\frac1M\sum_{m=1}^M\phi_Q(z_0^{(m)}\mid s,a,1).\]</p>
+<p>作者称其 rejection sampling，操作上是 best-of-K。它不对所有连续动作求全局最优，而只比较 BC 给出的候选。BC 学坏、遗漏关键动作，或者 Q 对某个异常候选高估，都可能让它选错。候选来自行为模型有助于减少分布外动作，但不是严格的数据支持集约束。</p>
+<p>训练 VF 的 V-loss 时，也用这一改进策略的动作；因此 V 评估的是改进后的行为。训练时为了便宜，\(M=1\) 并用一步回报积分近似；评测时用 16 个回报样本、10 步积分，并在不同动作候选间共享初始噪声来降低比较方差。共享的是候选动作评分时的 Monte Carlo 随机数，不是前面 Bellman 校正中必须独立的两个噪声。</p>
+<h4>3.8 IVF 的“隐式”是什么意思</h4>
+<p>IVF 在价值训练中不采样新动作，而是使用数据里的 \(a\)，依据<strong>标量期望回报优势</strong>分配权重：</p>
+<p>\[w_\mu(s,a)=\begin{cases}\mu,&amp;Q(s,a)\ge V(s),\\1-\mu,&amp;Q(s,a)&lt;V(s),\end{cases}\quad \mu\in[0.5,1).\]</p>
+<p>\[\mathcal L_{V,\mu}=\mathbb E_{a\sim\mathcal D,z_\tau\sim p_Q}[w_\mu(s,a)(v_V-v_Q)^2].\]</p>
+<p>例如 \(\mu=0.9\)，好于当前 V 的动作获得 0.9 权重，较差动作只有 0.1。整个动作对应的回报流都按这个权重学习。权重不是根据某个噪声位置的速度大小决定：大速度只说明这个生成位置移动得快，并不直接表示最终回报高。</p>
+<p>“隐式”不代表完全没有动作生成模型。IVF 仍训练 BC flow，并在评测时 best-of-16 选动作；只是价值目标不查询显式改进 actor 的数据外动作。实际实现中 V/Q 共享一个网络，通过是否提供动作条件区分，含两个 ensemble 成员；这是受 classifier-free guidance 的条件处理方式启发，不是自动采用图像生成的 CFG 放大系数。</p>
+<h4>3.9 IVF 理论与算法顺序</h4>
+<p>附录 A.2 先假定每轮损失精确优化、迭代已收敛到自洽固定点。权重等价于把行为策略重加权：</p>
+<p>\[\pi_\mu(a\mid s)=\frac{\pi_\beta(a\mid s)w_\mu(s,a)}{\mathbb E_{a\sim\pi_\beta}w_\mu(s,a)}.\]</p>
+<p>于是 V 是这个隐式策略下 Q 分布的混合；在 \(\tau=1\) 取均值，得到 expectile Bellman 方程。expectile 可以理解为非对称平方误差的中心：高于中心的误差权重大，就把中心往高值侧推。让 \(\mu\to1\)，理想固定点趋向<strong>数据行为支持内</strong>的最优价值，不能发现从未出现的关键动作，也不能把神经训练的收敛当作已证明。</p>
+<p>Algorithm 1 的实际次序：初始化 V/Q/BC 及 Q 的滑动平均目标；抽转移与 \(\tau\)；VF 用候选筛选动作更新 V，或 IVF 用数据动作加 expectile 权重更新 V（二选一，不能都执行）；从下一状态 V-flow 构造 Q 输入与标签、更新 Q；用数据动作训练 BC；最后以 0.005 更新 Q 的 EMA。采样端、标签端与预测端的 stop-gradient 必须区分。</p>
+<h4>3.10 实验设计：所谓“小数据”是多少</h4>
+<p>OGBench 为四个域各五个任务：三/四积木操作、4×4 puzzle、巨大 humanoid maze，共 20 个。每个全量域数据集有 100M 转移；10% 仍约 10M，所以这里“小数据”是相对预算，不是几十条演示。轨迹子集按<strong>平均奖励的 softmax</strong>无放回抽取，并非均匀随机；每个 seed 抽一次后固定。数据质量与数量可能同时变化，迁移结论应保留这个条件。</p>
+<p>OCBench 选六个 lite 任务：单/双物块及 chamber，7 维动作、10 Hz；完整数据约 0.77M–5.81M 转移，25% 子集同样按奖励抽样。不是整个 OCBench。所有算法使用长度 5 的 action chunk：一次产生并执行连续 5 个动作再决策，提高时序抽象，也提高 critic 输入维数。目标状态固定，成功即终止；OGBench 四域上限为 1000/1000/500/4000 步，OCBench 为 200/400/500 步。</p>
+<p>每方法训练 500K 梯度步，4 seeds。OGBench 每 100K 评测，每任务 10 episodes；OCBench 每 50K 评测，每任务 500 episodes。主表用最后一次结果，消融用 300K/400K/500K 三次均值；跨任务统计先在每个 seed 内平均，再对 seeds 求均值和标准差。评测量不同，不能直接把两套基准的误差条当同等精度。</p>
+<h4>3.11 分布是否更准：独立于控制能力的实验</h4>
+<p>每个 OGBench 域只挑一个状态，固定初始 action chunk 后跟随同一个数据收集策略，分别收集 1000 条训练和 1000 条评测轨迹。所有方法用记录中的下一动作做 SARSA 式评估，训练 100K 步，再生成 5000 个回报，与评测实际折扣回报计算 1-Wasserstein 距离。Oracle 直接用已实现回报做监督，去掉 bootstrap 误差，但仍有有限样本和优化误差。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/4ab6243763ea1411fb6ac30f.png" alt="原文 Figure 2。看分布曲线的宽度和位置，而不只是最高峰是否重合。VF 保留更多回报变化；右边 Wasserstein 距离同时反映位置和形状偏差。每域只测一个状态，不能推出所有状态都校准。" loading="lazy"></div><figcaption>原文 Figure 2。看分布曲线的宽度和位置，而不只是最高峰是否重合。VF 保留更多回报变化；右边 Wasserstein 距离同时反映位置和形状偏差。每域只测一个状态，不能推出所有状态都校准。</figcaption></figure>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>域</th>
+<th style="text-align: right;">VF 的距离</th>
+<th style="text-align: right;">FlowCritic</th>
+<th style="text-align: right;">Value Flows</th>
+<th style="text-align: right;">PCBF</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cube-triple</td>
+<td style="text-align: right;">115±16</td>
+<td style="text-align: right;">212±14</td>
+<td style="text-align: right;">295±16</td>
+<td style="text-align: right;">204±15</td>
+</tr>
+<tr>
+<td>cube-quadruple</td>
+<td style="text-align: right;">179±6</td>
+<td style="text-align: right;">203±9</td>
+<td style="text-align: right;">289±11</td>
+<td style="text-align: right;">184±9</td>
+</tr>
+<tr>
+<td>puzzle-4x4</td>
+<td style="text-align: right;">22±5</td>
+<td style="text-align: right;">125±6</td>
+<td style="text-align: right;">134±7</td>
+<td style="text-align: right;">118±6</td>
+</tr>
+<tr>
+<td>humanoidmaze-giant</td>
+<td style="text-align: right;">13±2</td>
+<td style="text-align: right;">127±3</td>
+<td style="text-align: right;">462±3</td>
+<td style="text-align: right;">122±3</td>
+</tr>
+</tbody>
+</table></div>
+<p>cube-quadruple 对 PCBF 的优势很小，不能说每域都数量级提升。附录的 IVF 对 implicit C51/IQN/DIVL 也更准确，但同样只在各域单状态评测。Oracle 的有限拟合误差意味着它不是严格数值下界，VF 偶尔小于 Oracle 并不违反定理。附录 Figure 7 展示 51 个分位数对应的流轨迹，VF 较早拉开样本，基线常到末端聚成窄峰；这提供机制线索，不构成普遍的无坍缩定理。</p>
+<h4>3.12 控制结果：平均进步与失败任务都要看</h4>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/6b034cb547f1bbacb13cbcbd.png" alt="原文 Figure 3：左侧比较 OGBench 的四种数据预算，右侧是 OCBench 的两种预算。VF 和 IVF 应分别对照显式和隐式方法；不能只挑柱子最好的任务。" loading="lazy"></div><figcaption>原文 Figure 3：左侧比较 OGBench 的四种数据预算，右侧是 OCBench 的两种预算。VF 和 IVF 应分别对照显式和隐式方法；不能只挑柱子最好的任务。</figcaption></figure>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>OGBench 数据量</th>
+<th style="text-align: right;">VF</th>
+<th style="text-align: right;">QC</th>
+<th style="text-align: right;">IVF</th>
+<th style="text-align: right;">Implicit C51</th>
+<th style="text-align: right;">Implicit QC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10%</td>
+<td style="text-align: right;">48±3</td>
+<td style="text-align: right;">43±2</td>
+<td style="text-align: right;">43±3</td>
+<td style="text-align: right;">26±3</td>
+<td style="text-align: right;">25±3</td>
+</tr>
+<tr>
+<td>25%</td>
+<td style="text-align: right;">54±2</td>
+<td style="text-align: right;">44±3</td>
+<td style="text-align: right;">61±4</td>
+<td style="text-align: right;">39±4</td>
+<td style="text-align: right;">38±3</td>
+</tr>
+<tr>
+<td>50%</td>
+<td style="text-align: right;">53±2</td>
+<td style="text-align: right;">45±3</td>
+<td style="text-align: right;">66±3</td>
+<td style="text-align: right;">58±2</td>
+<td style="text-align: right;">51±4</td>
+</tr>
+<tr>
+<td>100%</td>
+<td style="text-align: right;">57±5</td>
+<td style="text-align: right;">52±3</td>
+<td style="text-align: right;">65±5</td>
+<td style="text-align: right;">66±3</td>
+<td style="text-align: right;">62±4</td>
+</tr>
+</tbody>
+</table></div>
+<p>数值为平均成功率百分比和跨 seed 标准差。VF 在 10%/25% 的显式组平均领先，IVF 在减少数据的隐式组平均更好；全量 IVF 65 并没有超过 Implicit C51 的 66。50% 比 100% 更高也出现于部分任务，不能声称严格单调的数据 scaling。</p>
+<p>关键负结果：显式 VF 在 humanoidmaze-giant 的域平均，10%/25%/50% 均约 0，全量也只有 1±2；其总体优势主要不能靠这一域解释。IVF 相应约 40/50/49/55，表明显式候选选择和隐式学习的差异实质影响长程任务。cube-quadruple 仍有多项零或低成功率。puzzle 在多种基线下已经接近满分，不能说“流模型普遍打败标量”。</p>
+<p>OCBench 25% 数据时，VF 67±2、Value Flows 60±3、C51 58±3、QC 45±5；全量为 92±1/85±2/91±2/62±5。IVF 25% 为 58±2，接近 Implicit QC 57±3；全量 91±1，高于 implicit C51 86±2、implicit QC 80±1。只比较了选定基线，没有完整复现所有 11 个对手。</p>
+<h4>3.13 消融：哪些设计必要，哪些不是</h4>
+<p>消融只选 cube-triple 与 puzzle 的 task2/task4，共四个任务。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>改动</th>
+<th>原文现象</th>
+<th>原因与能支持的结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VF 去掉单独 V，用目标 Q 自举</td>
+<td>表现相近</td>
+<td>拆 V/Q 有组织优势，但不是 VF 收益的必要条件</td>
+</tr>
+<tr>
+<td>用可微一步 actor 替换 best-of-K</td>
+<td>作者称成功率降低 44%</td>
+<td>生成可执行候选的方式影响很大；该百分比按作者表述，不能自行写成 44 个百分点</td>
+</tr>
+<tr>
+<td>IVF 按速度残差做 expectile</td>
+<td>明显变差</td>
+<td>每个噪声位置“最快”的动作可能不同，拼起来不是任何单个高价值动作</td>
+</tr>
+<tr>
+<td>IVF 用回报分位数决定权重</td>
+<td>较差</td>
+<td>高分位和高期望不是相同决策目标</td>
+</tr>
+<tr>
+<td>去掉奖励缩放</td>
+<td>VF 约 86→11；IVF 76→11</td>
+<td>回报和初始噪声的尺度匹配不可忽略</td>
+</tr>
+<tr>
+<td>回报积分步数 1/5/10/20</td>
+<td>测试范围内相近</td>
+<td>这些四个任务不强依赖高精度积分，不能外推到所有生成模型</td>
+</tr>
+<tr>
+<td>返回样本数：VF 1/2/4/8，IVF 4/8/16/32</td>
+<td>相近</td>
+<td>局部参数鲁棒性证据，未证明大规模高维输出也不敏感</td>
+</tr>
+</tbody>
+</table></div>
+<p>一步 actor 使用“最大化 Q + 靠近同初噪 BC 动作”的平方距离正则，系数在 1/3/10 调优后选 3；所以不是完全未调参的稻草人。错误的速度 expectile 在 \(\mu\to1\) 时取各点速度的上包络，积分和对动作取最大值不可交换。quantile 版本利用一维 ODE 不交叉、保持分位次序，测试 q=0.7/0.8/0.9 后选 0.9，仍不如按期望优势加权。</p>
+<h4>3.14 复现与基线公平性</h4>
+<p>共同设置：Adam 0.0003、batch1024、GELU、LayerNorm、16 维正弦噪声时间编码；OGBench 为 4×1024 MLP，OCBench 为输入层加四个双层 1024 残差块。折扣分别 0.999/0.9999；K=16；回报流通常 10 Euler 步；BC 通常 10 步，VF 训练 BC 采样用 4 步。VF 的 V/Q 各有两个成员，IVF 用共享条件网络的双成员；目标 EMA 0.005。</p>
+<p>IVF expectile 按域选 0.9/0.8/0.9/0.8，OCBench 0.9；奖励范围按域为 [−3,0]、[−4,0]、[−16,0]、[−1,0]，OCBench [−1,0]。调参只用各域 task2/task4 的全量数据，随后固定到全部任务和数据预算，避免每个小样本任务单独挑最佳参数，但低预算设置仍借用了全量数据调参结果。</p>
+<p>基线不是原论文所有配置的原样对比：FlowCritic 用截去最大回报样本的保守均值（训练 M4/一步，评测 M10/十步）；Value Flows 加端点稳定项和置信权重，并裁剪每步回报/动作；PCBF 用共享初噪轨迹和 control variate；C51 用 51 个固定 atom，IQN 用 64 维分位编码、32 维组合嵌入、8 个分位样本。Floq 以均值 TD 标签训练 flow，因此它估计标量而非完整回报分布；其噪声用均匀分布，并训练一步 actor。</p>
+<p>隐式 C51/IQN 是本文新构造的变体：前者按标量优势加权类别分布交叉熵，后者加权分位回归并用下一状态 V 分位自举；DIVL 从数据动作的 Q 值类别分布选自适应分位数，它建模的变化来源也不同于完整随机回报。本文把 DIVL 原来的 adjoint matching 改成 best-of-K，并把 atom 从 201 增到 2001。Implicit QC 组合 IQL 式 V 回归与 action-chunk Q。Implicit C51 借用 IVF expectile，Implicit IQN/QC 固定 0.9；各方法并未获得完全相同的调参搜索量。</p>
+<h3>4. 前作关系</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>具体区别</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://arxiv.org/abs/2210.02747" target="_blank" rel="noopener noreferrer">Flow Matching</a></td>
+<td>提供学习概率流的回归框架；本论文必须额外构造不知道真实回报时的 Bellman 监督</td>
+</tr>
+<tr>
+<td>Value Flows</td>
+<td>直接把干净回报的更新用于所有噪声程度，初始高斯方差不一致；VF 加独立校正并缩放即时奖励</td>
+</tr>
+<tr>
+<td>FlowCritic / FlowIQN</td>
+<td>用末端回报形成训练目标；虽在不同时间训练 velocity，但不等于对每个中间边际施加 Bellman 方程</td>
+</tr>
+<tr>
+<td>PCBF</td>
+<td>共享初始噪声建立路径约束；VF 约束各噪声时刻的边际分布，二者的随机变量耦合不同</td>
+</tr>
+<tr>
+<td>IQL / Implicit Q-Learning</td>
+<td>提供支持内 expectile 学习思路；IVF 把标量优势权重用到回报流回归，并证明理想固定点关系</td>
+</tr>
+</tbody>
+</table></div>
+<p>上述区别来自本文正文和附录 Table1、D.2；没有把这些旧文新增为今天的推荐。可通过<a href="https://chongyi-zheng.github.io/value-forcing/" target="_blank" rel="noopener noreferrer">项目页的前作链接</a>访问原始论文。</p>
+<h3>5. 局限与可迁移内容</h3>
+<p>证明需要精确优化和自洽固定点；实际网络的收敛未解决。实验是仿真离线任务，不含线上学习和实机；没有展示真实物流派单。分布描述的是环境和策略产生的回报变动，不能直接当作“模型不知道的程度”；在数据未覆盖区域，生成一个很窄的分布也可能只是自信地错。</p>
+<p>对美团：如果选择生成“给定骑手和订单组合的未来超时成本”，需要先定义折扣、拒单/出餐随机性和终止，把订单组合编码成可比较的条件，并处理组合可行性。数据只记录历史选择的结果，未分配组合没有真实回报标签。Flow Matching 并不消除这一反事实缺口，VF 的 bootstrap 只能在已有建模假设下传播信息。应先检验 scalar critic、categorical critic、FlowCritic、带/不带校正的 VF 在同一仿真与数据划分下的分布精度和派单收益。</p>
+<h3>6. 后续引用与公开讨论</h3>
+<p>论文于 2026-11-01 提交，本次检索未找到可核验的正式后续引用。项目页提供作者 <a href="https://x.com/chongyiz1/status/2117668963786322017" target="_blank" rel="noopener noreferrer">X 讨论链接</a>，但实际抓取返回 403，因此没有引用帖文内容。Reddit、知乎、小红书检索未取得可核验的实质性讨论；不把作者发布当成独立认可。</p>
+<p>覆盖检查：正文 1–7、附录 A.1/A.2、B.1/B.2、C、D.1–D.5 及表 1–7 的关键方法、对照、负结果和实现条件均在上述段落解释。附录个别等式存在记号/条件排版歧义时，以其前后随机过程定义及正文 Eq.11–13 为准，不将疑似错位的下标直接抄入推导。</p></div><div class="qa-log"><strong>后续问答</strong><p>本次按用户指定完成精读；后续问答追加在本论文模块内。</p></div>
+</section>
+<section class="paper-card" id="paper-2610.12135" data-paper-id="2610.12135" data-deep-read="false"><div class="kicker">RECENT RL · 08</div><h2>Q-Shaped Options for Hierarchical Reinforcement Learning</h2><p class="lede">用上下两层 Q 函数共同学习 option 表示</p><div><span class="chip">hierarchical reinforcement learning</span><span class="chip">offline reinforcement learning</span><span class="chip">representation learning</span></div>
+<div class="paper-summary"><p class="meta">Clarisse Wibault；Antoine Gorceix；Antonio Léon Villares；Alexey Zakharov；Evangelos Chatzaroulas；Michael Matthews；Eduardo Pignatelli；Jakob Foerster<br>University of Oxford</p><p><strong>首发：</strong>2026-10-08；<strong>当前版本日期：</strong>2026-10-08；arXiv preprint<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2610.12135" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2610.12135" target="_blank" rel="noopener noreferrer">PDF</a> · <a href="https://github.com/CWibault/QSO" target="_blank" rel="noopener noreferrer">作者代码</a></p><p><strong>推荐理由：</strong>长期作者偏好：Jakob Foerster；主题：hierarchical RL；补充长时决策方向。</p><p class="notice"><strong>中文摘要概述：</strong>低层保留执行所需区别，高层合并与最终任务无关的区别。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Learning to tackle long-horizon, goal-conditioned tasks requires an agent to reason over extended timescales and act across a …</blockquote><p><a href="https://arxiv.org/abs/2610.12135" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：公开全文；方法和实验调研。</p></div>
+<h4>一个迷宫例子</h4>
+<p>高层决定“先到下面的通道”，低层决定每一步怎样移动。如果 option 表示把两个不同出口合成一个点，低层不知道该走哪个；如果它连每次细小脚步都区分，高层又无法合并本来等价的路线，数据难以共享。</p>
+<p>QSO 让同一个 option encoder 同时接受两种价值学习信号：低层 Q 把 option 当目标，要求保留成功执行必须知道的信息；高层 Q 把它当动作，鼓励删去对后续决策无用的区别。两层各有自己的状态表示、价值函数和策略，而非只在原策略上加一个固定时间间隔。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/52d4d427d708783f610e3fb5.png" alt="原文 Figure 1 比较层级接口与不同 option 学法。重点看 option 编码连接哪两层 Q，而不是把更多网络框本身当贡献。" loading="lazy"></div><figcaption>原文 Figure 1 比较层级接口与不同 option 学法。重点看 option 编码连接哪两层 Q，而不是把更多网络框本身当贡献。</figcaption></figure>
+<p>作者在离线目标条件 locomotion 与 manipulation 中评测，观察到有语义的 option，并在部分所有对照均失败的任务中取得非零表现。适合追问“长任务究竟缺时间抽象还是合适的状态压缩”。不过层级仍依赖数据覆盖与 option 可执行性，本文结果不能保证任意选取高层目标都能到达。此卡完成方法和实验调研，未覆盖全部附录，不标完整精读。</p>
+</section>
+<section class="paper-card" id="paper-2611.03296" data-paper-id="2611.03296" data-deep-read="false"><div class="kicker">RECENT RL · 09</div><h2>Inferring Transferable Rewards via Active Inverse Reinforcement Learning</h2><p class="lede">主动选择环境动力学以学习可迁移奖励</p><div><span class="chip">inverse reinforcement learning</span><span class="chip">active learning</span><span class="chip">reward transfer</span></div>
+<div class="paper-summary"><p class="meta">Victor Villin；Till Freihaut；Andreas Schlaginhaufen；Christos Dimitrakakis；Maryam Kamgarpour；Giorgia Ramponi<br>University of Neuchâtel / University of Zurich / EPFL</p><p><strong>首发：</strong>2026-11-02；<strong>当前版本日期：</strong>2026-11-02；arXiv preprint<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2611.03296" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2611.03296" target="_blank" rel="noopener noreferrer">PDF</a></p><p><strong>推荐理由：</strong>近期新论文；主题：inverse RL / sample efficiency；补充行为建模视角。</p><p class="notice"><strong>中文摘要概述：</strong>不是盲目多收演示，而是选择最能区分候选奖励的环境来问专家。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Inverse Reinforcement Learning (IRL) aims to recover expert rewards that transfer across environments with differing dynamics. Prior work …</blockquote><p><a href="https://arxiv.org/abs/2611.03296" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：公开全文；理论条件与主要实验调研。</p></div>
+<h4>为什么换环境能看出专家真正想要什么</h4>
+<p>如果直路既最近又最安全，专家一直走直路，不能判断他重视距离还是安全。改变道路条件后，两种目标可能给出不同选择；这类演示更有辨别力。这个道路例子是解释，不是论文的配送实验。</p>
+<p>方法先轮流查询可用动力学环境，形成可靠的初始奖励估计，再按减少奖励不确定性的准则主动选环境并获取专家演示。理论建立在有限、熵正则 MDP、已知动力学等条件上，给出可迁移奖励的样本复杂度；其速率不随可选动力学数量增长，不等于对完全无法辨识的任意环境都零误差恢复奖励。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/2af605fac50125a1227fae8f.png" alt="原文 Figure 1。四列改变环境动力学的相似/多样程度；横轴是专家轨迹数量，纵轴是最坏次优性。主动选择是否有收益取决于可用环境能否提供互补信息。" loading="lazy"></div><figcaption>原文 Figure 1。四列改变环境动力学的相似/多样程度；横轴是专家轨迹数量，纵轴是最坏次优性。主动选择是否有收益取决于可用环境能否提供互补信息。</figcaption></figure>
+<p>作者实验报告部分设置可用更少演示达到相近误差，最高约少 5 倍；预热阶段需要先覆盖环境，所以小预算时也有成本。若用于理解骑手行为，首先要有可查询的专家和可信动力学，不能直接把仅有历史日志当成可自由干预的实验环境。本卡不声称现实骑手具备论文假定的同一奖励或理性模型。</p>
+</section>
+<section class="paper-card" id="paper-2611.03301" data-paper-id="2611.03301" data-deep-read="false"><div class="kicker">RECENT RL · 10</div><h2>An Axiomatic Framework for Reinforcement Learning in Open Multi-Agent Systems</h2><p class="lede">为只能控制部分智能体的系统建立价值学习规则</p><div><span class="chip">multi-agent reinforcement learning</span><span class="chip">ad hoc teamwork</span><span class="chip">credit assignment</span></div>
+<div class="paper-summary"><p class="meta">Jianhong Wang；Yang Li；Samuel Kaski；Jonathan Lawry<br>University of Bristol / Shanghai Jiao Tong University / ELLIS Institute Finland / Aalto University / University of Manchester</p><p><strong>首发：</strong>2026-11-02；<strong>当前版本日期：</strong>2026-11-03；NeurIPS 2026<br><strong>通讯 / 联系作者：</strong>Jianhong Wang; Yang Li</p><p><a href="https://arxiv.org/abs/2611.03301" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2611.03301" target="_blank" rel="noopener noreferrer">PDF</a> · <a href="https://github.com/hsvgbkhgbv/axiomatic-rl-naht" target="_blank" rel="noopener noreferrer">作者代码</a></p><p><strong>推荐理由：</strong>近期新论文；主题：multi-agent RL；与部分可控的现实系统相关。</p><p class="notice"><strong>中文摘要概述：</strong>用合作博弈公理约束个体价值，处理未知或变化的队友。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Open multi-agent systems, where only a subset of agents are controllable, are central to real-world domains such as …</blockquote><p><a href="https://arxiv.org/abs/2611.03301" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：公开全文 v2；方法与实验调研。</p></div>
+<h4>问题不只是“有很多智能体”</h4>
+<p>在团队游戏中，你可能只训练两名队员，其余队友由别的程序控制，而且测试时换了习惯。把所有人都当作同一训练器可更新的策略，会漏掉这种开放性。论文使用 n-agent ad hoc teamwork（NAHT），区分可控群体内部合作与面对外部队友的协作。</p>
+<p>作者把 Shapley 的 Efficiency、Symmetry、Linearity 作为个体价值函数的结构条件：总贡献要与团队价值相符，贡献等价的成员不应仅因身份被区别，价值组合要保持线性关系。由此构造 Shapley Machines 和 Banzhaf Machines，再实例化到 IPPO、POAM 等算法；不是只在训练完成后附加一个解释分数。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/9dc90c9cefd1574e5cd5f261.png" alt="原文 Figure 3 的基准学习曲线。改造后的方法与其基础算法比较；不同任务和训练阶段差距不同，应结合误差带看，不能由一条曲线推导全部开放系统的最优性。" loading="lazy"></div><figcaption>原文 Figure 3 的基准学习曲线。改造后的方法与其基础算法比较；不同任务和训练阶段差距不同，应结合误差带看，不能由一条曲线推导全部开放系统的最优性。</figcaption></figure>
+<p>实验检验面对未见智能体类型和协作惯例的泛化。适合研究团队成员变化时信用分配如何影响学习，但公理约束不替代环境建模、可观测性和队友分布假设；真实物流中的兼职骑手退出、奖励异质性仍需单独定义。版本 v2 为 2026-11-03，原稿首发 11 月 2 日。</p>
+</section>
+<footer><p>检索边界：Gmail Scholar 当前缺少可用认证/依赖，X API 未配置；已以论文原文、作者页、arXiv、期刊与会议渠道交叉核验。X、Reddit、知乎、小红书未取得两篇精读论文的可核验实质评论；未把不可访问的帖子写成引文。公司新闻与每日论文榜单仅作发现入口，本次没有足够相关的非论文新闻条目。</p><p>基础教程参考材料不计入 10 篇推荐。所有实验数字均按作者报告，教学分布和迁移建议另行注明。仅两篇完成全文与技术附录覆盖审计，其他卡片保持未精读状态。</p></footer></main>
+
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+ renderMathInElement(document.body,{delimiters:[{left:String.raw`\[`,right:String.raw`\]`,display:true},{left:String.raw`\(`,right:String.raw`\)`,display:false}],throwOnError:false});
+ document.querySelectorAll('.figure-block').forEach(b=>{
+  const v=b.querySelector('.figure-viewport'),s=b.querySelector('[data-zoom]'),im=v.querySelector('img');
+  function zoom(){const xr=v.scrollLeft/Math.max(1,v.scrollWidth-v.clientWidth),yr=v.scrollTop/Math.max(1,v.scrollHeight-v.clientHeight);im.style.width=(Math.min(im.naturalWidth||v.clientWidth,Math.max(280,v.clientWidth))*Number(s.value))+'px';requestAnimationFrame(()=>{v.scrollLeft=xr*Math.max(0,v.scrollWidth-v.clientWidth);v.scrollTop=yr*Math.max(0,v.scrollHeight-v.clientHeight)})}
+  im.addEventListener('load',zoom);zoom();s.addEventListener('input',zoom);let state=null;
+  v.addEventListener('pointerdown',e=>{state=[e.clientX,e.clientY,v.scrollLeft,v.scrollTop];v.classList.add('is-dragging');v.setPointerCapture(e.pointerId);e.preventDefault()});
+  v.addEventListener('pointermove',e=>{if(state){v.scrollLeft=state[2]+state[0]-e.clientX;v.scrollTop=state[3]+state[1]-e.clientY}});
+  for(const event of ['pointerup','pointercancel'])v.addEventListener(event,()=>{state=null;v.classList.remove('is-dragging')});
+ });
+ const canvas=document.getElementById('density-canvas'),ctx=canvas.getContext('2d'),slider=document.getElementById('progress'),mode=document.getElementById('path-mode');
+ function normal(x,m,v){return Math.exp(-.5*(x-m)**2/v)/Math.sqrt(2*Math.PI*v)}
+ function draw(){let q=Number(slider.value)/100;const fm=mode.value==='fm',m=2*(fm?q:Math.sqrt(q)),v=fm?(1-q)**2+.09*q*q:1-.91*q;const W=canvas.width,H=canvas.height,L=68,R=30,T=42,B=64;const px=x=>L+(x+5)/10*(W-L-R),py=y=>H-B-y/.78*(H-B-T);ctx.clearRect(0,0,W,H);ctx.font='17px -apple-system, PingFang SC, sans-serif';ctx.fillStyle='#526b78';ctx.strokeStyle='#d8e5e9';ctx.lineWidth=1;
+ for(let y=0;y<=.7;y+=.1){ctx.beginPath();ctx.moveTo(L,py(y));ctx.lineTo(W-R,py(y));ctx.stroke();ctx.fillText(y.toFixed(1),20,py(y)+5)}
+ for(let x=-5;x<=5;x++){ctx.fillText(String(x),px(x)-6,H-B+25)}ctx.fillText('概率密度',L,25);ctx.fillText('提前 ← 送达偏差（分钟） → 迟到',W/2-145,H-15);
+ function curve(mu,varr,color,dash){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=3;ctx.setLineDash(dash);for(let i=0;i<=800;i++){let x=-5+10*i/800,y=.5*normal(x,-mu,varr)+.5*normal(x,mu,varr);if(i===0)ctx.moveTo(px(x),py(y));else ctx.lineTo(px(x),py(y))}ctx.stroke();ctx.setLineDash([])}
+ curve(2,.09,'#d3a16a',[8,6]);curve(m,v,'#087f8c',[]);ctx.strokeStyle='#758c98';ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(px(0),T);ctx.lineTo(px(0),H-B);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#087f8c';ctx.fillText(fm?'Flow Matching 路径':'DDPM 路径',W-300,27);
+ document.getElementById('progress-label').value=q.toFixed(2);document.getElementById('density-readout').textContent=(fm?'τ = ':'累计信号比例 ᾱ = ')+q.toFixed(2)+'；两个混合成分均值 = ±'+m.toFixed(2)+'，各自标准差 = '+Math.sqrt(v).toFixed(2)+'。整体均值始终是 0，但分布形状在改变。';window.demoState={mode:mode.value,progress:q,componentMean:m,componentVariance:v};}
+ slider.addEventListener('input',draw);mode.addEventListener('change',draw);draw();
+});
+</script></body></html>
