@@ -1,0 +1,2101 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-11-09 · 外卖派单、路线规划与模拟器代码精读</title>
+<style>
+:root{--ink:#172b3a;--muted:#566b7a;--line:#d5e1e8;--teal:#087f8c;--amber:#a94d0a;--bg:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:24px 30px 80px}header{padding:48px 0 28px;border-bottom:2px solid var(--ink)}h1{font-size:36px;line-height:1.35;letter-spacing:-.5px;max-width:940px}h2{font-size:28px;line-height:1.5;margin-top:20px}h3{font-size:23px;line-height:1.5;margin-top:40px;border-top:1px solid var(--line);padding-top:24px}h4{font-size:19px;margin-top:32px}p{margin:15px 0}a{color:#1763ad;text-decoration-thickness:1px;text-underline-offset:3px}a:visited{color:#6550a1}strong{font-weight:650}.kicker{text-transform:uppercase;color:var(--teal);font:700 13px/1.5 system-ui;letter-spacing:2px}.lede{font-size:20px;max-width:920px}.muted,.meta,figcaption{color:var(--muted);font-size:14px}.sticky-nav{position:sticky;top:0;z-index:20;background:#fffef8f5;border-bottom:1px solid var(--line);backdrop-filter:blur(10px);padding:10px 24px;display:flex;gap:15px;align-items:center;overflow-x:auto;white-space:nowrap;font-size:14px}.sticky-nav a{text-decoration:none}.section,.paper-card{background:white;border:1px solid var(--line);border-radius:12px;padding:32px 40px;margin:32px 0}.paper-card.is-deep-read{border-left:5px solid #e99632;background:linear-gradient(90deg,#fff7ed,#fff 24rem)}a.is-deep-read-link,a[data-deep-read="true"]{color:var(--amber);font-weight:750;text-decoration:underline;text-decoration-thickness:2px}.chip{display:inline-block;background:#e9f3f5;color:#266572;font-size:12px;padding:3px 9px;border-radius:5px;margin:3px 5px 3px 0}.deep-label{color:#a94d0a;background:#ffead3}.notice{border-left:3px solid var(--teal);padding:12px 20px;background:#f0f8f8}.table-scroll{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:15px}th,td{border:1px solid var(--line);padding:12px 14px;vertical-align:top;min-width:105px}th{background:#edf4f6;text-align:left}tr:nth-child(even){background:#fafcfd}table.catalog{min-width:1300px}table.catalog td:first-child{min-width:50px}table.catalog td:nth-child(2){min-width:300px}blockquote{border-left:3px solid #b7cad6;padding:8px 20px;margin:15px 0;background:#f7f9fa;color:#4a5f6e;font-size:15px}.figure-block{margin:28px 0}.figure-tools{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:8px}.figure-viewport{overflow:auto;max-height:70vh;min-height:100px;resize:both;max-width:100%;border:1px solid var(--line);background:#f9fbfc;cursor:grab}.figure-viewport img{display:block;max-width:none;height:auto;transform:none}.figure-viewport.is-dragging{cursor:grabbing}figcaption{margin-top:10px}.katex-display{overflow-x:auto;overflow-y:hidden;padding:8px 0}.katex{font-size:1.04em}.tutorial-toc{columns:2;font-size:15px}.tutorial-toc a{display:block;break-inside:avoid;margin:5px 0}.interactive{padding:22px;border:1px solid #a3cbd1;background:#f4fafb;border-radius:10px;margin:28px 0}.interactive canvas{width:100%;height:auto;display:block;background:white;border-radius:6px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:15px;margin:14px 0}.controls input[type=range]{min-width:210px;flex:1}select,button{font:inherit;padding:6px 10px;border:1px solid #9ab5bf;border-radius:5px;background:white;color:var(--ink)}.read-route{display:flex;flex-wrap:wrap;gap:10px}.read-route a{border:1px solid var(--line);border-radius:6px;padding:6px 12px}.number{color:var(--teal);font-weight:700}.qa-log{font-size:14px;border-top:1px dashed var(--line);margin-top:30px;padding-top:10px}footer{color:var(--muted);font-size:13px;padding-top:20px}details{margin:14px 0}summary{cursor:pointer;font-weight:600}@media(max-width:700px){main{padding:12px}.section,.paper-card{padding:22px 18px}h1{font-size:28px}h2{font-size:24px}h3{font-size:21px}body{font-size:16px}.tutorial-toc{columns:1}.sticky-nav{gap:14px;padding:10px 12px}header{padding:28px 10px}.interactive{padding:12px}}
+pre{overflow:auto;max-width:100%;font-size:13px}code{overflow-wrap:anywhere}h2{overflow-wrap:anywhere}.audit-jump{display:block;font-size:14px;margin:8px 0}.evidence-table{min-width:760px}</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script><style id="portal-font">html,body,button,input,select,textarea{font-family:"Times New Roman","Noto Serif CJK SC","SimSun",serif!important}</style></head><body>
+<nav class="sticky-nav" aria-label="快速导航"><a href="#top">11·09</a><a href="#catalog">8 篇精读</a><a href="#dataset">模拟器范围</a><a href="#paper-ieee9185791" data-deep-read="true">1</a><a href="#paper-ieee9185864" data-deep-read="true">2</a><a href="#paper-tsfh2019" data-deep-read="true">3</a><a href="#paper-auad2026" data-deep-read="true">4</a><a href="#paper-2502.16862" data-deep-read="true">5</a><a href="#paper-ssrn6349239" data-deep-read="true">6</a><a href="#paper-ssrn5202084" data-deep-read="true">7</a><a href="#paper-calibrated-dispatch2026" data-deep-read="true">8</a><a href="#simulator-calibrated-dispatch2026">源码审计</a></nav><main id="top"><header><div class="kicker">DEEP READING · 2026.11.09 · ASIA/HONG_KONG</div><h1>外卖派单、路线规划<br>与模拟器代码精读</h1><p class="lede">3 篇指定论文新增精读，5 篇美团相关完整精读从 11 月 5 日迁入。逐篇解释商家、用户、骑手和平台如何行动，并区分论文模型与可核查的源码。</p><p class="meta">8 篇全文精读 · 1 个作者代码仓库深入审计 · 7 篇未定位到公开作者实现 · 公式、原图、反例与执行边界</p><div class="read-route"><a href="#catalog">逐篇目录</a><a href="#dataset">先看八篇各自模拟什么</a><a href="#simulator-calibrated-dispatch2026">直接看源码与小例子</a><a href="https://seven-7-ding.github.io/DocumentResearch/reports/2026-11-05/" target="_blank" rel="noopener noreferrer">11 月 5 日：原推荐与独立扩散教程</a></div></header><section class="section" id="catalog"><h2>今天的精读目录</h2><p>这是按用户指定整理的历史与近期论文专题，不把 2019/2020 年文章标成今日新发表。橙色入口均对应完整精读。</p><div class="table-scroll"><table class="catalog"><thead><tr><th>#</th><th>论文</th><th>选读原因</th><th>第一作者</th><th>通讯作者</th><th>末作者</th><th>机构</th><th>一句话</th><th>入口</th></tr></thead><tbody><tr><td>1</td><td><a href="#paper-ieee9185791" data-deep-read="true">Two Fast Heuristics for Online Order Dispatching</a><br>两种用于在线外卖派单的快速启发式</td><td>用户指定新增精读</td><td>Qingte Zhou</td><td>not explicitly listed</td><td>Ling Wang</td><td>Meituan-Dianping Group / Tsinghua University</td><td>每分钟把新单插入专属骑手既有路线，优先处理可行骑手少的订单。</td><td><a href="https://doi.org/10.1109/CEC48606.2020.9185791" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-ieee9185791">实体与代码</a></td></tr><tr><td>2</td><td><a href="#paper-ieee9185864" data-deep-read="true">An Effective Iterated Greedy Algorithm for Online Route Planning Problem</a><br>用迭代贪心在毫秒预算内规划单骑手取送路线</td><td>用户指定新增精读</td><td>Xing Wang</td><td>not explicitly listed</td><td>Zhizhao Sun</td><td>Tsinghua University / Meituan-Dianping Group</td><td>给定一名骑手的订单，按订单拆除重插，再用四种局部搜索减少迟到与路程。</td><td><a href="https://doi.org/10.1109/CEC48606.2020.9185864" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-ieee9185864">实体与代码</a></td></tr><tr><td>3</td><td><a href="#paper-tsfh2019" data-deep-read="true">A Two-Stage Fast Heuristic for Food Delivery Route Planning Problem</a><br>用地理剪枝和局部调整加速外卖路线规划</td><td>用户指定新增精读</td><td>Huanyu Zheng</td><td>not explicitly listed</td><td>Zhizhao Sun</td><td>Meituan-Dianping Group</td><td>按 ETA 贪心插入，用地理分组减少候选，再移动过早或迟到的送达点。</td><td><a href="https://s3plus.meituan.net/v1/mss_e63d09aec75b41879dcb3069234793ac/file/%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87%E7%AF%87.pdf" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-tsfh2019">实体与代码</a></td></tr><tr><td>4</td><td><a href="#paper-auad2026" data-deep-read="true">Data-Driven Optimization for Meal Delivery: A Reinforcement Learning Approach for Order-Courier Assignment and Routing at Meituan</a><br>用强化学习与启发式搜索协同优化美团派单和路线</td><td>11.5 完整精读迁入；新增模拟器核查</td><td>Ramón Auad</td><td>Ramón Auad</td><td>Tomás Lagos</td><td>Amazon / Universidad Católica del Norte / Universidad Adolfo Ibáñez / University of Sydney</td><td>学习什么时候暂缓派单，并用传统路线搜索产生可执行方案。</td><td><a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-auad2026">实体与代码</a></td></tr><tr><td>5</td><td><a href="#paper-2502.16862" data-deep-read="true">Potential-Based Greedy Matching for Dynamic Delivery Pooling</a><br>用订单距离估计机会成本的动态拼单</td><td>11.5 完整精读迁入；新增模拟器核查</td><td>Hongyao Ma</td><td>not explicitly listed</td><td>Matias Romero</td><td>Columbia Business School</td><td>给贪心拼单扣除机会成本，不预测未来订单也能减少短视决策。</td><td><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-2502.16862">实体与代码</a></td></tr><tr><td>6</td><td><a href="#paper-ssrn6349239" data-deep-read="true">Behaviorally Informed Dispatch Decisions for Real-Time Order-Courier Assignment</a><br>考虑骑手接单行为与工作量的实时派单</td><td>11.5 完整精读迁入；新增模拟器核查</td><td>Golman Rahmanifar</td><td>Golman Rahmanifar (explicitly marked in PDF)</td><td>Stefan Minner</td><td>Eindhoven University of Technology / Norwegian University of Science and Technology / Technical University of Munich</td><td>把接单概率、路线占用和工作量公平放入派单成本。</td><td><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6349239" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-ssrn6349239">实体与代码</a></td></tr><tr><td>7</td><td><a href="#paper-ssrn5202084" data-deep-read="true">Mixed-Type Courier Dispatching and Pricing for Online Food Delivery Platforms</a><br>混合全职与兼职骑手的定价和派单</td><td>11.5 完整精读迁入；新增模拟器核查</td><td>Junlin Chen</td><td>Manxi Wu (SSRN Contact Author)</td><td>Zhanhao Zhang</td><td>University of California, Berkeley / Cornell University</td><td>把兼职骑手的接单、进入和退出行为与平台派单一起建模。</td><td><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-ssrn5202084">实体与代码</a></td></tr><tr><td>8</td><td><a href="#paper-calibrated-dispatch2026" data-deep-read="true">Calibrated Counterfactual Evaluation of Dispatch Policies Under Cascading Divergence</a><br>用历史行为校准派单策略的反事实仿真评估</td><td>11.5 完整精读迁入；新增模拟器核查</td><td>Amr Abdelbaky</td><td>Amr Abdelbaky</td><td>Nourhan Sakr</td><td>The American University in Cairo / Santa Clara University</td><td>单步模仿很准，也可能在连续派单后产生很大的状态漂移。</td><td><a href="https://doi.org/10.1007/978-3-032-37679-4_11" target="_blank" rel="noopener noreferrer">原文</a><br><a href="#simulator-calibrated-dispatch2026">实体与代码</a></td></tr></tbody></table></div></section><section class="section" id="dataset"><h2>先区分：八篇工作的时间和决策范围</h2><p>“寻路”可能指安排取送节点顺序，也可能指两点之间的道路最短路；下表与各篇正文分别说明。没有源码的论文只按原文还原行为，不补造类名、事件队列或接拒算法。</p><div class="table-scroll"><table class="evidence-table"><tr><th>工作</th><th>时间怎样推进</th><th>真正决策</th><th>源码证据</th></tr><tr><td>MGI/MRI</td><td>每分钟收集快照</td><td>新单插给专属骑手，旧节点顺序保留</td><td>Java 实现未定位到公开仓库</td></tr><tr><td>IG</td><td>一次限时路线求解；搜索轮次不是运营时间</td><td>单骑手订单的取送重排</td><td>未定位到公开作者实现</td></tr><tr><td>TSFH</td><td>一次快速路线计算</td><td>ETA 插入、地理剪枝、局部移动</td><td>未定位到公开作者实现；图文有差异</td></tr><tr><td>Auad 等</td><td>实验每 30 秒决策</td><td>发 offer、改路线或暂缓；环境产生接受/拒绝</td><td>论文公开，作者模拟器未定位</td></tr><tr><td>PB</td><td>理论按到达序号；真实数据按到期时刻；PRBAT 每 30 秒</td><td>订单配对，不直接派给具体骑手</td><td>作者实验实现未定位</td></tr><tr><td>Behaviorally Informed</td><td>订单、出餐、空闲、暂缓超时事件</td><td>筛人、插入、接受调整、公平评分</td><td>作者模拟器未定位；伪代码与随机转移需区分</td></tr><tr><td>Mixed-Type</td><td>先求稳态流；再用离散事件执行</td><td>类型比例、运力和报酬；逐单概率选择类型</td><td>作者仿真未定位；明确不模拟备餐</td></tr><tr><td>Calibrated Counterfactual</td><td>历史派单周期及周期内 offer</td><td>二元接拒、固定 scorer 重派</td><td>作者仓库已审；关键边界用小输入验证</td></tr></table></div><p class="notice">公开的美团 INFORMS-TSL 挑战仓库是数据与说明，不含这些论文的统一外卖模拟器。前三篇是不同年份的美团业务快照研究，不能默认使用同一份 2022 挑战数据。源码审计发现的行为只适用于固定提交；没有以小探针冒充整篇实验复现。</p></section><section class="paper-card is-deep-read" id="paper-ieee9185791" data-paper-id="ieee9185791" data-deep-read="true"><div class="kicker">SELECTED PAPER · 01</div><h2>Two Fast Heuristics for Online Order Dispatching</h2><p class="lede">两种用于在线外卖派单的快速启发式</p><div><span class="chip">order dispatching</span><span class="chip">insertion heuristics</span><span class="chip">vehicle routing</span><span class="chip deep-label">Deep Read</span></div><div class="paper-summary"><p class="meta">Qingte Zhou；Huanyu Zheng；Shengyao Wang；Jinghua Hao；Renqing He；Zhizhao Sun；Xing Wang；Ling Wang<br>Meituan-Dianping Group · Tsinghua University<br>2020-07 · IEEE CEC 2020</p><p><strong>第一作者：</strong>Qingte Zhou；<strong>末作者：</strong>Ling Wang；<strong>通讯作者：</strong>not explicitly listed。</p><p><strong>选读原因：</strong>用户明确指定；外卖派单与路线规划项目。<strong>一句话：</strong>每分钟把新单插入专属骑手既有路线，优先处理可行骑手少的订单。</p><p><a href="https://doi.org/10.1109/CEC48606.2020.9185791" target="_blank" rel="noopener noreferrer">论文来源</a> · <a href="https://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_WCCI_2020/CEC/Papers/E-24094.pdf" target="_blank" rel="noopener noreferrer">全文 PDF</a></p><details><summary>English abstract · 原文</summary><blockquote>Order dispatching, a key part in real-time food delivery system, has received a lot of attention over the last decade. Under constraints of on-time rate and some other practical constraints, our goal is to maximize the total efﬁciency of the whole system. As an online algorithm, the running time of the algorithm for order dispatching is limited within milliseconds. At the same time, the problem is highly dynamic and the complexity of the solution space is huge. In this paper, we design two fast heuristics for order dispatching in real-time food delivery. We compare our algorithm with two state-of-the-art algorithms. With numerical results, we show our algorithms are faster than algorithms in the literature and with similar or better solution quality.</blockquote></details></div><div class="deep-reading-content"><h3>1. 摘要完整中文翻译与来源</h3>
+<p>订单派送是实时餐饮配送系统的重要组成部分，过去十年受到广泛关注。在准时率及其他实际约束下，我们的目标是最大化整个系统的效率。作为在线算法，派单算法的运行时间被限制在毫秒量级。同时，问题高度动态，解空间的复杂度很大。本文为实时餐饮配送中的派单设计两种快速启发式算法，并与两种已有先进算法比较。数值结果表明，本文算法比已有算法更快，同时得到相近或更好的解。</p>
+<p>本次读完用户下载的 IEEE CEC 2020 正文全部 8 页，另核对<a href="https://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_WCCI_2020/CEC/Papers/E-24094.pdf" target="_blank" rel="noopener noreferrer">大学托管的会议 PDF</a>；无另附技术附录。论文 DOI 为 <a href="https://doi.org/10.1109/CEC48606.2020.9185791" target="_blank" rel="noopener noreferrer">10.1109/CEC48606.2020.9185791</a>。下文的数字例子均为解释算法而构造，不是实验数据。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文署名机构</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qingte Zhou</td>
+<td>Meituan-Dianping Group</td>
+<td>第一作者</td>
+</tr>
+<tr>
+<td>Huanyu Zheng、Shengyao Wang、Jinghua Hao、Renqing He、Zhizhao Sun</td>
+<td>Meituan-Dianping Group</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Xing Wang</td>
+<td>Tsinghua University, Department of Automation</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Ling Wang</td>
+<td>Tsinghua University, Department of Automation</td>
+<td>末作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>正文没有明确标注通讯作者，不能凭末位署名推断。新关注作者的可靠介绍入口是<a href="https://www.au.tsinghua.edu.cn/info/1077/3265.htm" target="_blank" rel="noopener noreferrer">王凌的清华机构页</a>，研究智能优化、调度，页面列出与美团合作的即时配送研究。Qingte Zhou 等产业作者尚未定位到可可靠消歧的独立主页；用论文的姓名、机构和邮箱作为身份依据。本报告另两篇 <a href="#paper-ieee9185864" data-deep-read="true">IG 路线规划</a>、<a href="#paper-tsfh2019" data-deep-read="true">TSFH 路线规划</a>是这个合作团队可直接核查的相关工作，不把同名作者的其他论文混入。</p>
+<h3>3. 详细技术精读</h3>
+<h4>3.1 一家餐厅在 12:01 要派什么</h4>
+<p>设一家餐厅在 12:00–12:01 收到 25 张新单，有若干专属骑手。有的骑手尚未取餐，有的已经在送三单。平台在 12:01 收集这些新单和骑手当前位置、未完成路线，尝试尽量多交给专属骑手。专属运力不够时可用公共骑手，但本文没有联合优化公共骑手的价格和路线。</p>
+<p>因此目标不是“全平台多送多少单”，而是本轮新单中有多少能由专属骑手承担：</p>
+<p>\[ODR=\frac{DN}{TN}.\]</p>
+<p>\(DN\) 是分给专属骑手的新单数，\(TN\) 是全部新单数。25 单中分出 16 单，ODR 为 64%；剩下 9 单不能直接称为丢单，因为本文把它们留给另一类运力处理。专属骑手服务更便宜、稳定，是提高该比例的业务动机；成本没有在目标中显式计价。</p>
+<h4>3.2 输入和每一条可行性约束</h4>
+<p>新单集合 \(W\) 有 \(n\) 单，骑手集合 \(R\) 有 \(m\) 人。每单有取餐点 \(i^+\)、送达点 \(i^-\)、最早取餐时间 \(TP_i\)、承诺送达时刻 \(ETA_i\)。骑手原有路线含未访问的取送节点：已经取过的餐只剩送达节点，不能再让骑手重复取餐。任意两点的路程 \(d_{pq}\)、行程时间 \(t_{pq}\) 是输入。算法选择谁接哪单、把两个节点插在哪；<strong>原有节点的相对顺序必须保留</strong>。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>约束</th>
+<th>实际含义与例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>同一骑手、先取后送、节点访问一次</td>
+<td>A 的餐不能由骑手甲取、骑手乙送；不能把送达排到取餐前</td>
+</tr>
+<tr>
+<td>容量 \(Q\)</td>
+<td>沿路取餐增加负载、送达减少负载；检验的是任何时刻的携带量</td>
+</tr>
+<tr>
+<td>出餐时间</td>
+<td>12:04 到店、12:06 才备好，需要等待；不能在 12:04 带走</td>
+</tr>
+<tr>
+<td>插入以后不得造成后续迟到</td>
+<td>从新取餐节点的插入位置往后的订单，送达必须不晚于各自 ETA；并非要求修复插入位置之前已经发生的迟到</td>
+</tr>
+<tr>
+<td>同方向</td>
+<td>对不够近的新单，将餐厅到各客户的向量与新客户方向比较；角度必须低于阈值。过近旧客户不参与，近距离新单可豁免</td>
+</tr>
+<tr>
+<td>先送完已取的餐再取新餐</td>
+<td>对不够近的新单，已在车上的订单必须全部送完，才回餐厅取新单。近单有例外</td>
+</tr>
+</tbody>
+</table></div>
+<p>最后一条不是普通的“先取后送”：它限制跨订单的回店顺序。假设骑手已经带着 A、B 出发，新单 C 很远，就不能送完 A 后立即回店取 C、把 B 留在车上等。论文没有披露“足够近”的距离阈值和同方向角度，无法从正文得到唯一可复现的筛选器。</p>
+<p>迟到量定义为 \(OT_i=\max\{D_{i^-}-ETA_i,0\}\)。新插入点之后要求这些量为零。这套严格筛选会让可行候选很少，也是后面“优先照顾只有一名骑手能送的订单”的原因。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/f46b9acd36a7905cebe4c95a.png" alt="原文第 3 页 Figure 2：把新客户插到相反方向会违反同方向约束；仅满足先取后送还不够。" loading="lazy"></div><figcaption>原文第 3 页 Figure 2：把新客户插到相反方向会违反同方向约束；仅满足先取后送还不够。</figcaption></figure>
+<p>图 2 上半图中三个客户大致同向；下半图把第四个客户放到另一侧，虽然仍然先取后送，却违反同方向条件。图说明业务规则会排除某些传统取送问题中的可行路线；它没有证明这个角度规则在任何城市都是最优的。</p>
+<h4>3.3 插入成本算什么，MGI 怎么排序</h4>
+<p>对每个订单—骑手组合，枚举所有保持上述约束的取送插入位置，选新增总耗时最少的一对：</p>
+<p>\[\Delta f_{w,r}=\min_{\text{可行插入}}[T(\rho_r\oplus w)-T(\rho_r)],\qquad c_w=\min_r\Delta f_{w,r}.\]</p>
+<p>\(T\) 包含行驶和等待。没有可行位置时记为无穷大；所有骑手都不可行的订单从本轮待分集合删除。以上是按文字写出的解释式，原文直接定义最低插入增量。多走 1 分钟但减少 3 分钟到店等待，可能比最短距离的插入更好，因此不能只算两点距离。</p>
+<p>普通 GI 每次选全局最便宜的插入。MGI 先按“还有几名可行骑手”升序排列，再在候选数相同的订单中按 \(c_w\) 升序。例：A 只能给甲，增量 5；B 给甲只增 1、给乙增 2。如果先把 B 塞给甲，可能使 A 再也放不进去。MGI 先处理 A，保留 B 给乙的机会。这里是当前可行性提供的预判，没有预测未来订单，也没有价值网络。</p>
+<h4>3.4 MRI：失去最佳骑手，损失会有多大</h4>
+<p>对某单，把可行骑手按插入成本排序为 \(x_{w,1},\ldots,x_{w,k}\)。普通 RI 累加较差选择相对最佳选择的损失：</p>
+<p>\[RV_w=\sum_{i=2}^{k}(\Delta f_{w,x_{w,i}}-\Delta f_{w,x_{w,1}}).\]</p>
+<p>MRI 仍先按可行骑手数量升序，但同数量内改按下面的加权遗憾降序：</p>
+<p>\[RV_w^{\ast}=\sum_{i=2}^{k}(\Delta f_{w,x_{w,i}}-\Delta f_{w,x_{w,1}})\gamma^{i-2},\qquad\gamma=0.5.\]</p>
+<p>例如三个骑手的成本是 2、4、12，普通遗憾为 \(2+10=12\)，加权遗憾为 \(2+0.5\times10=7\)。第二选择最可能真正被用到，第十选择很少用到，所以远端选择权重递减。这里 \(k\) 随该单可行骑手数确定；只有一名可行骑手时定义 \(RV_w^{\ast}=-\Delta f_{w,x_{w,1}}\)，仍优先便宜者。遗憾衡量丢失当前好位置的代价，不是实际收入损失，也没有给出最优解近似比。</p>
+<h4>3.5 Algorithm 1 的加速细节：遇到重复骑手就结束内循环</h4>
+<p>先计算全部 \(\Delta f\)。每轮筛掉无可行位置的订单，按 MGI 或 MRI 排序，清空本轮已分订单集合 \(AO\) 和已用骑手集合 \(AR\)。依序取订单的最佳骑手：若该骑手尚未在 \(AR\) 中，就执行插入并记下；若已经在 \(AR\) 中，<strong>第 17 行是 break，结束本轮内循环</strong>，不是跳过这一单继续随意处理。</p>
+<p>原因是骑手路线一改，这一列插入成本已过时；继续拿旧表选人可能违反约束。不同骑手的路线互不影响，可以在一轮内各插一单。随后删掉 \(AO\)，只重新计算 \(AR\) 对应的成本列，再筛选、排序。直到订单都处理完或已无可行插入。同一骑手可以在后续轮次继续获得新单，不能把“每轮一单”误解成“每分钟最多一单”。省时来自减少重算次数，而不是不再检查路线可行性。</p>
+<h4>3.6 实验、三张结果表和不能过度推广的结论</h4>
+<p>20 个真实派单快照，分新订单数 21–30、31–40 两组；2.2 GHz MacBook Pro、16 GB、Java SE 8、IntelliJ。与 GI/RI 比较能直接检验修改排序和批量更新的价值；但样本少，未给完整实例、容量与角度配置，也不是几天的订单到达—拒单—配送闭环测试。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>全部实例</th>
+<th style="text-align: right;">ODR</th>
+<th style="text-align: right;">平均运行时间</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MGI</td>
+<td style="text-align: right;">64.65%</td>
+<td style="text-align: right;">101.28 ms</td>
+</tr>
+<tr>
+<td>MRI</td>
+<td style="text-align: right;">65.47%</td>
+<td style="text-align: right;">111.11 ms</td>
+</tr>
+<tr>
+<td>GI</td>
+<td style="text-align: right;">60.23%</td>
+<td style="text-align: right;">115.17 ms</td>
+</tr>
+<tr>
+<td>RI</td>
+<td style="text-align: right;">65.63%</td>
+<td style="text-align: right;">140.69 ms</td>
+</tr>
+</tbody>
+</table></div>
+<p>MGI 比 GI 多 4.42 个百分点，快 12.06%；MRI 比 RI 少 0.16 个百分点，快 21.02%。这支持用略有变化的质量换速度，不能说 MRI 在质量上全面胜过 RI，也不是每次计算只需一两毫秒。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/b3045bc0cb8369f9929e7162.png" alt="原文第 6 页 Tables I–III：MGI/MRI 更快；MRI 的整体 ODR 略低于 RI，大实例仍存在质量与时间权衡。" loading="lazy"></div><figcaption>原文第 6 页 Tables I–III：MGI/MRI 更快；MRI 的整体 ODR 略低于 RI，大实例仍存在质量与时间权衡。</figcaption></figure>
+<p>表 II 中，21–30 单的 MGI/MRI/GI/RI 的 ODR 分别为 68.68/69.75/62.99/69.40%，耗时 94.05/93.26/99.74/111.87 ms。表 III 中，31–40 单对应 61.21/61.82/57.88/62.42%，耗时 108.51/130.59/128.96/169.52 ms。较大实例中 MRI 仍更快，但比 RI 少分出 0.60 个百分点。逐实例图 5–8 显示 MGI 在 18/20 个实例更快；MRI 在 20/20 个实例更快，ODR 则 6 次更高、9 次更低、5 次相同。这些差异应保留，不能只引用摘要中的“更优”。</p>
+<p>没有分别去掉“可行人数优先”“遗憾衰减”“多骑手同时插入”的因子消融，因此无法独立量化每个改动的贡献；也没有随机重复、置信区间或对精确最优解的 gap。§V 讨论进化算法在很短时间和狭窄可行域下难以发挥作用，但没有直接做进化算法实验，不能得出所有 GA 都不适合的结论。</p>
+<h3 id="simulator-ieee9185791">4. 实体行为、时间推进与代码核查</h3>
+<p><strong>源码状态：</strong>全文未列代码地址；按完整标题、作者和 GitHub 仓库检索，未定位到作者公开的 Java 实现。所以下表是论文 §II–III 的可复原接口，不是声称读到了私有模拟器源码。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>每分钟派单点观察或改变什么</th>
+<th>没有披露什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户</td>
+<td>产生带地址、最早取餐及承诺时刻的新订单，进入本分钟集合</td>
+<td>用户下单选择、取消、改地址、对迟到的反馈机制</td>
+</tr>
+<tr>
+<td>商家</td>
+<td>提供同一个取餐地点和各单最早可取时间</td>
+<td>厨师数量、厨房队列、接拒商家订单、内生出餐预测</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td>输入当前地点和原路线；插入成功后获得新的完整访问顺序</td>
+<td>逐秒沿道路移动、随机拒单、抢单、疲劳、交通信号</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>枚举可行插入、按 MGI/MRI 选人并推送路线</td>
+<td>公共骑手溢出后的拥堵与成本、失败后的顾客取消规则</td>
+</tr>
+</tbody>
+</table></div>
+<p>例如 12:01 先看到 A 的餐 12:06 才好，算出骑手预计 12:04 到店，就把 2 分钟等待放进插入成本。算法输出后，12:02 如何获得新的实际位置和是否有人拒单，论文没有提供执行程序。不能自行补成“每秒调用 A*，到店 Bernoulli 接单”。这里“寻路”指停靠点顺序；道路图上两点最短路的算法及交通时间预测器均未公开。</p>
+<p>与 <a href="#paper-ieee9185864" data-deep-read="true">IG</a> 的区别是：本篇要决定多名骑手的订单归属，并锁住旧路线顺序；IG 给定一名骑手的订单集合后整体重排。与 <a href="#paper-tsfh2019" data-deep-read="true">TSFH</a> 的联系是都使用便宜插入，但本文不采用其地理聚类剪枝。可把本文用作调度器候选生成的基线；若接到真实模拟器，需要另定义 reject 后是否重新排队、已出发首段能否改道及溢出运力，不能把这些设定算作原文实现。</p>
+<h3>5. 局限、后续引用与公开讨论</h3>
+<p>同向和先送再取规则可能排除有价值的绕路拼单：例如客户离餐厅很近，回店顺带取走新餐可能反而快；论文因此给近距离例外，但未披露阈值。这使结果依赖业务筛选，不能仅凭 ODR 推断全城总成本降低。已有旧单序列被锁住，也会错过重新排序才可行的方案。本文没有 RL、神经网络、厨房模型或经济性的骑手接受模型。</p>
+<p>本轮没有核验到可明确归属于本篇、且能直接补足代码细节的后续公开实现；不把同团队后来的论文当作本篇原代码。X、Reddit、知乎、小红书的完整标题组合检索未发现可核验的实质技术讨论；这表示本次公开检索没有找到，不表示平台上绝无讨论。覆盖：§I 背景/相关工作，§II 全部约束与 ODR，§III 全部公式与 Algorithm 1，§IV 三表及四个逐实例图，§V–VI 适用条件和未来工作，参考文献；无技术附录。</p></div><div class="qa-log"><strong>本次要求 · 2026-11-09</strong><p>精读指定论文，并额外核查各实体、时间步、路线和接拒行为及代码实现。已完成全文与原图核对；源码不可得处明确标注依据和边界。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-ieee9185864" data-paper-id="ieee9185864" data-deep-read="true"><div class="kicker">SELECTED PAPER · 02</div><h2>An Effective Iterated Greedy Algorithm for Online Route Planning Problem</h2><p class="lede">用迭代贪心在毫秒预算内规划单骑手取送路线</p><div><span class="chip">vehicle routing</span><span class="chip">iterated greedy</span><span class="chip">local search</span><span class="chip deep-label">Deep Read</span></div><div class="paper-summary"><p class="meta">Xing Wang；Shengyao Wang；Ling Wang；Huanyu Zheng；Jinghua Hao；Renqing He；Zhizhao Sun<br>Tsinghua University · Meituan-Dianping Group<br>2020-07 · IEEE CEC 2020</p><p><strong>第一作者：</strong>Xing Wang；<strong>末作者：</strong>Zhizhao Sun；<strong>通讯作者：</strong>not explicitly listed。</p><p><strong>选读原因：</strong>用户明确指定；外卖派单与路线规划项目。<strong>一句话：</strong>给定一名骑手的订单，按订单拆除重插，再用四种局部搜索减少迟到与路程。</p><p><a href="https://doi.org/10.1109/CEC48606.2020.9185864" target="_blank" rel="noopener noreferrer">论文来源</a> · <a href="https://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_WCCI_2020/CEC/Papers/E-24111.pdf" target="_blank" rel="noopener noreferrer">全文 PDF</a></p><details><summary>English abstract · 原文</summary><blockquote>Route planning serves as the most fundamental part in modern food ordering and delivery system, which is also a classical combinatorial optimization problem. In this paper, we study an online extension of traditional route planning problem where a near-optimal solution has to be generated in a very short time. A simple and effective iterated greedy algorithm is presented along with problem-speciﬁc initialization rules, destruction procedure and construction procedure. We also propose a local search method, consisting of two adjustment operators and two neighborhood search operators. With experimental results, we show that our algorithm outperforms the compared evolutionary algorithms and has the capability of providing high-quality solutions within milliseconds.</blockquote></details></div><div class="deep-reading-content"><h3>1. 摘要完整中文翻译与来源</h3>
+<p>路线规划是现代餐饮点单与配送系统最基础的组成部分，也是一类经典组合优化问题。本文研究传统路线规划的在线扩展，要求在极短时间内生成近似最优解。我们提出一种简单、有效的迭代贪心算法，配合针对问题设计的初始化规则、破坏过程和构造过程；还提出由两个调整算子与两个邻域搜索算子组成的局部搜索方法。实验结果表明，该算法优于所比较的进化算法，并能在毫秒内提供高质量解。</p>
+<p>读完用户下载的 8 页 IEEE CEC 2020 全文，核对<a href="https://vigir.missouri.edu/~gdesouza/Research/Conference_CDs/IEEE_WCCI_2020/CEC/Papers/E-24111.pdf" target="_blank" rel="noopener noreferrer">会议 PDF</a>，无另附技术附录。DOI：<a href="https://doi.org/10.1109/CEC48606.2020.9185864" target="_blank" rel="noopener noreferrer">10.1109/CEC48606.2020.9185864</a>。摘要的“近似最优”是作者经验表述，正文没有给出对全局最优的理论近似界。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文署名机构</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Xing Wang</td>
+<td>Tsinghua University, Department of Automation</td>
+<td>第一作者</td>
+</tr>
+<tr>
+<td>Shengyao Wang</td>
+<td>Meituan-Dianping Group</td>
+<td>第二作者</td>
+</tr>
+<tr>
+<td>Ling Wang</td>
+<td>Tsinghua University, Department of Automation</td>
+<td>第三作者</td>
+</tr>
+<tr>
+<td>Huanyu Zheng、Jinghua Hao、Renqing He</td>
+<td>Meituan-Dianping Group</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Zhizhao Sun</td>
+<td>Meituan-Dianping Group</td>
+<td>末作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>通讯作者未明确标注。<a href="https://www.au.tsinghua.edu.cn/info/1077/3265.htm" target="_blank" rel="noopener noreferrer">王凌的清华机构主页</a>可核验优化调度研究背景；Xing Wang 的独立个人主页本轮未可靠消歧，故不引用同名人物履历。同一团队的 <a href="#paper-ieee9185791" data-deep-read="true">MGI/MRI</a>解决跨骑手派单；<a href="#paper-tsfh2019" data-deep-read="true">TSFH</a>也是单骑手快速路线算法。这里是基于三篇全文的技术比较，不声称后者代码直接继承前者。</p>
+<h3>3. 详细技术精读</h3>
+<h4>3.1 输入已经给定骑手，输出只是访问顺序</h4>
+<p>12:00，骑手甲车上有 A、B 两单，还要去餐厅取 C。平台已经决定这三单归甲，现在只问“从甲当前位置出发，先送 A、还是先取 C”。算法不会再选骑手，不会给 C 定价，也不会生成顾客或商家的策略。</p>
+<p>论文称 online，是强调调度系统要反复快速调用路线计算器；每次求解面对的是一个给定快照。不能把它理解成已实现持续到单、拒单、出餐波动的完整城市模拟器。取送问题的传统精确法可能运行很久；本文用少量、有针对性的修改，在很小 CPU 预算内找较好解。</p>
+<h4>3.2 两类订单、初始负载与目标函数</h4>
+<p>\(O_1\) 是已经取餐、只剩送达的订单；\(O_2\) 是取餐和送达都未完成的订单。设数量分别为 \(n_1,n_2\)，订单数 \(n=n_1+n_2\)，待访问节点数为 \(n_1+2n_2\)。初始点 \(l_0\) 携带负载 \(q_{l_0}\)，取餐节点需求为正、送达节点为负，同一单二者相加为零。初始负载不能忘：如果甲车上已有 A、B，容量为 2，先取 C 就超载，不能用“当前尚未访问任何点，所以负载为零”初始化。</p>
+<p>路线从 \(l_0\) 出发，结束在某个客户处，每个剩余节点只访问一次，同一单先取后送，沿途负载不超过 \(Q\)。最早取餐时间 \(PT_i\) 是不可提前的下界，\(ETA_i\) 是承诺送达时刻；迟到进入软成本，而非全部强制为零。两点距离 \(d_{k,l}\) 和时间 \(t_{k,l}\) 是输入，送达时刻由路线评估模块计算。</p>
+<p>\[TC=TD+DIS=\sum_{i\in O}\max\{D_i-ETA_i,0\}+\sum_{j=1}^{n_1+2n_2}d_{j-1,j}.\]</p>
+<p>第一项累计各单晚到的时间，第二项累计整条路程。比如甲两单分别晚 2、0 分钟，走 4 km，则按分钟与公里口径得分为 6；它不是 6 元。论文把不同单位直接相加，没有单独标定业务权重。改用米而不改权重就会让距离支配目标，这个分值不能直接解释为平台收益。</p>
+<p>给定路线的合理时间递推是“上一站离开时间加行程时间；取餐若太早就等待至 \(PT_i\)”。这里是在解释输入的含义；正文没有提供完整路线评估源程序，也未详细给出每种服务时长。预测出餐与实际出餐偏差如何进入执行过程，不属于本文已披露内容。</p>
+<h4>3.3 四个初始化规则，为什么要跑两次</h4>
+<p>先把已经取餐的 \(O_1\) 放在待取餐的 \(O_2\) 前面，各组内部排序，再依次插入。对 \(O_1\)，枚举单个送达点的可行位置；对 \(O_2\)，枚举取、送位置对，保证容量和先取后送，选 \(TC\) 最小者。这里“先处理 \(O_1\)”指构造顺序；后续插入 \(O_2\) 仍可能进入它们之间，不等于最终路线必须先送完所有旧单。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>规则</th>
+<th>具体排序</th>
+<th>动机与可能失败的情形</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REPT</td>
+<td>最早取餐时间升序</td>
+<td>先处理已备好的餐，少等厨房；但可能忽视远处快超时的客户</td>
+</tr>
+<tr>
+<td>RETA</td>
+<td>承诺送达时刻升序</td>
+<td>先安排截止更早者；但不考虑需要走多远</td>
+</tr>
+<tr>
+<td>RU</td>
+<td>紧迫度降序</td>
+<td>同时考虑剩余时间和距离</td>
+</tr>
+<tr>
+<td>RH</td>
+<td>\(O_1\) 按 ETA，\(O_2\) 按最早取餐时间</td>
+<td>已取餐单不再受出餐时间影响，分组使用不同排序</td>
+</tr>
+</tbody>
+</table></div>
+<p>RU 的式 2 是：</p>
+<p>\[\delta_i=\frac{d_i}{ETA_i-ct}.\]</p>
+<p>\(ct\) 是当前时刻。已取餐单的 \(d_i\) 是当前位置到客户的距离；未取餐单则是当前位置到餐厅再到客户的距离之和。图 4 的例子是 17:00 开始，A 距离 1 km、17:05 到期，B 距离 2 km、17:06 到期。RETA 先 A；RU 分别为 \(1/5=0.2\) 和 \(2/6\approx0.333\)，先 B，因为 B 对剩余时间要求更高。这个比值类似所需平均速度，但没有纳入备餐等待。分母为零或负数时如何处理，正文未交代，是复现必须补足的边界。</p>
+<p>作者分别用 RETA、RU 构造完整路线，取两者分值更低的作为初始解。不是每单临时挑一种规则；这是两次构造后比较。依据来自四规则实验，而非证明这两种在任何订单集合都最好。</p>
+<h4>3.4 破坏、重建与接受差解</h4>
+<p>IG 每轮随机选 \(d\) 张订单，把相关节点整组移走。对已取餐单只移送达点，对未取餐单同时移取送两点，避免剩下一半造成无法评估的路线。余下为 \(\pi_D\)，移走为 \(\pi_R\)。</p>
+<p>重建时再把 \(\pi_R\) 分成两类，两组都使用 RETA 排序，依次尝试所有可行插入，取当前最便宜的位置，直到全部插回。这样可以跳出只改一个节点时无法跨越的局部结构。假设 A、B 的交错顺序把 C 挤到最后，删掉 A、B 再插回可能同时改掉两个阻碍，普通单点移动未必做得到。</p>
+<p>局部搜索之后，新解更好就接受为下一轮起点，更差则以 0.5 概率接受。这个常数概率不是模拟退火的温度，也不按差了多少而递减；可能接受明显较差的解，以换取探索新区域。相等分值的处理、是否独立保留全程最优及最终返回哪一份，正文与简化流程图没有完整交代；不能补写成已审过代码的标准 IG 模板。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/183b2a6d485c6ef9aceb7ab8.png" alt="原文第 4 页 Figure 3：IG 的破坏、构造、局部搜索循环；接受规则需结合正文。" loading="lazy"></div><figcaption>原文第 4 页 Figure 3：IG 的破坏、构造、局部搜索循环；接受规则需结合正文。</figcaption></figure>
+<p>图 3 显示“初始化→破坏→构造→局部搜索→检查终止”的循环。它说明算法模块顺序，没有画出每一条可行性检查、差解接受和最优解保存逻辑，复现需要结合文字并保留未披露项。</p>
+<h4>3.5 四种局部搜索各自改什么</h4>
+<p>令 \(\Delta_i=D_i-ETA_i\)。负数表示提前送达、正数表示迟到。先做 backward adjustment：找最提前的送达点，把它往路线后面试放，让紧急单有机会先走；然后做 forward adjustment：找最迟到的送达点往前试放。这里明确“前、后”指访问顺序，不是地图方向。</p>
+<p>每个调整最多尝试 \(ls=5\) 次。Algorithm 1 用 <code>cnt</code> 计尝试数、<code>rank</code> 计当前看第几紧迫的单：若找到更小 \(TC\)，接受，重算所有 \(\Delta\)，把 rank 重置为 1；没有改善就看下一名；不存在提前单或迟到单就提前退出。失败的尝试也增加 cnt，因此不是“必须成功改善五次”。提前送达没有直接罚分，后移它的目的只是腾出位置减少其他单迟到。</p>
+<p>随后做 insertion neighborhood：取出一个节点，试放到其他位置，找到改善就更新；最后做 swap neighborhood：尝试交换节点。必须保持路线可行，不能把送餐交换到自家取餐前，或造成途中超载。两种邻域都持续检查直到整轮无改善。总体顺序是“提前单后移→迟到单前移→单点插入→两点交换”；订单整体移除属于外层破坏，不等同于此处单点移动。</p>
+<h4>3.6 实验设置与参数歧义</h4>
+<p>1500 个美团真实快照，按总取送节点数分为小于 10、10–20、大于 20 三组，各 500 个。每算法每实例运行 30 次，控制随机破坏与搜索带来的波动。机器是 2.2 GHz MacBook Pro、16 GB，Java/Eclipse；CPU 预算统一为 \(2N\) ms，这里用 \(N\) 表示节点数，避免与正文订单数 \(n\) 混淆。另测 10 ms、100 ms。</p>
+<p>原文破坏参数写成节点数的一半，却在方法中说移走 \(d\) 张订单。若全部未取餐，节点数一半恰为全部订单；混合订单时取整和具体抽样范围也未说明。<strong>不能把它无声改成“移走一半订单”</strong>。此处缺少代码，使重要超参数存在解释歧义。</p>
+<p>对照 TS 使用 Landrieu 等的禁忌搜索，禁忌表长 5；GA 使用 MX1 交叉和随机交换变异，种群 10，交叉率 1.0、变异率 0.1。相同 CPU 预算回答“在线给这么点时间谁更好”，不回答“充分收敛后谁更好”。TS 属于局部搜索元启发式，正文把它与 GA 统称进化算法，分类不够严格。</p>
+<p>\[ARPD=\frac{100}{M}\sum_{u=1}^{M}\frac{Alg_u-Best_u}{Best_u}.\]</p>
+<p>\(Best_u\) 是比较算法中该实例的最好解，<strong>不是认证全局最优</strong>。ARPD 为 0.47% 不能读成离全局最优仅 0.47%。<code>1% Worst</code> 是最差 1% 解的平均总成本，是经验尾部指标，不是最坏情形上界；30 次结果如何进一步汇总为该尾部集合，正文说明仍不充分。</p>
+<h4>3.7 五张表一起看：初始化、最终路线和时间预算</h4>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>初始化（Table I，全体）</th>
+<th style="text-align: right;">TC</th>
+<th style="text-align: right;">TD</th>
+<th style="text-align: right;">ARPD</th>
+<th style="text-align: right;">时间 ms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REPT</td>
+<td style="text-align: right;">10.96</td>
+<td style="text-align: right;">6.61</td>
+<td style="text-align: right;">24.17%</td>
+<td style="text-align: right;">0.50</td>
+</tr>
+<tr>
+<td>RETA</td>
+<td style="text-align: right;">9.84</td>
+<td style="text-align: right;">5.69</td>
+<td style="text-align: right;">10.59%</td>
+<td style="text-align: right;">0.48</td>
+</tr>
+<tr>
+<td>RU</td>
+<td style="text-align: right;">9.86</td>
+<td style="text-align: right;">5.64</td>
+<td style="text-align: right;">11.83%</td>
+<td style="text-align: right;">0.52</td>
+</tr>
+<tr>
+<td>RH</td>
+<td style="text-align: right;">10.84</td>
+<td style="text-align: right;">6.39</td>
+<td style="text-align: right;">22.58%</td>
+<td style="text-align: right;">0.52</td>
+</tr>
+</tbody>
+</table></div>
+<p>RETA 与 RU 的综合分最好，但 RU 的迟到项更低、综合分略高，说明路程也在影响排名。按规模展开的 Table II 仍是 RETA 的 TC 最低：小/中/大为 5.51/7.36/16.34，RU 为 5.60/7.54/16.59；REPT 为 5.92/8.29/18.67，RH 为 5.97/8.24/18.50。只按备餐时间排序更容易忽略送达紧迫性。大组初始化耗时约 1.12–1.28 ms，小组约 0.10–0.12 ms，后续搜索另计。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/528dcd50af2251311844e0f5.png" alt="原文第 7 页 Table III：统一 2N ms 预算下的平均成本和最差 1% 成本；ARPD 参照比较算法的最好解。" loading="lazy"></div><figcaption>原文第 7 页 Table III：统一 2N ms 预算下的平均成本和最差 1% 成本；ARPD 参照比较算法的最好解。</figcaption></figure>
+<p>Table III 的 \(2N\) ms 预算下，小组 IG/TS/GA 的 TC 为 4.83/4.98/4.90，中组 5.88/6.23/6.04，大组 12.53/13.75/13.73；对应 IG 的 ARPD 为 0.47/0.52/2.38%，大组 TS、GA 为 15.21/15.26%。大组 IG 的 TD=7.28、距离=5.25，两者均优于这组对照的 8.29/5.47 与 8.25/5.48。最差 1% 成本，大组是 93.43 对 97.54/97.68，小组为 28.08 对 30.48/29.24，中组为 35.08 对 37.56/36.11；平均优势也出现在所报告的尾部，但尾部仍远高于平均。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>大节点组</th>
+<th style="text-align: right;">IG TC / ARPD</th>
+<th style="text-align: right;">TS TC / ARPD</th>
+<th style="text-align: right;">GA TC / ARPD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10 ms（Table IV）</td>
+<td style="text-align: right;">12.83 / 3.01%</td>
+<td style="text-align: right;">13.84 / 14.95%</td>
+<td style="text-align: right;">15.18 / 31.82%</td>
+</tr>
+<tr>
+<td>\(2N\) ms（Table III）</td>
+<td style="text-align: right;">12.53 / 2.38%</td>
+<td style="text-align: right;">13.75 / 15.21%</td>
+<td style="text-align: right;">13.73 / 15.26%</td>
+</tr>
+<tr>
+<td>100 ms（Table V）</td>
+<td style="text-align: right;">12.38 / 2.34%</td>
+<td style="text-align: right;">13.75 / 15.57%</td>
+<td style="text-align: right;">12.74 / 5.64%</td>
+</tr>
+</tbody>
+</table></div>
+<p>10 ms 下 GA 来不及充分搜索，100 ms 下明显追近。IG 在小/中组的 TC 从 10 ms 的 4.85/5.92 变为 100 ms 的 4.82/5.87，改善较小；大组最差 1% 成本从 95.67 降至 92.22，TS 仍为 97.54，GA 从 100.61 降到 95.62。ARPD 的参照最好解会随比较预算变化，不能把不同表里 TS 的 ARPD 上升误解成其绝对成本变坏。</p>
+<p>初始化比较算组件实验；预算改变算敏感性实验。没有独立移除每个局部算子、改变 0.5 接受概率、改变破坏规模的完整消融，所以不能确定哪一组件贡献最多。没有真实上线 A/B 或完整日仿真。</p>
+<h3 id="simulator-ieee9185864">4. 实体、时间与源码范围</h3>
+<p>全文、完整标题与作者/GitHub 检索未定位到作者公开实现。论文明确说用 Java 实验，但没有提供可检查的 Java 仓库。本节据论文还原求解器行为，<strong>不是代码执行验证</strong>。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>一次调用中的表示与变化</th>
+<th>未披露的执行行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>商家</td>
+<td>取餐坐标、最早可取时间；评估路线时可能产生等待</td>
+<td>多订单厨房排队、产能、实际出餐随机过程</td>
+</tr>
+<tr>
+<td>用户</td>
+<td>送达点、承诺时刻，晚到贡献 TD</td>
+<td>下单需求模型、取消、满意度反馈</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td>一个当前位置、初始负载、已取/待取两类订单；输出访问序列</td>
+<td>接单/拒单、班次、路线不服从、逐秒移动</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>调用 IG，限时内反复破坏重建和局部改进</td>
+<td>多骑手匹配、重派、全城模拟时钟</td>
+</tr>
+</tbody>
+</table></div>
+<p>示例：12:00 甲载 A、B，C 在 12:04 出餐。评估 <code>送 A→取 C→送 B→送 C</code> 时，先计算到 A 的时间并减负载，再算到 C 餐厅的时间，若 12:03 到就等 1 分钟，然后增负载。每个候选序列都重新算完，才比较 TC。<strong>搜索迭代不是现实时间步</strong>：做第十轮破坏时，不能让甲在现实里也移动十步；优化开始时的状态仍是同一快照。</p>
+<p>两点之间的 \(t_{k,l}\)、\(d_{k,l}\) 从外部给定；正文不说明来自道路最短路、地图 API 还是其他估算，也没有 A* 或 Dijkstra 的实现可定位。若将它接入模拟器，应该由环境推进到下个事件，再用新状态调用求解器；这属于项目设计建议，不是论文现有功能。</p>
+<h3>5. 相关工作、局限与公开讨论</h3>
+<p><a href="#paper-tsfh2019" data-deep-read="true">TSFH</a>也采用插入和提前/迟到调整，但本文增加两种初始化取优、随机按订单破坏重建、差解接受、插入/交换邻域；不能仅把 IG 描述为“又一种贪心”。<a href="#paper-ieee9185791" data-deep-read="true">MGI/MRI</a>还要决定订单归哪名骑手，目标是专属骑手分配比例，本篇则最小化固定骑手路线成本，实验分值不能横向排高低。</p>
+<p>容量、时间矩阵、破坏规模解释、零/负剩余时间、差解接受后的最优保存、服务时长均影响复现。作者将多骑手、动态与不确定性、更广泛启发式或 RL 列为未来工作，不能提前算作本篇能力。后续文献检索发现存在引用本篇的其他 IG 工作，但本轮没有取得能够补齐原实现的作者代码；不把引用关系当作代码一致性证据。</p>
+<p>X、Reddit、知乎、小红书的完整标题组合检索未发现可核验的实质讨论，不杜撰评价。覆盖：§I 相关工作，§II 输入/全部约束/式 1，§III 初始化四规则/式 2/破坏重建/接受/Algorithm 1，§IV 设定/式 3/Tables I–V，§V 扩展边界及参考文献；无技术附录。</p></div><div class="qa-log"><strong>本次要求 · 2026-11-09</strong><p>精读指定论文，并额外核查各实体、时间步、路线和接拒行为及代码实现。已完成全文与原图核对；源码不可得处明确标注依据和边界。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-tsfh2019" data-paper-id="tsfh2019" data-deep-read="true"><div class="kicker">SELECTED PAPER · 03</div><h2>A Two-Stage Fast Heuristic for Food Delivery Route Planning Problem</h2><p class="lede">用地理剪枝和局部调整加速外卖路线规划</p><div><span class="chip">vehicle routing</span><span class="chip">insertion heuristics</span><span class="chip">geographic clustering</span><span class="chip deep-label">Deep Read</span></div><div class="paper-summary"><p class="meta">Huanyu Zheng；Shengyao Wang；Ying Cha；Feng Guo；Jinghua Hao；Renqing He；Zhizhao Sun<br>Meituan-Dianping Group<br>2019-10-20 · 2019 INFORMS Annual Meeting / Meituan technical collection</p><p><strong>第一作者：</strong>Huanyu Zheng；<strong>末作者：</strong>Zhizhao Sun；<strong>通讯作者：</strong>not explicitly listed。</p><p><strong>选读原因：</strong>用户明确指定；外卖派单与路线规划项目。<strong>一句话：</strong>按 ETA 贪心插入，用地理分组减少候选，再移动过早或迟到的送达点。</p><p><a href="https://s3plus.meituan.net/v1/mss_e63d09aec75b41879dcb3069234793ac/file/%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87%E7%AF%87.pdf" target="_blank" rel="noopener noreferrer">论文来源</a> · <a href="https://s3plus.meituan.net/v1/mss_e63d09aec75b41879dcb3069234793ac/file/%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87%E7%AF%87.pdf" target="_blank" rel="noopener noreferrer">全文 PDF</a></p><details><summary>English abstract · 原文</summary><blockquote>Online food-delivery platforms are expanding choice, allowing customers to order from a wide variety of restaurants. As an industrial level technology, route planning algorithm is required to be fast enough. This paper proposes a two-stage fast heuristic for route planning, which solves the problem at millisecond level. To speed up the algorithm, we further utilize geographic information so that invalid search attempts are prevented. Finally, we compare our algorithm with brute-force algorithm and several state-of-the-art algorithms to show its eﬀectiveness and eﬃciency.</blockquote></details></div><div class="deep-reading-content"><h3>1. 摘要完整中文翻译与版本</h3>
+<p>在线餐饮配送平台扩大了消费者的选择，使顾客能够从种类繁多的餐厅点餐。作为工业级技术，路线规划算法必须足够快。本文提出一种两阶段快速路线规划启发式，在毫秒量级求解问题。为进一步加速，算法利用地理信息避免无效的搜索尝试。最后，通过与暴力枚举算法和若干已有先进算法比较，展示其有效性与效率。</p>
+<p>本次读完用户 <code>2026_INFORMS/papers</code> 文件夹内唯一论文全部 9 页，并核对<a href="https://s3plus.meituan.net/v1/mss_e63d09aec75b41879dcb3069234793ac/file/%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87%E7%AF%87.pdf" target="_blank" rel="noopener noreferrer">美团官方托管版本</a>。首页为 2019 INFORMS Annual Meeting，Seattle，2019-10-20 至 10-23，收录于美团技术材料。页眉 DOI <code>10.1287/infp.2019.XXXX</code> 和页码 <code>000–000</code> 是占位符，<strong>不作为有效 DOI 或正式出版页码</strong>；无另附技术附录。</p>
+<h3>2. 作者与机构</h3>
+<p>作者依次为 Huanyu Zheng、Shengyao Wang、Ying Cha、Feng Guo、Jinghua Hao、Renqing He、Zhizhao Sun，全部署名 Meituan-Dianping Group；第一作者 Huanyu Zheng，末作者 Zhizhao Sun，通讯作者未明确标注。产业作者的个人主页本轮未可靠消歧，以<a href="https://s3plus.meituan.net/v1/mss_e63d09aec75b41879dcb3069234793ac/file/%E5%AD%A6%E6%9C%AF%E8%AE%BA%E6%96%87%E7%AF%87.pdf" target="_blank" rel="noopener noreferrer">机构托管论文</a>作为身份入口。可核验的同团队技术工作还有 <a href="#paper-ieee9185791" data-deep-read="true">2020 年 MGI/MRI 派单</a>和 <a href="#paper-ieee9185864" data-deep-read="true">IG 路线规划</a>，共同关注在很短计算时间内处理外卖取送任务。</p>
+<h3>3. 详细技术精读</h3>
+<h4>3.1 为什么给一个骑手排路线也很难</h4>
+<p>假设甲同时负责 10 单，有 10 个取餐点和 10 个送餐点。即使只要求每单先取后送，不检查容量，也有：</p>
+<p>\[\frac{(2n)!}{2^n}\quad(n=10\text{ 时约为 }2.38\times10^{15})\]</p>
+<p>种次序。分母来自每对取送两个相对次序中仅允许一个，不是每单只有两个位置可选。平台在派单时可能为许多“订单—骑手”候选重复调用路线计算，所以一次只慢几毫秒也会放大。</p>
+<p>本文输入是某骑手已分配的任务，输出取送顺序；没有直接决定全城订单归属。传统 PDPTW 的精确算法包括列生成、分支割、分支定价割，元启发式包括禁忌搜索、邻域搜索、退火等；它们能投入更长时间。本文要在紧预算下先构造可行路线，再做小范围改进。</p>
+<h4>3.2 目标、约束与记号中容易忽略的歧义</h4>
+<p>原文式 1 写为：</p>
+<p>\[\min\sum_{i=1}^{n}[\max(T_i-t_i,0)+d_i].\]</p>
+<p>\(t_i\) 是送达节点向顾客展示的 ETA，\(T_i\) 是候选路线预测的行动时刻，\(d_i\) 是前一点到当前点的距离。实验明确迟到以分钟、距离以公里计。晚 3 分钟且总路长 5 km 得分为 8；这是加权系数隐含为 1 的综合分，不是货币成本。原式把送达时间和全部路段写在同一个求和中，但没有定义取餐点的 \(t_i\)，严谨实现应分开“送达点迟到求和”和“所有路段距离求和”；这是对表达歧义的澄清，不声称原代码已经如此处理。</p>
+<p>先取后送和携带容量是明确硬约束，晚到是软惩罚。称为带时间窗问题，不意味着禁止任何迟到。本文没有像另两篇那样完整给出最早出餐等待的递推，更没有披露随机备餐执行器；不能凭行业常识补成代码事实。</p>
+<h4>3.3 第一阶段：按 ETA 构造路线</h4>
+<p>先把订单按 ETA 由早到晚排序。第一单只有取再送一种合法相对次序；第二单的取送点插入原有一对节点，有 6 种保持两对先取后送的交错。逐一评估目标与容量，选当前最便宜的方案。后续每单同样操作，直到所有点都进入路线。</p>
+<p>例如先有 <code>取 A→送 A</code>，加 B 时可以 <code>取 A→取 B→送 A→送 B</code>，也可以 <code>取 B→取 A→送 B→送 A</code> 等；若容量只有 1，就不能同时拿着 A、B。排序影响早期留下的空位，后插订单只能在已有结构中寻找机会，所以这是贪心构造，不保证最优。</p>
+<h4>3.4 地理聚类究竟如何做</h4>
+<p>餐厅常集中在商业楼，顾客常集中在住宅区。算法据此减少跨区域反复试插。正文称 hierarchical clustering，但给出的具体程序是顺序建中心：设范围 \(D\)，例子为 100 m；扫描点 \(i\)，若它尚未分类，就以它为新中心。再看其他点 \(j\)：未分类且 \(d_{ij}&lt;D\) 时加入；已经属于中心 \(k\) 且自己不是中心时，若 \(d_{ij}&lt;d_{kj}\)，改归 \(i\)。</p>
+<p>这不是调用一个通用凝聚式层次聚类函数即可复现。中心不被重新分类，扫描顺序会影响结果；100 m 是举例，正文未给完整调参过程。距离相等如何处理、已有路线的组是否必然连续，也没有展开。</p>
+<p>Lemma 1 说：属于组 \(i\) 的新点，插到它前面的组不如插到自身组。直觉是本来就要到这个区域，提前绕过去再回来增加路程，也使已有任务更晚。Lemma 2 说：若放到自身组后面的另一个组内部，不如放到那个组结束之后；这样减少来回打断。两者合起来，只尝试自身组内及其后各组边界。</p>
+<p><strong>保证的边界：</strong>两段证明仅用“距离更长、没有送达点受益”解释，未给覆盖任意几何、紧迫期限、容量和不连续组的严格条件。比如某客户虽然属于后面的住宅组，却已快超时，提前送它可能值得多走路。实际 Table 1 也出现剪枝后平均分稍差，所以应把它当作经验加速，不应当作任意实例下都不丢最优解的精确剪枝定理。</p>
+<h4>3.5 第二阶段：核对 Figure 8 后再解释前后移动</h4>
+<p>局部搜索想把很早送达的点后移，给着急的单让路；把迟到严重的点前移，以减少迟到。每次仅在总分更小时保留新路线，仍要满足先取后送与容量。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/e6595a15282184a880a642f4.png" alt="原文第 6 页 Figure 8：提前/迟到超过 5 分钟才触发对应移动；正文 §3.2 的方向及图号存在不一致。" loading="lazy"></div><figcaption>原文第 6 页 Figure 8：提前/迟到超过 5 分钟才触发对应移动；正文 §3.2 的方向及图号存在不一致。</figcaption></figure>
+<p>原图 8(A) 明确写“找到最提前的送达点；是否提前超过 5 分钟；若是，把它 backward 到最佳位置”；8(B) 写“找到最迟到的点；是否晚超过 5 分钟；若是，forward 到最佳位置”。按访问顺序理解，就是<strong>提前超过 5 分钟者往后、迟到超过 5 分钟者往前</strong>。这两项阈值出现在图中，不能只看抽取正文而漏掉。</p>
+<p>§3.2 文字却把“最迟到”和“时间最充足”与两个方向、图号相反地配对，存在内部不一致。本报告以图中的可执行条件解释，保留歧义；没有源码就无法判定实验实际用哪版。图中改善后会再检查，但没有像 IG 那样给出固定尝试深度，若一直选到无改善的同一极值节点，如何避免空转也未明确。</p>
+<p>教学例子：A 预计 12:05 送到但承诺 12:20，B 预计 12:18 才到而承诺 12:10。若把 A 往后放使它 12:12 到、B 12:11 到，A 仍不迟，B 从迟 8 分钟降到迟 1 分钟；若路程未增加超过 7 个计分单位，总分改善。不是要故意让所有单都压着截止时间送，而是避免过早服务宽松订单阻碍紧急单。</p>
+<h4>3.6 实验范围、初始化消融和精确对照</h4>
+<p>实例随机取自真实路线规划问题，按<strong>取餐加送达节点总数</strong>分为小于 10、10–20、大于 20，不能写成相同数量的订单。机器是 2.2 GHz MacBook Pro、16 GB、Java/Eclipse；报告平均分和平均运行毫秒，未披露每组样本数、随机种子和完整实例。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Table 1</th>
+<th style="text-align: right;">普通初始化：分值 / ms</th>
+<th style="text-align: right;">地理加速初始化：分值 / ms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>小于 10 节点</td>
+<td style="text-align: right;">28.59 / 0.14</td>
+<td style="text-align: right;">28.67 / 0.10</td>
+</tr>
+<tr>
+<td>10–20 节点</td>
+<td style="text-align: right;">46.29 / 0.37</td>
+<td style="text-align: right;">46.11 / 0.21</td>
+</tr>
+<tr>
+<td>大于 20 节点</td>
+<td style="text-align: right;">240.88 / 2.60</td>
+<td style="text-align: right;">242.48 / 1.08</td>
+</tr>
+</tbody>
+</table></div>
+<p>中组少用 43.24% 时间；大组少用 58.46% 时间，但得分从 240.88 升到 242.48，约差 0.66%；小组也略差。作者说质量近似不受损，应理解为均值接近，而非严格不降低。这个比较针对第一阶段，不是完整 TSFH 只有 0.10–1.08 ms。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/cc2786106437481853ad70c0.png" alt="原文第 7 页 Tables 1–3：加速剪枝可能略降质量；完整算法大组 7.08 ms，精确最优对照只在小组。" loading="lazy"></div><figcaption>原文第 7 页 Tables 1–3：加速剪枝可能略降质量；完整算法大组 7.08 ms，精确最优对照只在小组。</figcaption></figure>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Table 2：完整算法</th>
+<th style="text-align: right;">总分</th>
+<th style="text-align: right;">迟到分钟和</th>
+<th style="text-align: right;">路程 km</th>
+<th style="text-align: right;">平均 ms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TSFH，小组</td>
+<td style="text-align: right;">27.35</td>
+<td style="text-align: right;">22.94</td>
+<td style="text-align: right;">4.40</td>
+<td style="text-align: right;">0.41</td>
+</tr>
+<tr>
+<td>枚举，小组</td>
+<td style="text-align: right;">27.17</td>
+<td style="text-align: right;">22.79</td>
+<td style="text-align: right;">4.38</td>
+<td style="text-align: right;">199.31</td>
+</tr>
+<tr>
+<td>TSFH，中组</td>
+<td style="text-align: right;">42.48</td>
+<td style="text-align: right;">37.65</td>
+<td style="text-align: right;">4.83</td>
+<td style="text-align: right;">1.01</td>
+</tr>
+<tr>
+<td>TSFH，大组</td>
+<td style="text-align: right;">223.30</td>
+<td style="text-align: right;">214.79</td>
+<td style="text-align: right;">8.51</td>
+<td style="text-align: right;">7.08</td>
+</tr>
+</tbody>
+</table></div>
+<p>小组均值相对枚举高约 0.66%，用时约为 0.206%，约快 486 倍。注意是均值比，不是所有实例都离最优不到 1%。中大组没有精确解，不能延伸这一 gap。完整算法大组要 7.08 ms，中组 1.01 ms，所以不能写“全部规模小于 1 ms”。图表是这两项边界的直接证据。</p>
+<h4>3.7 与 VDS、SA 的比较及没有做的消融</h4>
+<p>Table 3 中 VDS 为变深度搜索，SA 为模拟退火；它们是已有单车辆取送路线方法。小组 VDS/SA 得分为 35.17/36.87，耗时 3.51/25.64 ms；中组 77.34/101.02，耗时 6.23/35.59 ms；大组 877.80/1195.50，耗时 25.96/64.71 ms。TSFH 在这组实现中综合分更低且更快。</p>
+<p>但 VDS 的路程在小/中/大组是 4.23/4.68/8.18 km，比 TSFH 的 4.40/4.83/8.51 还短；VDS 输在迟到，分别为 30.95/72.66/869.63 分钟。<strong>本文不是“把路线距离做得最短”</strong>，而是在当前单位权重下更好地处理送达次序。大组几百分钟是跨订单累计迟到，不应称每个顾客等了几百分钟。</p>
+<p>论文给了地理加速前后的比较，也能比较完整法与初始化，但没有分别去掉两个局部调整、改变 100 m 聚类范围或 5 分钟触发条件的完整消融。VDS、SA 具体调参和相等计算预算说明不充分，因此结论应限于所报告实现与配置。没有全城动态订单闭环，也没有线上 A/B。</p>
+<h3 id="simulator-tsfh2019">4. 各实体在“时钟步”中做什么，代码能查到什么</h3>
+<p>按完整标题、作者和 GitHub 检索未定位到作者公开的 TSFH Java 仓库。网上同名课程项目不能当作原论文实现。官方美团研究挑战仓库提供数据和说明，也不包含这篇 2019 算法的模拟器。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>本文真正给出的表示或动作</th>
+<th>缺失的外卖模拟器细节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>商家</td>
+<td>餐厅取餐坐标，地理聚类中的节点</td>
+<td>厨房队列、出餐过程、接拒商家订单</td>
+</tr>
+<tr>
+<td>用户</td>
+<td>客户坐标、送达 ETA，迟到进入目标</td>
+<td>用户到达过程、取消、选店与价格响应</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td>给定一组任务和容量，按输出次序取送</td>
+<td>骑手接拒订单、随机行为、上线下线与移动步长</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>调用初始化、聚类剪枝、局部调整，返回路线</td>
+<td>外层指派、等待订单池、重派以及统一模拟时钟</td>
+</tr>
+</tbody>
+</table></div>
+<p>这里没有“每个时钟步四类 agent 各行动一次”的程序。一个搜索步骤只是修改待选访问顺序并重新计算预计时刻，骑手并没有真的骑过那条路。假设现实 12:00 调用 TSFH，计算花 7 ms，返回 <code>餐厅 A→客户 B→客户 A</code>；下一次输入骑手状态如何产生、7 ms 是否计入运营延迟，文章没有说明。</p>
+<p>地理聚类是减少“在哪个停靠位置插入”的尝试，不是道路寻路算法；没有道路图、路口、转向、限行、A* 或 Dijkstra 源码。要接入美团项目模拟器，可把 TSFH 放在 <code>给定骑手任务→返回可行取送序列</code> 的接口后面；环境仍必须自己维护当前在途段、已取餐集合、真实备餐和服务完成事件。以上接口划分是基于论文的项目建议，不能反称作者已实现。</p>
+<h3>5. 相关工作、局限与公开讨论</h3>
+<p>与 <a href="#paper-ieee9185864" data-deep-read="true">IG</a>相比，TSFH 用地理剪枝换速度、仅做两种时间导向调整；IG 增加随机按订单破坏和重建、两种初始化、插入/交换邻域。与 <a href="#paper-ieee9185791" data-deep-read="true">MGI/MRI</a>相比，本篇没有在多骑手之间竞争分配订单，也没有专属骑手 ODR 目标。三者实验数据、任务和分值不同，不能直接把运行时间数字当作公平排名。</p>
+<p>本轮未核验到足以补足原始实现的后续公开代码。本文主要复现风险是局部搜索图文冲突、剪枝引理条件不足、备餐与时间递推未详、单位权重隐含、精确最优比较仅覆盖小组。论文导言中的极端用户数量显然不合常理，本报告不作为产业事实引用。</p>
+<p>X、Reddit、知乎、小红书的完整标题组合检索没有找到可核验的实质技术评论。覆盖：§1–2 动机/相关工作，§3.1 贪心插入/聚类/两个引理，§3.2 与 Figure 8 的逐项核对，§4 三表/枚举复杂度/基线比较，结论及参考文献；无技术附录。</p></div><div class="qa-log"><strong>本次要求 · 2026-11-09</strong><p>精读指定论文，并额外核查各实体、时间步、路线和接拒行为及代码实现。已完成全文与原图核对；源码不可得处明确标注依据和边界。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-auad2026" data-paper-id="auad2026" data-deep-read="true"><div class="kicker">MOVED FROM 11·05 · 04</div><h2>Data-Driven Optimization for Meal Delivery: A Reinforcement Learning Approach for Order-Courier Assignment and Routing at Meituan</h2><p class="lede">用强化学习与启发式搜索协同优化美团派单和路线</p><div><span class="chip">reinforcement learning</span><span class="chip">order dispatching</span><span class="chip">vehicle routing</span><span class="chip">value function approximation</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Ramón Auad；Felipe Lagos；Tomás Lagos<br>Amazon / Universidad Católica del Norte / Universidad Adolfo Ibáñez / University of Sydney</p><p><strong>首发：</strong>2026-04-27；<strong>当前版本日期：</strong>2026-04-27；Transportation Science<br><strong>通讯 / 联系作者：</strong>Ramón Auad</p><p><a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://optimization-online.org/wp-content/uploads/2025/10/Meituan_INFORMS_TSL_OO.pdf" target="_blank" rel="noopener noreferrer">PDF</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；近期精读偏好：RL for logistics。</p><p class="notice"><strong>中文摘要概述：</strong>学习什么时候暂缓派单，并用传统路线搜索产生可执行方案。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>The rapid growth of online meal delivery has introduced complex logistical challenges</blockquote><p><a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：公开作者稿全文 40 页、正文 §1–7 与附录 A–C 已覆盖；完整精读。</p></div>
+<p class="notice">由 2026-11-05 报告整体迁入，原摘要、全部精读、原图与问答保留。新增 <a href="#simulator-auad2026">第 7 节：实体与模拟器核查</a>。</p><div class="deep-reading-content"><h3>1. 摘要中文翻译与阅读版本</h3>
+<p><strong>精读日期：2026-11-09。</strong> 技术依据为 <a href="https://optimization-online.org/wp-content/uploads/2025/10/Meituan_INFORMS_TSL_OO.pdf" target="_blank" rel="noopener noreferrer">Optimization Online 作者稿（40 页，含附录 A–C）</a>，期刊入口为 <a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">Transportation Science</a>。公开稿保留投稿模板文字；以下指出的疑点仅针对该稿，不推断最终期刊版仍有同样问题。</p>
+<p>在线餐饮配送的快速增长带来复杂的物流挑战：平台必须在需求不确定、骑手自主决策和服务效率之间动态分配订单。传统派单通常着眼短期成本，难以反映当前分配对全系统长期表现的影响。本文提出把强化学习与超启发式优化结合的框架，改进连续的订单分配和路线决策。方法把 n-step SARSA、价值函数近似和包含七种底层启发式的多臂赌博机搜索结合起来，显式描述系统状态的变化，在当下效率和后续运营表现间权衡。线性价值函数近似使大规模状态与动作之间能够共享学习结果，同时控制计算成本。作者用美团运营数据建立包含订单变化、骑手行为和服务时间的模拟环境。计算实验报告，通过有策略地推迟订单分配，相对基线降低约 12% 成本；改善主要发生在需求高、运力不足时，而增加 10% 骑手连接概率的收益甚至超过单纯改善算法。论文同时提供了运力管理和派单策略方面的启示。这里的效果均来自仿真，并非线上 A/B 实验。</p>
+<h3>2. 作者、机构与研究位置</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文首页机构</th>
+<th>本次阅读中的位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ramón Auad</td>
+<td>Amazon；Universidad Católica del Norte</td>
+<td>第一作者；餐饮配送与动态运力研究</td>
+</tr>
+<tr>
+<td>Felipe Lagos</td>
+<td>Universidad Adolfo Ibáñez</td>
+<td>超启发式与组合优化</td>
+</tr>
+<tr>
+<td>Tomás Lagos</td>
+<td>The University of Sydney</td>
+<td>运营与决策分析</td>
+</tr>
+</tbody>
+</table></div>
+<p>机构以所读 PDF 署名为准。新作者资料入口包括 <a href="https://pure.uai.cl/es/persons/felipe-lagos/" target="_blank" rel="noopener noreferrer">Felipe Lagos 的 UAI 机构页</a>与 <a href="https://www.unsw.edu.au/staff/tomas-lagos" target="_blank" rel="noopener noreferrer">Tomás Lagos 的 UNSW 机构页</a>。后者现列 UNSW，不反写成投稿时的 University of Sydney。UAI 页列有 Multi-armed bandit-based hyper-heuristics for combinatorial optimization problems（2024）和三位作者合作的 The Online Shortest Path Problem: Learning Travel Times Using a Multiarmed Bandit Framework（2025），分别对应算子选择与在线行程学习背景；这里只核对书目关系，不把它们当成本篇实验的独立复现。推荐来自本次明确选择的 Meituan challenge 数据线，以及 reinforcement learning / vehicle routing 主题。</p>
+<h3>3. 详细技术精读</h3>
+<h4>3.1 午高峰的一次派单：输入、动作与信息边界（A1–A3）</h4>
+<p>设骑手 A 正去餐厅取旧订单，骑手 B 很空闲但远一些，新订单还有一段时间才出餐。立刻给 A 可能少走路，却让旧订单迟到；给 B 可能浪费路程；等下一轮也许能找到更合适的骑手。本文要同时选择发给谁、是否等待、如何把取送任务插入路线。它不是只预测 ETA，也不是只让网络从骑手名单里选一个编号。</p>
+<p>每 30 秒决策一次。状态包含时段、工作日标识、活跃订单、在线骑手、已工作时长、未分配订单、拒单历史、订单归属、当前取餐／送餐服务已持续时间、各骑手有序任务表与位置。忙碌骑手的位置编码有时表示当前前往的目的地，而非即时 GPS；这影响插单距离的含义。订单的餐厅、客户、承诺送达时间和 ready time 在模型中于到单时已知；<strong>这比真实系统只能预测出餐时间的情形更强</strong>。骑手何时上线／下线事先不对规划器公开，但模拟器知道潜在班次结束时刻，用来拒绝会延长班次的订单。</p>
+<p>可行性由构造过程保证：已接订单不能换骑手；每轮每名骑手最多一份新 offer；同时未完成订单不超过 4；取餐必须先于送达；正在执行的第一个任务不变；拒过某单的骑手不再收到该单。新 offer 若被拒，骑手保留原路线；若接受，采用插入后的路线。没有新 offer 的骑手也可重新排列尚未执行的任务。空闲且无任务时，模拟器让骑手向最近餐厅移动。这些约束意味着“优化路线”并不等于可以任意撤销历史承诺。</p>
+<p>每轮依次发生：形成 offer 和候选路线 → 揭示接单／拒单、到单、上下线、任务完成 → 更新订单集合、拒单集合、路线时刻及位置 → 进入下一轮。服务时间和旅行时间随机。已经到达但服务未完成的任务要重新估计完成时刻，不能只因计划时间已过就删除。</p>
+<p>用正成本记号解释实际目标：</p>
+<p>\[c_t=K^{late}\sum_{o\in D_t}(t_o^{deliver}-d_o)_++K^{dist}L_t+K^{lost}\lvert U_t\rvert,\qquad r_t=-c_t.\]</p>
+<p>\(D_t\) 是这一轮真正送完的订单，\(d_o\) 是承诺时刻，\(L_t\) 是这一轮开始执行任务计入的路程，\(U_t\) 是被判丢失的订单。迟到成本在送达后兑现，未必归属于同一轮新 offer。参数为距离权重 1、迟到权重 4、丢单权重 16；它们是模拟目标的权重，不是已经校准的利润或人民币成本。策略意图是最小化累计折扣成本，等价于最大化负成本奖励。后文算法混用这两种符号，需要复现前统一。</p>
+<h4>3.2 价值函数究竟学什么（A4）</h4>
+<p>\[\widehat Q(s,x;\theta)=c_0(s,x)+\theta^\top\phi(s,x).\]</p>
+<p>\(c_0\) 不由网络重新预测，而是候选路线相对原路线的即时增量：</p>
+<p>\[c_0(s,x)=\sum_{c\in C^{offered}}\left[K^{dist}(\delta(\rho_c^{prop})-\delta(\rho_c))+K^{late}(\zeta(\rho_c^{prop})-\zeta(\rho_c))\right].\]</p>
+<p>\(\delta\) 把路线各段距离相加；\(\zeta\) 把各送达任务预计超出承诺时刻的部分相加。对新单，插入位置不同就会改变后续旧单的预计迟到。因此即使只用 \(c_0\)，也已经比“最近骑手”复杂。求和写在收到 offer 的骑手上；单纯重排但没有新 offer 的路线如何进入这一成本，公开稿表达不够清楚，不能默认为已完整覆盖。</p>
+<p>线性残差 \(\theta^\top\phi\) 用于补充未来影响。各特征的具体用途如下。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>特征</th>
+<th>定义和设计原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>常数项</td>
+<td>\(\phi_0=1\)，允许整体成本基线平移</td>
+</tr>
+<tr>
+<td>订单／骑手比</td>
+<td>活跃订单数除以 \(\max(\lvert C\rvert,1)\)，反映总体压力；避免无骑手时除零</td>
+</tr>
+<tr>
+<td>未 offer 订单／骑手比</td>
+<td>在候选动作之后仍未发出的订单数除以上述分母，区分不同动作留下的压力</td>
+</tr>
+<tr>
+<td>未 offer 订单数</td>
+<td>即使比例相同，大市场积压的绝对量也不同</td>
+</tr>
+<tr>
+<td>未 offer 订单的 deadline 分布</td>
+<td>按未来时间窗计数，并另列更远的订单；同样剩 10 单，5 分钟内到期与半小时后到期不是同一种压力</td>
+</tr>
+<tr>
+<td>未收到 offer 的骑手数</td>
+<td>保留运力的代理，<strong>不等于无任务的空闲骑手数</strong></td>
+</tr>
+<tr>
+<td>本轮 offer 的餐厅—客户平均距离</td>
+<td>反映新接任务可能占用多久；无 offer 时分母下限为 1</td>
+</tr>
+</tbody>
+</table></div>
+<p>特征会随候选动作改变，所以搜索可以借它比较“现在派”与“留下”等动作。线性形式计算便宜、梯度就是特征；代价是不同街区的非线性拥堵、骑手互相干扰很难由这些全局聚合量表达。原稿给出 \(m_{feat}=8\)、窗口宽 1200 秒、\(n_{feat}=14\)，但逐项编号、远期桶与总维数有冲突；不能不核对代码便据此生成一个声称精确复现的 14 维实现。</p>
+<h4>3.3 n-step SARSA、经验回放与最优参数保留（A5）</h4>
+<p>标准的成本形式可写成下面的解释式，帮助看懂“把一段真实成本加上末端预测”这一结构：</p>
+<p>\[G_t^{(n)}=\sum_{i=0}^{n-1}\gamma^i c_{t+i}+\gamma^n\widehat Q(s_{t+n},x_{t+n};\theta).\]</p>
+<p>\(n\) 是向前累计的决策步数，\(\gamma\) 折扣远期成本。\(n\) 大时更多使用真实模拟成本、较少依赖末端自举；它并不普遍保证更低方差。论文用“降低方差”描述收益，但一般 n-step 存在偏差—方差权衡。</p>
+<p>算法先用保留参数 \(\theta_{best}\) 选择当前动作，再观察转移。积累足够步数后，把早先的 \((s,x)\) 与扣掉即时成本的目标 \(G'=G-c_0(s,x)\) 放入容量 \(m\) 的循环缓冲区，随机取最多 \(b\) 条。更新等价于：</p>
+<p>\[\theta\leftarrow\theta+\alpha\left[G'-\theta^\top\phi(s,x)\right]\phi(s,x).\]</p>
+<p>这让学习器拟合“即时成本以外还会发生什么”，而不是重复拟合容易算出的插单成本。每 200 步对当前参数跑一次完整模拟日；若成本低于旧最好参数，替换 \(\theta_{best}\)。因此训练参数和实际选动作所用参数可能不同，回放里也混有较早策略数据。它不是教科书中严格按同一当前策略即时更新的 SARSA，不能直接援引标准收敛结论。</p>
+<p><strong>公开伪代码的复现疑点：</strong> Algorithm 1 实际写的是从 \(t-n+1\) 开始、累加到 \(n-2\) 的奖励，再加 \(\gamma^{n-1}\widehat Q(s_t,x_t)\)，却存到 \((s_{t-n},x_{t-n})\)；文字和代码对扣除哪个时刻的 \(c_0\) 也不同。再加前文 \(r\) 为负成本、后文却最小化 \(\widehat Q\)，不能把上述标准解释式当作作者代码的逐字转录。原稿称 \(n=2\) 等价 Q-learning，也依赖动作是否真的取贪心最优、符号与时标如何实现。</p>
+<h4>3.4 搜索如何产生可执行动作（A6–A7）</h4>
+<p>超启发式不直接移动骑手；它选择“先拆哪些 offer，再如何插回”的算子序列。七个算子对应 Markov 链状态。转移分数 \(P_{hg}\) 决定用完 \(h\) 后选择 \(g\) 的概率：</p>
+<p>\[T_{hg}=\frac{\exp(\eta P_{hg})}{\sum_{g'}\exp(\eta P_{hg'})}.\]</p>
+<p>另一个两列分数矩阵 \(L_{h,u}\) 决定继续延长序列还是停止并执行。设计意图是二分类 softmax；<strong>原稿 Algorithm 2 第 5 行的分母两次写了 \(\exp(\eta L_{h,2})\)，不构成正确归一化</strong>，已对原页确认。这不是 OCR 错误，不能照抄运行。</p>
+<p>一次搜索从当前可行解开始，抽下个算子，再抽继续／执行；执行整段序列后用 \(\widehat Q\) 比较。如果比当前解更好，对用到的转移加 \(1/T_{hg}\)、对停止／继续分数做逆概率奖励，鼓励有效但抽样稀少的组合。候选解还可在下列范围内成为下一次搜索起点：</p>
+<p>\[\widehat Q(s,x)&lt;\left[1+\varepsilon+\vartheta\left(1-\frac{t_{elapsed}}{t_{limit}}\right)\right]\widehat Q(s,x^{best}).\]</p>
+<p>初期容许略差解以跳出局部最优，时间耗尽时收紧容忍度；始终单独保留最优解，结束后输出它，并把 \(P,L\) 留给下一轮使用。这个乘法阈值在负值评分时语义会改变，复现也需核对。公开伪代码没有清楚写出执行后清空算子序列的步骤，且 \(L\) 的更新同时列两个选项，都是需要与实现确认的细节。</p>
+<p>底层插入先枚举合法取送位置、计算每位候选骑手的最好插入，再选择骑手。过滤条件 C1–C5 是距餐厅小于 10 km、未拒过该单、本轮尚无别的新 offer、未满容量、候选评分不大于零。最后一项使“暂缓”成为可能，但不是一个自动成立的经济阈值：它依赖价值函数基线和符号。随机插入先打乱订单与骑手顺序；拆单算子则随机删除，或删除承诺时间最远的若干 offer。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>算子</th>
+<th>实际修改与原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>\(h_1\)</td>
+<td>拆掉远 deadline 的 offer，按 deadline 由近到远重插；优先尝试紧急任务</td>
+</tr>
+<tr>
+<td>\(h_2\)</td>
+<td>随机选订单，以餐厅间距加客户间距衡量邻近，拆掉近邻 offer；先改善受影响骑手的旧路线再重插，利用局部空间结构</td>
+</tr>
+<tr>
+<td>\(h_3\)</td>
+<td>随机拆／随机重插，改变局部搜索起点</td>
+</tr>
+<tr>
+<td>\(h_4\)</td>
+<td>抽若干骑手，对未取餐且非首任务的旧单做最便宜重插；不改变已接订单归属</td>
+</tr>
+<tr>
+<td>\(h_5\)</td>
+<td>抽骑手对，撤下二人的待发 offer 再交叉尝试；不是交换已经接受的订单</td>
+</tr>
+<tr>
+<td>\(h_6\)</td>
+<td>随机拆 offer，改善对应旧路线，再随机重插</td>
+</tr>
+<tr>
+<td>\(h_7\)</td>
+<td>拆远 deadline offer、改善路线，再把所有未 offer 订单按 deadline 插入受影响骑手；给紧迫新单腾位置</td>
+</tr>
+</tbody>
+</table></div>
+<p>附录 B 设置 \(\eta=0.25\)、\(\varepsilon=10^{-5}\)、\(\vartheta=0.01\)，初始 \(P,L=0\)。每次移除数量为 \(\min(\text{当前 offer 数},\max(\lceil0.12\lvert C\rvert\rceil,24))\)；重排骑手数为 \(\max(0.1\lvert C\rvert,5)\)；交换对数由骑手数一半及 offer 数的 10%／下限 5 控制。小车队要处理非整数取整和超过可抽人数的问题，稿中没有逐项交代。</p>
+<h4>3.5 路线时间递推与模拟器不是同一套计算（A9、A13）</h4>
+<p>附录 A 先把新取送任务放进指定槽位，再按原顺序填入未移动任务，保持首任务。后续到达时刻按上一任务服务时间和路程递推；若下一站取餐，还要等出餐：</p>
+<p>\[t_k^{prop}=\begin{cases}\max\{b_o,t_{k-1}^{prop}+\widehat\mu(q_{k-1})+D(\ell_{k-1},\ell_k)/v\},&amp;\text{取餐},\\t_{k-1}^{prop}+\widehat\mu(q_{k-1})+D(\ell_{k-1},\ell_k)/v,&amp;\text{送餐}.\end{cases}\]</p>
+<p>\(b_o\) 是 ready time，\(v=18\) km/h；取、送服务时间各按 3.5 分钟估计。它是快速评分用的计划模型，真实转移由随机模拟器产生。空路线首单的特例公式没有完整写出同样的 ready-time 截断，亦需复现核对。不能把规划器中固定车速、固定服务时间误写成模拟器完全确定。</p>
+<p>模拟器的四部分是：①从 8 天历史每日时刻抽订单；②从骑手活动重建班次并抽上线事件；③预测完成时间；④预测接单行为。活动间隔超过一小时即切新班次，因此班次是推断值。到单和上线概率均取 \(0.1/7.96\)，已在线的骑手不会重复进入；这是保留经验日内节奏的抽样，不证明完整保留需求与供给的联合相关性。</p>
+<p>完成时间线性模型是“截距＋距离系数＋是否去餐厅的偏置＋高斯噪声”。备选 boosting 回归还使用骑手／餐厅标识、目的地坐标和每日 1 至 6 次谐波的正余弦时间编码，用 200 次 boosting、shrinkage 0.025。接单模型先检查潜在班次终点，再用 logistic：</p>
+<p>\[P(accept\mid s,o,c)=\frac{e^{U_{c,o,t}}}{1+e^{U_{c,o,t}}}.\]</p>
+<p>效用 \(U\) 包含餐厅—客户距离、骑手—餐厅距离、手上订单数、手上最长配送距离、预约单标识、工作日／周末标识、已工作时长及未观察扰动。备选 boosting 分类加入身份和时段等，600 次迭代、学习率 0.05。原稿对周末变量与状态中的工作日变量命名不一致；分类树概率写成若干叶概率直接相加也未完整交代链接／归一化，不能直接视为可执行概率公式。</p>
+<p>80/20 随机拆分用于这两个预测器，不等于按天、按骑手、按城市隔离测试。测试 MAE 为线性 155.47 秒、树 146.30 秒；RMSE 为 261.04 与 214.53 秒；\(R^2\) 为 0.2921 与 0.5093。接单准确率 0.748→0.877、AUC 0.826→0.952、log loss 0.506→0.283，树更准；但<strong>最终模拟器选用便宜的线性和逻辑回归</strong>。其误差会传给 RL；原表 adjusted \(R^2\) 与 prevalence 等字段也不宜未经定义核对便二次分析。</p>
+<h4>3.6 对照组、训练规模与真正的结果（A8、A10–A12）</h4>
+<p>Fastest 按追加到路线末端的距离找骑手；Simple 枚举插入位置，以即时成本分配；Hyper 只做超启发式搜索，不学长期值，并移除延期条件；SARSA 在 Simple 上换成学习评分并允许延期；完整方法再加超启发式。<strong>同时改了评分与延期动作，不能由 SARSA 对 Simple 的差直接识别“延期独立贡献”。</strong></p>
+<p>训练 \(10^5\) 个 epoch、\(\gamma=0.999\)、batch 20；网格 \(n\in\{2,1000,3000\}\)、\(m\in\{3000,5000,9000\}\)、\(\alpha\in\{10^{-7},10^{-6},10^{-5}\}\)。最好 SARSA 为 \((3000,3000,10^{-6})\)，最好组合为 \((1000,9000,10^{-5})\)。对应末端自举系数约为 0.049 和 0.37，说明最好设置大幅削弱了短期自举。保留参数只用单个模拟日评估，选择噪声可能较大。</p>
+<p>最终测 50 个独立 24 小时模拟日；四天内跑不完 50 次的设置被丢弃。报告称缩至运营的 1:10，每天约 600 单、55 名骑手；这一订单规模与原始每天约 7 万单、抽样概率的数量级并不完全吻合，应记录为原稿复现疑点，而不是自行替作者修正。训练为 Java 17，在四颗八核 Xeon-2670／128 GB 内存环境完成；没有全城 260 单／分钟实时部署实验。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>指标（Table 4 原值）</th>
+<th style="text-align: right;">Simple</th>
+<th style="text-align: right;">Hyper</th>
+<th style="text-align: right;">Fastest</th>
+<th style="text-align: right;">SARSA</th>
+<th style="text-align: right;">SARSA＋Hyper</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>总成本</td>
+<td style="text-align: right;">1001.12</td>
+<td style="text-align: right;">898.12</td>
+<td style="text-align: right;">1335.54</td>
+<td style="text-align: right;">878.92</td>
+<td style="text-align: right;">870.52</td>
+</tr>
+<tr>
+<td>距离成本</td>
+<td style="text-align: right;">375.70</td>
+<td style="text-align: right;">368.56</td>
+<td style="text-align: right;">323.66</td>
+<td style="text-align: right;">378.10</td>
+<td style="text-align: right;">372.71</td>
+</tr>
+<tr>
+<td>迟到／丢单成本</td>
+<td style="text-align: right;">625.41</td>
+<td style="text-align: right;">529.57</td>
+<td style="text-align: right;">1011.88</td>
+<td style="text-align: right;">500.82</td>
+<td style="text-align: right;">497.82</td>
+</tr>
+<tr>
+<td>丢失／取消比例</td>
+<td style="text-align: right;">3.30%</td>
+<td style="text-align: right;">3.00%</td>
+<td style="text-align: right;">5.08%</td>
+<td style="text-align: right;">2.82%</td>
+<td style="text-align: right;">2.88%</td>
+</tr>
+<tr>
+<td>准时比例</td>
+<td style="text-align: right;">74.20%</td>
+<td style="text-align: right;">76.96%</td>
+<td style="text-align: right;">42.33%</td>
+<td style="text-align: right;">78.83%</td>
+<td style="text-align: right;">79.70%</td>
+</tr>
+<tr>
+<td>平均配送秒数</td>
+<td style="text-align: right;">1684.87</td>
+<td style="text-align: right;">1616.59</td>
+<td style="text-align: right;">2474.22</td>
+<td style="text-align: right;">1426.87</td>
+<td style="text-align: right;">1421.45</td>
+</tr>
+<tr>
+<td>平均迟到秒数</td>
+<td style="text-align: right;">361.17</td>
+<td style="text-align: right;">311.34</td>
+<td style="text-align: right;">889.01</td>
+<td style="text-align: right;">250.12</td>
+<td style="text-align: right;">238.89</td>
+</tr>
+<tr>
+<td>每模拟日运行秒数</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">30.63</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.49</td>
+<td style="text-align: right;">27.83</td>
+</tr>
+</tbody>
+</table></div>
+<p>总成本差按 Table 4 重算为 SARSA −12.21%、组合 −13.04%。组合距离成本仅 −0.80%，迟到／丢单成本约 −20.40%；主要收益来自服务质量。<strong>Table 3 的 Transp./Penalty 两列与 Table 4 的分量对应疑似交换</strong>：原表所列 −20.40% 与 −0.80% 恰好反过来。本报告保留原值来源，解释以能由原始 KPI 重算的结果为准。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/13ef746227c82e0406c96584.png" alt="原作者稿第 33 页 Table 4。总成本主要因迟到／丢单成本降低而改善；距离成本基本不变。每模拟日运行时间不能等同于单次线上响应时限。" loading="lazy"></div><figcaption>原作者稿第 33 页 Table 4。总成本主要因迟到／丢单成本降低而改善；距离成本基本不变。每模拟日运行时间不能等同于单次线上响应时限。</figcaption></figure>
+<p>Fastest 总距离较低，却准时率很差，不能把“走得少”直接当作更优运营。原稿称学习策略服务订单“接近两倍”，但 Table 4 的丢单比例不足以支持这个量级，应避免复述。附录 B 还写每次搜索限时 30 秒，而 Table 4 整个模拟日约 28–31 秒，两种时间口径未说明；不能据此保证每个决策严格满足线上延迟预算。</p>
+<p>高成本日主要有需求高峰与供给不足同时出现；图 4 是跨模拟日相对成本分布，图 5 展示典型日与高压力日的到单、骑手、延期和丢单变化。它们说明收益随压力变化，不是独立跨城泛化证据。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/7631e000af70833b2cf08755.png" alt="作者预印本的需求与运力日内曲线。订单高峰和在线骑手曲线并不同步，因此只比较平均全天负载会掩盖最困难时段。图是仿真校准背景，不是 12% 收益的直接证明。" loading="lazy"></div><figcaption>作者预印本的需求与运力日内曲线。订单高峰和在线骑手曲线并不同步，因此只比较平均全天负载会掩盖最困难时段。图是仿真校准背景，不是 12% 收益的直接证明。</figcaption></figure>
+<p>仅把 Simple 的骑手连接概率提高 10%，总成本就由 1001.12 降到 556.47（按表重算约 −44.4%），准时率 74.20%→92.73%；翻倍连接概率时成本 511.60、准时率 94.41%。这是<strong>连接概率</strong>干预，不是测得在线人数恰好增加 10%；也没有为新增运力加入足够的招募／补贴成本，不能据此得出真实利润上的最优扩招建议。</p>
+<h4>3.7 消融、失败配置与附录证据（A14–A15）</h4>
+<p>部分 \(n=2\) 配置成本超过基线数倍，甚至有配置无法在四天内完成。论文解释为价值估计诱发过度等待，积压扩大，插入搜索的组合量随之增加。这个负面结果意味着延期动作必须有等待上限和稳定评分；“允许等”本身不总有利。</p>
+<p>附录 C 图 6 给出七个算子的使用和停止概率：\(h_2\) 的局部空间拆插常被使用并结束序列；\(h_7\) 常作为中间步骤，让后续算子继续改进。<strong>这是使用统计，不是逐一移除算子的消融</strong>，不能证明七个都不可替代。列和 \(\sum_g T_{gh}\) 也不是未加权的实际访问频率，应结合前序算子的访问分布解释。未报告严格的重复训练种子置信区间，也未把模拟器误差纳入性能区间。</p>
+<h3>4. 相关工作与可用于本项目的接口</h3>
+<p>与 <a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">Potential-Based Greedy Matching</a> 的关系是本报告的比较：两者都考虑使用某项资源的未来机会，但 PB 配对订单，本文分配骑手并规划路线，没有证据表明它们互相继承算法。与 <a href="https://doi.org/10.1007/978-3-032-37679-4_11" target="_blank" rel="noopener noreferrer">BC 校准反事实评估</a> 比较，后者提醒：模拟器里的策略收益还需单独验证，不能因训练曲线好就认为现实有效。</p>
+<p>本项目可复用的接口是：候选动作生成器负责硬约束；即时路线成本负责可计算部分；学习器只修正未来价值。若要加入扩散模型，首先明确它生成的是候选插入、offer 集合还是价值残差；本文没有使用扩散模型，不应给它补上这一机制。</p>
+<h3>5. 局限、复现核查和后续引用</h3>
+<p>除了上述规模、计算时间与预测器误差，需特别核对：模型假设 ready time 已知；隐藏班次规则是否造成拒单偏差；未分配超时定义在正文出现“下单后”和“deadline 后”两种口径，而实验使用 deadline 后 2 小时；状态转移式没有完整写出 lost orders 的删除。过度等待可能同时扭曲成本和动作空间。以上都是具体实现会改变结果的条件，不能以“仅为符号问题”略过。</p>
+<p>本次检索未核实清楚的后续引用论文，不把作者其他配送论文当成引用证据。该稿是值得参考的混合方法实例，但公开表达不足以支持无需核对代码的精确复现。</p>
+<h3>6. 社交讨论与覆盖核查</h3>
+<p>按题名检索 X、Reddit、知乎和小红书，未取得可核验的实质讨论原帖，因此不引用评论，也不声称这些平台绝无讨论。</p>
+<p>覆盖已逐项落实：A1–A3→3.1；A4→3.2；A5→3.3；A6–A7→3.4；A8→3.6；A9/A13→3.5；A10–A12→3.6；A14→3.4、3.6；A15→3.7；§7 的适用范围及复现风险→第 4–5 节。正文 §1–7、附录 A–C 均已阅读；参考文献的纯书目信息不逐条展开。</p><h3 id="simulator-auad2026">7. 追加：30 秒一步时各实体如何变化，代码在哪里</h3>
+<p><strong>证据范围：</strong>已检索论文完整标题、作者及 GitHub，并核查 <a href="https://optimization-online.org/author/ramon-auad/" target="_blank" rel="noopener noreferrer">Auad 的 Optimization Online 作者入口</a>和 <a href="https://optimization-online.org/author/felipe-lagos/" target="_blank" rel="noopener noreferrer">Lagos 的作者入口</a>。截至本次核查，未定位到论文作者公开的求解器/模拟器仓库。论文引用的<a href="https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge" target="_blank" rel="noopener noreferrer">美团挑战仓库</a>提供数据和说明，其公开文件树没有可执行模拟器。下述行为来自正文 §3、§5.1 和附录 A；不能当作已核验的函数实现。</p>
+<h4>7.1 一个真实决策步是 30 秒</h4>
+<p>实验设 Δ=30 秒，一个 24 小时模拟日有 2880 个决策点。从当天 06:00 开始计日内时间。它是固定决策间隔，不是每出现事件就立即调用策略。一个区间内可以发生多个新订单、取餐、送达、接拒单和上下线。策略在当前状态给出 offer 与拟议路线，环境生成区间内实际结果，下一轮再看新状态。训练的 n-step SARSA 中一步也对应这种决策步，不是一次节点交换。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>当前步可见什么</th>
+<th>区间内如何变化</th>
+<th>未披露的源码细节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户/订单</td>
+<td>下单时刻、餐厅和客户坐标、ready time、承诺时刻；待派/已派状态</td>
+<td>在历史同一日内时刻以 p_activ 抽样到达；完成从活跃集合移除，超时未派计 lost</td>
+<td>没有需求对配送价格/等待的反馈模型；顾客取消不是独立策略</td>
+</tr>
+<tr>
+<td>商家</td>
+<td>每单 ready time；取餐地点</td>
+<td>骑手早到需要等待，再经历取餐服务</td>
+<td>无厨师排队、订单数量改变出餐速度的代码；ready time 不等于厨房产能模型</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td>路线、已接/拒过的单、在岗时长、取送停留时间、位置信息</td>
+<td>接受才采用新 offer 对应路线；拒绝恢复原路线；完成节点删除、延误节点更新时间；按隐含班次上下线</td>
+<td>同刻多个事件的优先级、随机数复用、逐道路移动实现未公开</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>所有当前活跃/待派订单和在岗骑手</td>
+<td>每名骑手每步至多收到一个新 offer；搜索插入、改非冻结任务顺序、选择暂缓</td>
+<td>不知道模拟器使用的真实班次结束时间，不能偷用它过滤候选</td>
+</tr>
+</tbody>
+</table></div>
+<h4>7.2 12:00 到 12:00:30 的具体例子</h4>
+<p>以下是解释流程的自造例子。12:00 时 A 单未派，甲正在去送 B，乙空闲。搜索给乙发 A，并生成取 A→送 A 的路线；给甲最多只能再发一张新单。环境若抽到乙拒绝，12:00:30 的 A 仍在待派集合，乙对 A 的拒绝记录保留，后续不再反复把 A 发给乙。若乙接受，订单归属和路线才提交。若 B 在区间内送达，下一状态删除 B 的完成任务并计迟到成本；若 B 未完成，就更新其预计完成时刻。新到的 C 同时进入下一轮可见集合。</p>
+<p>论文的位置变量有一个容易忽略的定义：骑手空闲时存当前位置；<strong>正在路上时存正在前往的目的地</strong>。这不是连续 GPS 坐标，不能根据这个状态式断言每 30 秒做了精确道路插值。规划器首任务冻结，也是为了避免对已在执行的动作随意重排。</p>
+<h4>7.3 路线预测、实际执行和拒单是三个不同环节</h4>
+<p>规划器用距离/18 km/h 加取送各 3.5 分钟服务估算，取餐要等 ready time；按附录 A 枚举合法位置、验证容量和先取后送，锁定首任务，旧订单不能随意换骑手。候选评分是即时绕路/迟到成本加线性学习残差，再由超启发式挑方案。它并非神经网络直接输出方向或道路。</p>
+<p>环境的完成时长采用训练得到的线性距离模型、去餐厅指示和高斯误差；正文还比较了更准确的 boosting 回归，但最终因速度选线性版本。接受先做班次终点检查：若预计送达越过模拟器知道、规划器不知道的班次结束，自动拒绝；否则用逻辑回归概率生成接受行为。特征含距离、手上任务、已有最长配送距离、预订/周末、在岗时长，表示经验规律，不是解一个骑手效用最大化问题。提升接受预测准确率不等于识别了改变报酬后的因果接受反应。</p>
+<p>历史活动相隔超过一小时就切工作块；订单到达与上线分别在历史时刻以概率抽样，实验 p_activ、p_conn 均为 0.1/7.96，骑手已在线时忽略重复上线。这个做法可以缩小订单与运力规模，不能保证缩小后仍保持所有空间供需相关性。</p>
+<h4>7.4 能还原到什么程度</h4>
+<p>论文足以还原状态/动作/外生信息接口和规划递推，无法定位道路最短路函数、厨房排队程序、接拒随机数的抽样语句、同时发生事件的处理顺序。其正文活跃集合更新式只显式减去 delivered，未完整减去 lost，反映形式化描述仍需实现补足。前文已列 SARSA 时标、softmax 分母、特征维数和正负号疑点；没有公开代码就不能替作者决定哪一个是排版错、哪一个进入实验。</p>
+<p>对美团项目可借用固定 30 秒滚动接口和“拒单保留待派”的状态结构；应分别记录实际当前位置、目标点、已承诺任务数、实际携带量，再明确服务完成和丢单的移除事件。这里是复现建议，不是声称作者源码已经实现。</p></div><div class="qa-log"><strong>后续问答 · 2026-11-09</strong><p><strong>本次要求：</strong>精读 11 月 5 日报告中与美团项目有关的论文；本轮先完成已取得全文的三篇，另外两篇暂缓。</p><p><strong>处理：</strong>正文与技术附录已逐项分析，保留原推荐信息、稳定锚点与原图，并补充方法、实验和复现边界。</p></div>
+<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-2502.16862" data-paper-id="2502.16862" data-deep-read="true"><div class="kicker">MOVED FROM 11·05 · 05</div><h2>Potential-Based Greedy Matching for Dynamic Delivery Pooling</h2><p class="lede">用订单距离估计机会成本的动态拼单</p><div><span class="chip">online optimization</span><span class="chip">order pooling</span><span class="chip">opportunity cost</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Hongyao Ma；Will Ma；Matias Romero<br>Columbia Business School</p><p><strong>首发：</strong>2025-02-24；<strong>当前版本日期：</strong>2026-01-11；arXiv v3<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2502.16862" target="_blank" rel="noopener noreferrer">PDF</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；主题：online optimization。</p><p class="notice"><strong>中文摘要概述：</strong>给贪心拼单扣除机会成本，不预测未来订单也能减少短视决策。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>We study the dynamic pooling of multiple orders into a single trip, a strategy widely adopted by online …</blockquote><p><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：arXiv v3 全文 55 页、正文 §1–5 与附录 A–E 已覆盖；完整精读。</p></div>
+<p class="notice">由 2026-11-05 报告整体迁入，原摘要、全部精读、原图与问答保留。新增 <a href="#simulator-2502.16862">第 7 节：实体与模拟器核查</a>。</p><div class="deep-reading-content"><h3>1. 摘要中文翻译与版本</h3>
+<p><strong>精读日期：2026-11-09；<a href="https://arxiv.org/pdf/2502.16862v3" target="_blank" rel="noopener noreferrer">arXiv v3，2026-01-11，55 页</a>。</strong> 已阅读正文 §1–5 与附录 A–E，包括上下界证明、机会成本解释和全部扩展实验。</p>
+<p>本文研究配送平台把多个订单合在一次行程中送达的动态拼单问题。当一个订单必须出发时，平台需要决定是否把它与当前可用的其他订单合并，在立即节省的路程与保留不同订单等待未来拼单的机会之间取舍。作者提出 potential-based greedy（PB）：用配送距离作为机会成本代理，为即将离开的订单选择“本次节省距离减去候选订单配送距离的一半”最大的伙伴；这一半距离称为该订单的 potential。理论上，市场密度增长时，PB 每单最坏 regret 趋零，而普通贪心仍有常数量级的每单 regret。作者进一步证明，在足够密集的特定随机模型中，potential 接近派走订单的真实边际机会成本。合成与美团真实订单数据实验表明，PB 虽不预测未来订单，仍优于依赖历史数据的实用贪心基线，且接近计算更昂贵的批量优化。把 potential 加入批量优化，也能改善效果或以更少计算达到相近结果。</p>
+<h3>2. 作者与机构</h3>
+<p>Hongyao Ma、Will Ma、Matias Romero 均署名 Columbia University 的 Graduate School of Business。论文未明确标注通讯作者，不由邮箱或末作者顺序推断。<a href="https://www.hongyaoma.com/" target="_blank" rel="noopener noreferrer">Hongyao Ma 的作者主页</a>介绍其研究位于计算机科学、经济学与运营的交叉处，关注不确定性、自利与自主行为下的机制和市场设计。主页列有 Randomized FIFO Mechanisms 等相关工作；本报告不把未逐篇读过的作品当成本论文结论的证据。推荐依据是本次指定的 Meituan 数据线、online optimization 与 opportunity cost。</p>
+<h3>3. 详细技术精读</h3>
+<h4>3.1 先分清这里配对的对象（P1–P3）</h4>
+<p>设一家餐厅有三单沿同一条路送到 0.4、0.45、0.9 km 处，0.4 km 那单现在必须出发。普通贪心把它与后两者中任何一单配对，都能省 0.4 km；PB 却更愿意用 0.45 km 单，把 0.9 km 长单留给未来更合适的长单。此例仅用于解释，不是论文实验样本。</p>
+<p>论文配对的是<strong>订单与订单</strong>，不是骑手与订单。其主理论模型只有共同起点 0、终点 \(\theta\in[0,1]\)，每单最多与另一单组成一对，没有骑手数、骑手位置、拒单、餐厅出餐随机性或多站路线容量。单送距离为 \(\theta\)，两单同送距离为较远的终点，因此节省：</p>
+<p>\[r(\theta,\theta')=\theta+\theta'-\max\{\theta,\theta'\}=\min\{\theta,\theta'\}.\]</p>
+<p>订单按到达次序 \(1,\ldots,n\) 编号。每单在之后又到达 \(d\) 个订单时成为 critical，必须决定送走。\(d\) 是可等待期间的到达量，代表市场厚度；不是固定分钟数。等待期限在到单时已知，没有突然取消，等待本身没有额外连续成本。因此在这个模型里可以把决策推迟到 critical 时；现实出餐、顾客取消和骑手行程并不自动满足这些条件。</p>
+<p>一般定义与选择规则为：</p>
+<p>\[p(\theta)=\tfrac12\sup_{\theta'\in\Theta}r(\theta,\theta'),\qquad m(j)\in\arg\max_{k\in A(j)}[r(\theta_j,\theta_k)-p(\theta_k)].\]</p>
+<p>\(A(j)\) 是已经到达、尚未送走的候选伙伴；上确界使用已知类型空间与奖励结构，不需要需求预测。在共同起点的一维配送里，\(p(\theta)=\theta/2\)。上述三单例中，0.45 km 候选评分为 0.175，0.9 km 候选为 −0.05，PB 选择前者。等式</p>
+<p>\[\min\{\theta,\theta'\}-\theta'/2=\theta/2-|\theta-\theta'|/2\]</p>
+<p>说明在固定当前单之后，PB 等价选择终点最近的订单。只扣候选伙伴的 potential，是因为当前单已经必须离开，无法把它继续保存；其自身 potential 对本次排序也只是常数。</p>
+<p><strong>对旧报告的纠正：</strong> Algorithm 1 有候选就选最大 index，即使所有 index 都为负也仍配对；没有候选才单送。二维实验另外要求配对的实际奖励非负，而不是要求调整后 index 非负。例如当前短单只有一张长单可配且确实省路，PB 可能照样配对。把零评分当成通用拒绝门槛，会改变原算法。</p>
+<p>算法输入为类型到达序列、\(d\)、奖励和 index 函数。每一步加入新单，检查到期单是否还在集合中；若已提前作为伙伴送走则跳过，否则选伙伴、同时删除二者；直到最后订单也过了期限。实现需维护这个可用集合，而不能每次在全日志中挑“最近订单”，后者会使用未来信息。</p>
+<h4>3.2 OPT、regret 与“密度增加”的准确含义（P2）</h4>
+<p>离线 comparator 知道全部未来，却仍受每单等待窗口约束。把每条无向边只计一次，可将原式 5 写清为：</p>
+<p>\[OPT=\max_{x}\sum_{j&lt;k,\ k-j\le d}r_{jk}x_{jk},\quad \sum_{k\ne j}x_{jk}\le1,\quad x_{jk}\in\{0,1\}.\]</p>
+<p>这里最后两个条件分别保证每单至多一名伙伴和不可分割匹配；每条边必须同时位于等待窗口内。regret 为 \(OPT-ALG\)，reward ratio 为 \(ALG/OPT\)，二者比较的是<strong>可节省的距离</strong>。ratio 为 0.9 不等于总配送距离减少 90%。当 \(d\) 大、很多相近订单同时可选时才叫更厚的市场；仅全城订单变多而街区之间不能互相拼单，不一定提高局部有效密度。</p>
+<h4>3.3 离线定理：为什么每一层错误最多损失一点（P4、P6）</h4>
+<p>先令所有订单在第一次决策前可见，仍按给定顺序逐单做 PB。对任意配对，\(r(\theta,\theta')\le p(\theta)+p(\theta')\)，所以全部 potential 之和是 OPT 上界。一维 PB 配对后的差额恰好与终点距离有关：</p>
+<p>\[Reg_{PB}\le\tfrac12+\tfrac12\sum_{j\in C}|\theta_j-\theta_{m(j)}|.\]</p>
+<p>\(C\) 是作为 critical 端被配对的订单；最多一个未配对订单贡献边界项 \(1/2\)。证明把每对终点连成区间。由于当时选最近点，两条区间只能相离或包含，不能交叉；这叫 laminar family。嵌套每加深一层，内部区间长度至少减半，否则外端点会是更近候选，违背 PB 的选择。</p>
+<p>设第 \(\ell\) 层的总长度由 \(z_\ell\) 控制，一层区间互不相交，总长不超过 1；越深的层，要凑出同样长度必须有更多短区间。因此得到分数背包上界：</p>
+<p>\[\max\sum_\ell z_\ell,\qquad \sum_\ell2^{\ell-1}z_\ell\le n/2,\quad0\le z_\ell\le1.\]</p>
+<p>先把便宜的浅层装满，能装满的层数只有对数级。结合式 8–12 得到 \(Reg_{PB}\le[1+\log_2(n/2+1)]/2\)，也就是 \(O(\log n)\)。这是按证明末行写出的界；主文定理排版的括号较易误读。</p>
+<p>附录 A.1 的 GRE 反例把许多略小于 \(\varepsilon\) 的短单放在前面、类型 1 的长单放后面：短单贪心消耗长单，OPT 则长长配对。总 regret 可逼近 \(n/4\)。A.2 用递归缩小并平移的四点坏实例，让 PB 每一层再损失常数；当 \(n=2^{k+3}-4\)，下界为 \([\log_2(n+4)-3]/4\)。所以 PB 的对数上界不是粗分析造成的假象。下界依赖特定规模与允许的平局处理，不意味着每个自然样本都如此差。</p>
+<h4>3.4 在线定理：不能直接把连续到单切成独立批（P5–P6）</h4>
+<p>在线情况把到达序列按 \(d+1\) 切成约 \(n/(d+1)\) 批。困难是某一批里的订单会和下一批配对；若直接把一批当离线实例，未来候选突然提前可见，会改变最近点选择，不能直接套离线定理。</p>
+<p>作者构造修正离线实例：批内配对原样保留；跨批配对且当前批还有候选时，把下一批伙伴移动到当前批最近的候选位置，使匹配距离不减并能与在线决定耦合；当前批已无候选的尾部情况每批至多一次，额外支付常数。然后每批距离和至多 \(1+\log_2(d+2)\)，得到：</p>
+<p>\[Reg_{PB}\le\tfrac12+\tfrac12\left(\frac{n}{d+1}+1\right)[1+\log_2(d+2)].\]</p>
+<p>因此主要阶为 \(O(n\log d/d)\)，每单 regret 为 \(O(\log d/d)\)。在 \(d\) 固定、仅把运营时间拉长时，并不能保证每单误差趋零。A.3 用逐批降低的短单让 GRE 在各批重复损失，仍为 \(\Omega(n)\)；A.4 把 PB 的坏实例交替放在区间 \([0,1/3]\) 与 \([2/3,1]\)，阻止跨批救场，得到 \(\Omega(n\log d/d)\)。下界陈述要求 \(d+1\) 及 \(n\) 的可整除性／特定指数规模。</p>
+<h4>3.5 两个反例拓扑告诉我们保证在哪里停止（P7）</h4>
+<p>若奖励为 \(1-|\theta-\theta'|\)，每个订单 potential 都是 \(1/2\)，PB 与 GRE 完全相同，都选最近点。附录 B.1 的 Theorem 3 和 Propositions 5–6 把上述距离和分析迁移过去，离线 \(\Theta(\log n)\)、在线 \(\Theta(n\log d/d)\)。此时加 potential 不会改善排序，因为每个候选扣掉相同常数。</p>
+<p>若奖励反过来为 \(|\theta-\theta'|\)，相远的点才有价值，potential 为 \(\max\{\theta,1-\theta\}/2\)。B.2 的 Proposition 7 构造三簇点，使任何固定的两点 index 排序在某些实例上损失 \(\Omega(n)\)；对 PB/GRE 可取离线常数 \(1/4\)。Proposition 8 用两批循环的反例得到在线至少 \(n/8\)（相应整除条件下）。这否定了“只要市场大，任意奖励都能靠半个最大收益解决”的推广。固定 index 看不到库存组成，这是反例能利用的弱点。</p>
+<h4>3.6 potential 与真正边际价值：不是声称每张单都值一半（P8–P9）</h4>
+<p>附录 C 定义移除订单 \(j\) 的边际损失与多加一份相同订单的边际收益：</p>
+<p>\[ML_j=OPT(\theta)-OPT(\theta_{-j}),\qquad MG_j=OPT(\theta_{+j})-OPT(\theta).\]</p>
+<p>这里先研究离线一维共同起点实例。把类型降序排列后，最优是相邻配对，价值为偶数位置类型之和。删除某一单会翻转后面配对的奇偶位置，因此 Lemma 1 把 \(ML\)、\(MG\) 分别写成剩余间隔中偶数项、奇数项之和；两者合计就是该单的长度：</p>
+<p>\[p(\theta_j)=\frac{ML_j+MG_j}{2}.\]</p>
+<p>这并不意味着 \(ML_j=MG_j=p_j\) 对每个有限实例成立。Proposition 9 固定一个订单位置，其余 \(n-1\) 个位置独立均匀抽自 \([0,1]\)，才证明两者期望距 potential 为 \(O(1/n)\)、方差为 \(O(1/n)\)。<strong>标准差通常是 \(O(n^{-1/2})\)，不能把均值偏差速度写成每个样本误差都为 \(O(1/n)\)。</strong></p>
+<p>证明把该订单左侧点数记为 \(N\sim Binomial(n-1,\theta_j)\)。条件于 \(N\)，间隔比例服从对称 Dirichlet 分布；交替间隔之和为 Beta 分布。其均值接近一半总长度，再对 \(N\) 平均，误差界出现 \([1-(1-\theta_j)^n]/n\)；用全方差公式分别控制条件方差与条件均值变化。这个论证依赖 IID 均匀、共同起点和指定奖励；它不是城市任意 OD 流的定价定理。</p>
+<p>HD／AD 基线使用的则是匹配整数规划的 LP 松弛对偶：</p>
+<p>\[\min_{\lambda\ge0}\sum_j\lambda_j,\qquad\lambda_j+\lambda_k\ge r_{jk}.\]</p>
+<p>对偶变量给每单一个价格，足以覆盖任意边收益。potential 提供一组可行价格，因为一条边收益不大于两端各自最大收益的一半之和。但可行不等于最优；一般非二分图仅有度约束的 LP 不必整数。附录图 9 的小 integrality gap 是这些实验里的现象，图 10 展示高密度时经验对偶价格向 potential 集中；二者不构成通用精确性保证。</p>
+<h4>3.7 对照算法和合成实验为何这样安排（P10）</h4>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>信息与决策</th>
+<th>比较意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GRE</td>
+<td>只最大化当前节省</td>
+<td>测机会成本修正的价值</td>
+</tr>
+<tr>
+<td>PB</td>
+<td>扣半个单送距离</td>
+<td>不依赖预测的实用方案</td>
+</tr>
+<tr>
+<td>HD</td>
+<td>用当前完整实例的最优对偶价格</td>
+<td>偷看未来的理想化 comparator，不可部署</td>
+</tr>
+<tr>
+<td>AD</td>
+<td>用历史数据按类型平均对偶价</td>
+<td>检查数据驱动机会成本是否优于简单几何代理</td>
+</tr>
+<tr>
+<td>BAT</td>
+<td>到期时优化当前所有单并全部发走</td>
+<td>当前匹配最优，但过早消耗未到期单</td>
+</tr>
+<tr>
+<td>RBAT</td>
+<td>每次到期都优化当前所有单，只执行到期单及伙伴</td>
+<td>保存未来机会，计算昂贵</td>
+</tr>
+</tbody>
+</table></div>
+<p>合成实验固定 1000 单，\(d=5\) 至 30，每个密度 100 个独立均匀实例。AD 用另 400 个 IID 实例，类型分 100 个格；因此不是故意给 AD 错误分布。PB 从低密度就得到 95% 以上 hindsight 最优节省，且优于 BAT/RBAT；在这类共同起点模型，留下长单的价值可比精细优化当前库存更大。GRE 的绝对节省仍可能随密度增加，但相对 OPT 的比例变差，两种趋势不矛盾。</p>
+<h4>3.8 二维美团实验：四条路线、数据稀疏与指标（P11–P12、P14）</h4>
+<p>真实订单类型为餐厅与客户坐标 \((O,D)\)。本文要求两单都取到后再送任何一单，允许四种取送顺序，按欧氏距离比较最短路线。令 \(\ell=\|D-O\|\)、\(\ell'=\|D'-O'\|\)：</p>
+<p>\[r=\ell+\ell'-\left[\|O-O'\|+\min\{\|D-O\|,\|D'-O\|,\|D-O'\|,\|D'-O'\|\}+\|D-D'\|\right].\]</p>
+<p>方括号依次是两餐厅间路段、中间跨取送路段、两客户间路段。城市不同起点时，合送可能反而更远，故只允许实际奖励非负的拼单。最好的另一单与自己同 OD，此时节省自己的单送距离，所以仍取 \(p=\ell/2\)。原文脚注的一个中间不等号链有问题，但最终上界可用更直接的论证：合送路线必须覆盖另一单的起终点，长度至少为 \(\ell'\)，故 \(r\le\ell\)；同 OD 取得等号。</p>
+<p>实验覆盖 2022 年 10 月的 8 天，取每天 10:30–13:30 午高峰，约 130 单／分钟、每日子集约 24000 单。订单按实际时间到达，可等待 30–180 秒；这里改用固定时间耐心，<strong>不再满足理论的固定后续到达数模型</strong>。原文“569 million orders”是明显数量级错误，原挑战数据约 56.9 万单，本报告不沿用该笔误。</p>
+<p>AD 对每个测试日使用其余 7 天，H3 六边形 OD 对作为类型；某 OD 对缺样本就回退到更粗分辨率。作者试过所有分辨率，并报告各窗口最佳层级（通常 8 或 9）；没有把这一选择过程描述为另一个完全独立的测试集。附录 D 显示起点比分散的终点更集中，resolution 9 的 OD 对中位数仅 3 单、均值 8.22 单，说明细粒度估价非常稀疏。变粗虽多样本，却把不同路线混在一起；PB 无需估这些条件均值。</p>
+<p>历史 wave 可含两单以上，甚至前单已送后才取后单；因此原数据“85% 以上订单被拼”的统计口径，不等于本算法两单同时在车上的配对率。历史到首次 dispatch 平均约 4 分钟，文中另有约 5 分钟的概述；出餐约 12 分钟。固定等 3 分钟在时间上可行的动机，不能替代配送 SLA 的直接测试。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/86b95260c0a3845ccdcc7900.png" alt="原文 Figure 5 的 Meituan 结果。左边 regret 越低越好，右边相对事后最优的收益比越高越好。PB 的收益比在 3 分钟附近约 0.9；不能把这解释为整个平台总成本下降 90%。" loading="lazy"></div><figcaption>原文 Figure 5 的 Meituan 结果。左边 regret 越低越好，右边相对事后最优的收益比越高越好。PB 的收益比在 3 分钟附近约 0.9；不能把这解释为整个平台总成本下降 90%。</figcaption></figure>
+<p>图 5 展示 greedy 组的 regret 与 reward ratio：3 分钟窗口 PB 约取得 OPT 节省的 90%，优于 GRE 和 AD；HD 在异质起点情形可明显胜出，说明信息确实可能有价值，只是历史平均价未能有效提取。附录 E.1 图 16 的另一组指标是 PB 拼单率超过 90%、相对逐单配送约节省 30% 距离。<strong>90% ratio、90% match rate、30% saving fraction 是三个不同分母。</strong> 两单模型 savings 上限 50%，来自每条边收益不超过两端 potential 之和。</p>
+<p>真实二维下 RBAT 胜过 PB，约需百倍计算；BAT 因过早清空库存较弱。PB 比 RBAT 配对更多订单，但配对多未必最省距离。原文认为较高拼单率可能减少骑手跨平台自行拼单的诱因，这只是业务推论，本文没有建模或测量骑手跨平台行为。</p>
+<h4>3.9 给批量求解器加入 potential 与附录扩展（P13、P15）</h4>
+<p>对候选边，把尚未到期的端点 potential 按比例扣除：</p>
+<p>\[\widetilde r_{jk}=r_{jk}-\gamma p_j\mathbf1\{j\text{ 未到期}\}-\gamma p_k\mathbf1\{k\text{ 未到期}\},\quad\gamma\in[0,1].\]</p>
+<p>这里 \(\gamma\) 是机会成本权重，不是 RL 折扣。到期单留不住，不应扣保留价值；两端都未到期时都扣。匹配求解器按调整后边权优化，再执行到期部分。PB-RBAT 在原图中比 RBAT 的 reward ratio 约改善 1–2%，几乎不增加同一求解问题的额外计算；不应写成整个平台利润提高 1–2%。</p>
+<p>附录 E.2 在与主城区地理隔离的小“岛”上，对每个窗口及价格类型搜索 \(\gamma=0,0.1,\ldots,1\)，再到其余不相交区域测试。最好权重随窗口缓慢变化，附近不太敏感；降低权重通常增加配对率，却可能降低总节省。这个调参划分和 AD 的按日留一验证是两件不同的事。</p>
+<p>E.3 的 PRBAT 每 30 秒求解一次，发走下一次求解前将到期的订单及伙伴。30 秒窗口时接近 BAT，会过早派走较多非到期伙伴；窗口变长时保留更多机会。正文说 60 秒时与 PB 相近，附录措辞为超过 PB，应按曲线理解为差距较小，不制造精确排名。180 秒窗口下，加入 potential 的 PB-PRBAT 可接近逐事件 RBAT 的收益，运行成本约低两个数量级。这是特定窗口下的实验对照，不是所有规模都固定提速百倍。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/5bab29ad336dba529054b55b.png" alt="arXiv v3 第 52 页 Figure 20。每 30 秒求解的 PRBAT 加入机会成本后，在较长等待窗口接近 RBAT；左轴为 regret，原图注的 running time 与坐标轴不一致。" loading="lazy"></div><figcaption>arXiv v3 第 52 页 Figure 20。每 30 秒求解的 PRBAT 加入机会成本后，在较长等待窗口接近 RBAT；左轴为 regret，原图注的 running time 与坐标轴不一致。</figcaption></figure>
+<p>图 20 的右图显示不同机会成本修正对 PRBAT 的收益比影响；左图纵轴实际标为 Regret，尽管原图注写 running time，本报告按坐标轴解释，不能从这张左图直接读取运行时间。180 秒处 PB-PRBAT 接近 RBAT，支持“少解几次匹配仍可保留多数收益”；HD-PRBAT 更高则再次提醒，未来信息参照不是可部署结果。</p>
+<p>E.4 逐一改变数据：一维 Beta(0.5,2) 终点保留主要结论；二维共同起点时 PB 仍很强、HD 略好；二维起终点均匀随机时 RBAT 明显更强，重现美团异质起点现象。说明影响排序的重要因素是起点异质性与有效可拼候选数，不只是“从一维变二维”。E.5 在相近奖励与相远奖励上也测 IID 均匀实例，PB 表现良好；这与相远奖励下最坏 regret 为线性并不矛盾，随机均值实验不能否定对抗反例。</p>
+<h3>4. 相关工作与项目用途</h3>
+<p>与 <a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">Auad 等人的骑手派单与路线方法</a> 相比，PB 提供无需训练的订单机会成本基线，适合放在路线求解器之前或修正候选边权，但没有处理骑手动作可行性。原论文的 related work 区分了无限等待但考察 all-time regret、未知随机离开、临走才通知、到达时即知 deadline 四类动态匹配；本文属于最后一类。文中引用的通用在线 matching 竞争比不能直接取代这里随密度改善的加性 regret 保证。</p>
+<p>对本项目，最先可做的可解释对照是 GRE 与 PB 使用<strong>完全相同候选集、等待窗和距离函数</strong>。再用相同算力预算比较 PB-PRBAT 与原始求解器。若候选集换了、模型用了未来出餐信息或增加等待时限，就不能把差额都归因于 opportunity cost。</p>
+<h3>5. 局限与后续研究</h3>
+<p>没有实际骑手约束、道路行驶时间、送达 deadline 或拒单响应；长单可能因未来相似单极少而根本不值得保留，potential 仍按最好可能配对估价。在二维异质 OD 的局部稀疏区域，它会过于乐观，这正是 RBAT/HD 可以更好的场景。每单只配一名伙伴，扩到三单以上是未来方向，不在本篇保证内。等待窗只限制出发，不直接惩罚顾客等餐；把窗口加长带来的节省解释成净服务收益也不成立。</p>
+<p>本文没有神经网络、训练 loss 或 RL 状态转移，也无需为它杜撰相关组件。后续同作者作品检索中出现 Sequential Offering 等题目，但本次未核验其参考文献对本文的引用关系，故不列作已确认引用。</p>
+<h3>6. 社交讨论与覆盖核查</h3>
+<p>X、Reddit、知乎、小红书的题名检索未取得可核验的实质评论。论文参考文献中的 Reddit 骑手帖用于讨论跨平台工作，不能冒充读者对本论文的反馈。</p>
+<p>覆盖映射：P1–P3→3.1–3.2；P4/P6→3.3；P5/P6→3.4；P7→3.5；P8/P9→3.6；P10→3.7；P11/P12/P14→3.8；P13/P15→3.9；P16→第 4–5 节。附录 A 的全部四个下界、B 的两种奖励、C 的边际值与 LP、D 的时空统计、E 的全部实验分支均有机制与边界解释。</p><h3 id="simulator-2502.16862">7. 追加：这里的 simulator 主要模拟订单配对，不是骑手车队</h3>
+<p><strong>代码检索：</strong>核查论文及附录的代码链接、标题/GitHub 检索和 <a href="https://www.hongyaoma.com/" target="_blank" rel="noopener noreferrer">Hongyao Ma 的作者主页</a>，未定位到与本篇对应的作者公开实验代码。论文与作者稿是方法依据；<a href="https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge" target="_blank" rel="noopener noreferrer">美团挑战仓库</a>是数据源，不能当作 PB 的算法实现。</p>
+<h4>7.1 理论中的一步与美团实验中的秒数不同</h4>
+<p>一维理论里每一步到一个订单类型，等待上限 d 按“后续到达多少张单”计。到期单成为 critical，就从仍可配对的集合里选伙伴；若它已提前作为别人的伙伴离开，就跳过。美团实验按历史真实到达时刻重放，等待上限换成 30–180 秒；PRBAT 则每 30 秒求一次当前匹配。不能把三个时钟都写成固定秒级仿真。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>文中实际状态/行为</th>
+<th>没有建模的部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户/订单</td>
+<td>到达时刻、取送坐标、尚可等待多久；进入/离开匹配集合</td>
+<td>没有顾客选择、主动取消或价格敏感需求；等待期限是算法约束</td>
+</tr>
+<tr>
+<td>商家</td>
+<td>取餐起点，决定两单能否省路；一维模型共同起点</td>
+<td>没有厨房容量、备餐随机事件和取餐队列</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td>两单合送路线的抽象载体</td>
+<td>没有逐个骑手位置、车队数、班次、接拒、跨平台抢单或忙闲状态</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>到期时按 r−p 选伙伴，或调用当前匹配优化器</td>
+<td>不负责把选中的组合指派到真实可用骑手</td>
+</tr>
+</tbody>
+</table></div>
+<h4>7.2 一张单如何从到达到配对离开</h4>
+<p>自造例子：A 在 12:00:00 到，等待上限 60 秒；B 在 12:00:40 到。12:01:00 A 到期，若 B 仍未配对，平台计算二者实际节省 r(A,B)，扣除 B 的 potential，和其他候选比较。A 已必须走，不能再为 A 留未来机会，故扣的是伙伴 B 的保留价值。选 B 后同时从候选集合删除两张单；12:01:40 不再为 B 重复派一次。没有候选则 A 单送。</p>
+<p>一维 PB 有候选时即使调整分数为负也可配；二维实验还检查真实合送奖励非负。把负 index 当作拒绝条件会改变算法。这里的“接受伙伴”是平台选边，不是骑手接受 offer，更不是商家接单。</p>
+<h4>7.3 路线计算的四种次序与缺失的运力约束</h4>
+<p>两单来自不同餐厅时，论文枚举两个餐厅先后、两个客户先后的 2×2=4 条路线，要求两餐都取完再送任何一单，用欧氏距离取最短。它不是对一般先取后送的所有六种交错进行搜索，也不在道路图上跑最短路。例：A 的客户就在 A 餐厅隔壁、B 餐厅很远，先送 A 再去取 B 的路线虽可能很合理，却不在这四条两单同时取餐的候选中。</p>
+<p>匹配一旦决定，就累计“分别配送距离减合送距离”的奖励。由于没有真实骑手车队，不能从 90% 拼单率推断某个有限车队能按 ETA 完成，也不能从距离节省推断省了多少等待时间。商家 12:10 才出餐、骑手还在另一街区等因素没有进入这个配对模块。</p>
+<p>PRBAT 的 30 秒间隔是少解几次匹配优化问题；当前集合中能连边的订单先求权重匹配，只执行下一轮前将到期的订单及伙伴，其他单保留。PB-PRBAT 把未到期端点的 potential 扣进边权，避免把值得留待未来的长单过早消耗。这是匹配器和事件列表的交互，不含 BC/DDQN 或其他学习网络。</p>
+<h4>7.4 对项目的接口及代码边界</h4>
+<p>可以把 PB 作为“待派订单→两单组合候选”的模块，再交给真正的骑手选择和路线可行性检查。需要另接入骑手当前位置、剩余容量、出餐时间和用户 SLA，且加入这些过滤后，论文的一维 regret 证明不会自动继续成立。公开稿未提供函数名、数据结构、平局次序和随机种子的实现，本文只给出可复原算法顺序，不伪造源码定位。</p></div><div class="qa-log"><strong>后续问答 · 2026-11-09</strong><p><strong>本次要求：</strong>精读 11 月 5 日报告中与美团项目有关的论文；本轮先完成已取得全文的三篇，另外两篇暂缓。</p><p><strong>处理：</strong>正文与技术附录已逐项分析，保留原推荐信息、稳定锚点与原图，并补充方法、实验和复现边界。</p></div>
+<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-ssrn6349239" data-paper-id="ssrn6349239" data-deep-read="true"><div class="kicker">MOVED FROM 11·05 · 06</div><h2>Behaviorally Informed Dispatch Decisions for Real-Time Order-Courier Assignment</h2><p class="lede">考虑骑手接单行为与工作量的实时派单</p><div><span class="chip">order dispatching</span><span class="chip">courier behavior</span><span class="chip">workload fairness</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Golman Rahmanifar；Mostafa Mohammadi；Nicolas Kuttruff；Stefan Minner<br>Eindhoven University of Technology / Norwegian University of Science and Technology / Technical University of Munich</p><p><strong>首发：</strong>2026-04-20；<strong>当前版本日期：</strong>2026-04-20；SSRN working paper<br><strong>通讯 / 联系作者：</strong>Golman Rahmanifar (SSRN Contact Author)</p><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6349239" target="_blank" rel="noopener noreferrer">论文 / 摘要</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；关注拒单与实时可行性。</p><p class="notice"><strong>中文摘要概述：</strong>把接单概率、路线占用和工作量公平放入派单成本。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Real-time order-courier assignment in online food-delivery platforms is inherently a multi-objective decision problem.</blockquote><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6349239" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：用户提供 34 页全文，正文 §1–7、附录 A–C 及原图已覆盖；完整精读。</p></div>
+<p class="notice">由 2026-11-05 报告整体迁入，原摘要、全部精读、原图与问答保留。新增 <a href="#simulator-ssrn6349239">第 7 节：实体与模拟器核查</a>。</p><div class="deep-reading-content"><h3>全文精读 · 2026-11-09</h3>
+<p><strong>依据：用户提供的 ssrn-6349239.pdf，34 页，正文 §1–7 与附录 A–C。</strong> <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6349239" target="_blank" rel="noopener noreferrer">SSRN / DOI 10.2139/ssrn.6349239</a>。原推荐记录的上线日期为 2026-04-20；以下技术结论以本次 PDF 为准。此前的全文受限状态已解除。</p>
+<h3>1. 摘要完整中文翻译</h3>
+<p>在线外卖平台的实时订单—骑手匹配本质上是一个多目标决策问题。派单决策必须同时满足送达时间约束、保持路线可行性、平衡骑手工作量，并考虑随机需求和交通条件下骑手是否接单。我们将派单建模为连续时间、事件驱动的半马尔可夫决策过程，并提出成本函数近似（CFA），在统一的序贯决策框架内分解和平衡这些相互竞争的目标。所得策略整合了基于可行性的骑手筛选、数据驱动的接单预测、衡量路线效率的占用惩罚、面向骑手间工作量平衡的公平项，以及在不违反送达时间约束的前提下实现短期订单合并的延迟派单机制。我们使用美团的大规模运营数据（TSL-Meituan Challenge）评估该方法，数据包含八个高需求派单日中由四千多名骑手完成的 564,704 个订单。相对现行美团基线，所提出的 CFA 将准时送达率从 85.0% 提升至 92.4%，平均迟到从 0.73 分钟降至 0.55 分钟，工作量公平性（Jain 指数）从 0.68 提升至约 0.69，同时保持适合实时部署的亚秒级决策时间。总体而言，将基于占用的工作量惩罚、接单概率修正的分配成本与延迟派单结合，得到了一种改善准时送达表现的实时派单策略。</p>
+<p>以上为作者摘要的译文。摘要中的“不会违反时间约束”与正文兜底规则、超时结果存在需要澄清之处，见 3.5、3.7；这不是本报告对系统的无条件保证。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>本次 PDF 署名机构</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Golman Rahmanifar</td>
+<td>Eindhoven University of Technology，Industrial Engineering &amp; Innovation Sciences</td>
+<td>首作者、明确以星号标注的通讯作者；本轮新精读作者</td>
+</tr>
+<tr>
+<td>Mostafa Mohammadi</td>
+<td>Norwegian University of Science and Technology，Industrial Economics and Technology Management</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Nicolas Kuttruff</td>
+<td>Technical University of Munich，Logistics &amp; Supply Chain Management；AdONE</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Stefan Minner</td>
+<td>Technical University of Munich，Logistics &amp; Supply Chain Management；Munich Data Science Institute</td>
+<td>末作者</td>
+</tr>
+</tbody>
+</table></div>
+<p><a href="https://research.tue.nl/nl/persons/golman-rahmanifar/" target="_blank" rel="noopener noreferrer">Golman 的 TU/e 官方主页</a>介绍其研究为货运物流、运筹优化与人工智能。<a href="https://research.tue.nl/en/publications/two-echelon-electric-vehicle-routing-problem-with-battery-swap-st/" target="_blank" rel="noopener noreferrer">两级电动车路径与换电站工作</a>以及<a href="https://www.sciencedirect.com/science/article/pii/S2452414X24000554" target="_blank" rel="noopener noreferrer">垃圾收运两级路径的时空同步研究</a>是可核验的相关代表工作；它们处理车辆路线与同步约束，不是本次派单算法的独立验证。机构署名按提供的 PDF 记录，不从作者顺序推断贡献比例。</p>
+<h3>3. 技术精读</h3>
+<h4>3.1 从一张可能被拒绝的订单开始</h4>
+<p>假设 12:00 新来一单，预计 12:08 出餐、12:25 送达。A 离餐厅近，但已有三单且经常拒单；B 稍远，但可能与现有路线顺路；再等几十秒还可能出现同餐厅订单。只最小化新增路程会反复找 A；只选最愿接单的人又会把机会集中在少数骑手身上。本文把“找谁、插在哪、是否先等一下”放进一个可解释的评分框架。这个例子是教学场景，不是论文实测案例。</p>
+<p>论文连接三类研究：动态取送与拼单决定路线是否可执行；随机控制关注当前决策对未来资源的影响；骑手行为研究关注 offer 是否真正被接受。<strong>ED-SMDP 是建模语言，CFA 是人工结构加离线调参的评分函数；本篇没有训练 Bellman 价值网络、策略梯度或深度 Q 网络。</strong> 机器学习主要用于监督式接单概率预测，不能因标题中出现序贯决策就归类为 RL。</p>
+<h4>3.2 连续时间、可见信息与可执行路线（正文 §3；附录 A）</h4>
+<p>事件包括订单到达、出餐通知、骑手完成任务或变为空闲、延期超时。事件间隔不固定，因此是半马尔可夫过程。状态记录当前时刻、进行中订单、待派与新订单，以及每名活跃骑手的位置、既有取送序列、负荷、行为特征和累计分配量。策略看到的是截至当前的历史；在真实出餐通知到来前只能用预计出餐时间 \(\hat{e}_o\)，不能提前读取之后才实现的真值。</p>
+<p>论文的有限时域目标可理解为 \(\mathbb E_\pi[\sum_k c(S_k,A_k)]\)：\(k\) 是事件编号，\(c\) 是事件成本。这不是自动按时间间隔积分的成本，也没有从半马尔可夫名称直接导出某个 RL 更新。状态过大，作者随后用 CFA 近似决策。</p>
+<p>一个动作要么将订单分给骑手并指定取餐、送餐的两个插入位置，要么暂缓。必须先取后送，而且插入后要重新验证<strong>整条路线中的所有旧单与新单</strong>。路线时间逐点递推：</p>
+<p>\[
+t^{\mathrm{arr}}_{r+1}=t^{\mathrm{dep}}_r+d_{r,r+1}/v,\qquad
+t^{\mathrm{dep}}_{\mathrm{pickup}(o)}=\max\{t^{\mathrm{arr}}_{\mathrm{pickup}(o)},\hat{e}_o\}+s_{\mathrm{pickup}}.
+\]</p>
+<p>这里 \(d\) 是路段距离，\(v\) 是速度，\(s\) 是服务时长；到早了要等出餐，而不是把早到视为不可行。送餐节点加送餐服务时长后再走下一段。实际携带量在取餐时加一、送达时减一，逐段不能超过容量 \(Q_g\)；“已承诺订单数”和“车上实际订单数”不是同一个量，复现时需要分开存。</p>
+<p>实验使用取餐开始不晚于预计出餐后 8 分钟、送达不晚于承诺时间后 5 分钟的可行性检查。取餐的软惩罚还会惩罚早到等待，因此即使硬约束可行，也未必便宜。按接单概率抽取 Bernoulli 接受事件：接受才改变承诺路线，拒绝则订单继续待派。<strong>算法 1 的展示直接更新路线与计数，没有显式列出随机拒单分支；实现必须和正文的随机转移区分，不能把发出 offer 当作接单成功。</strong></p>
+<h4>3.3 公平目标究竟平衡什么</h4>
+<p>令 \(y_g\) 为活跃骑手 \(g\) 的累计分配量，\(\theta_g=Q_g/\sum_{h\in G}Q_h\) 为容量比例目标，偏离量为：</p>
+<p>\[
+\phi_g=\frac{y_g}{\sum_{h\in G}y_h+\varepsilon}-\theta_g.
+\]</p>
+<p>容量更大的人允许拿更多单；因此公平并不等于绝对均分。概念模型给出累计不公平预算 \(\mathbb E[\sum_k\sum_g\psi(\phi_g)]\le B\)，再引入权重 \(\lambda_F\)。\(\psi\) 是凸惩罚，例如平方；\(B\) 是容许的不平衡总量。</p>
+<p>实际在线打分却加入当前候选骑手的 \(\lambda_F\psi(\phi_g)\)，没有展示“接这一单后全局公平损失的增量”，也没有预算超标后更新乘子的规则。若用对称平方，一个超额 0.1 的骑手与一个欠额 0.1 的骑手受到同样惩罚；它并不自动鼓励把下一单给欠额者。骑手上线、下线改变 \(G\) 和目标比例，也会改变累计份额的含义。<strong>因此这里有公平偏好，但没有证明在线策略满足公平预算。</strong> 此外，建模的 assigned count 与评估处 delivered count 的表述并不完全一致，应报告使用了哪一种。</p>
+<h4>3.4 候选筛选、完整插入与评分（正文 §4）</h4>
+<p>先用骑手当前位置和既有路线未来任务位置构成“有效位置”，估计到新餐厅的最短距离，做廉价必要条件筛选。用未来任务位置能避免错杀一位很快会经过餐厅的骑手，但若忽略“先到该位置还要多久”，这个距离只是乐观下界；真正可行性仍由完整时间递推检查。对剩余骑手枚举保持先取后送的插入组合，容量、时间窗全部可行后才评分。</p>
+<p>立即成本有三项：取餐同步误差、送达迟到、新增绕路：</p>
+<p>\[
+C_{\mathrm{imm}}=\lambda^{\mathrm{imm}}_{\mathrm{pick}}P_{\mathrm{pick}}+\lambda^{\mathrm{imm}}_{\mathrm{del}}P_{\mathrm{del}}+\lambda_{\mathrm{detour}}\Delta T.
+\]</p>
+<p>\(P_{\mathrm{pick}}=|t^{\mathrm{arr}}_{\mathrm{pick}}-\hat{e}_o|/60\) 计算提前等餐或晚取餐的分钟偏差；\(P_{\mathrm{del}}=\max(t^{\mathrm{arr}}_{\mathrm{del}}-d_o,0)/60\) 只罚超过送达承诺 \(d_o\) 的部分；\(\Delta T\) 是插入增加的路线时间。各权重控制三种代价的兑换比例，所得分数不是直接的现金支出。</p>
+<p>占用项是插入后整条路线的代理成本：</p>
+<p>\[
+CO=\sum_{s\in\mathrm{route}}\frac{\tau_s}{N_s}+\lambda^{CO}_{\mathrm{pick}}P_{\mathrm{pick}}+\lambda^{CO}_{\mathrm{del}}P_{\mathrm{del}}.
+\]</p>
+<p>\(\tau_s\) 是路段时间，\(N_s\) 是该段服务的订单数。教学例子：同样 6 分钟路段，服务一单贡献 6，合并服务两单贡献 3；它鼓励共享路程。它考察完整候选路线，而立即绕路项只看增量，因此可能偏好不同骑手。这不是由未来轨迹训练出来的准确 cost-to-go。若 \(N_s\) 按实际车上订单定义，空车去取餐时可能为零；正文未明确给出零分母约定。取餐与迟到同时进入立即项和 CO，也应理解为有意重加权而不是彼此独立的证据。</p>
+<p>最终候选评分为：</p>
+<p>\[
+\mathrm{score}(o,g)=\frac{C_{\mathrm{imm}}+CO}{\max\{\hat{p}_{\mathrm{acc}}(o,g),0.05\}}+\lambda_F\psi(\phi_g).
+\]</p>
+<p>例如未修正成本同为 10，接单概率 0.9 与 0.5 对应 11.11 与 20，前者优先。这一除法让容易拒单的 offer 更昂贵，0.05 防止爆炸；它不是完整拒单后再派过程的精确期望。只有在每次尝试成功概率与成本都保持不变等条件下，重复尝试才容易导出 \(1/p\)；现实拒单会推进时间、改变可行骑手和订单机会。</p>
+<p>算法按订单到达顺序逐单处理：更新事件状态→筛选骑手→枚举插入→计算各骑手最优插入→选择最低分→接受后更新路线与公平计数→处理下一单。前一单改变后一单状态，因而这是顺序贪心，不是同时求解所有订单的最优联合匹配。接单概率和成本相互作用，改变订单排序也可能改变结果。</p>
+<h4>3.5 暂缓、截止与兜底的边界</h4>
+<p>暂缓截止时间定义为：</p>
+<p>\[
+T_o^{\mathrm{latest}}=\hat{e}_o+\delta_{\mathrm{meal}}-\delta_{\mathrm{insert}}.
+\]</p>
+<p>\(\delta_{\mathrm{meal}}\) 是出餐不确定性余量，\(\delta_{\mathrm{insert}}\) 是给后续插入预留的时间。作者由此建立旅行时间的必要条件，避免订单无限等待。未到截止、找不到合适候选时，订单留在待派集合；之后有新订单、新位置或出餐事件再评估。这种“虚拟批处理”通过保留订单创造合并机会，没有另求一个联合批量路线问题。</p>
+<p>本文固定的两个余量是 357 秒和 636.92 秒，因此截止实际为预计出餐前 279.92 秒，约 4.67 分钟；不是“出餐后再等若干分钟”。文本还谈到成本过高时暂缓，但没有给出可重现的成本阈值；算法 1 明确展示的暂缓条件主要是无可行候选。需求 KDE 进入讨论，但没有一个清晰的需求强度—暂缓阈值公式。</p>
+<p>达到截止后使用最近可行骑手等兜底，并允许迟到；但这与前述送达后 5 分钟硬窗的关系不够明确。出餐预测出错、无人愿接、全部骑手满载时，时间余量并不能凭空制造可行解；附录 A 的拒单成本符号也没有完整进入最终评分。复现必须补足“无可行骑手、连续拒单、允许放宽哪个约束、丢单如何计入指标”的规则，而不能把文中“保留可行性”理解成任何输入都可履约的定理。</p>
+<h4>3.6 数据、容量和监督学习（正文 §5；附录 B）</h4>
+<p>原始数据说明给出 568,546 单、4,085 名骑手和 10 月 11–24 日的 14 天范围；核心评估挑选 Day 5–12 的八个高需求日。摘要称清洗后 564,704 单，但正文没有完整列出从原始数量到该数的清洗映射。预订单的创建至推送间隔明显更长（约 93.74 vs 3.85 分钟），说明订单创建时间、真正允许派单时间、出餐时间不能混为一谈。空间热点、午间与晚间峰值用于理解供需，不证明某种派单规则有因果效果。</p>
+<p>作者以配送 wave 的订单数估容量：中位数 2，四分位范围 1–4，85%、90%、95% 分位分别为 4、6、8，最终使用 8。一个 wave 中完成的总单数可能大于同时携带量；把它当物理容量会偏宽。Fig.3 的批量大小、距离与迟到关联也不能证明“大批量本身导致迟到”，因为繁忙区域和难单会共同改变这些变量。</p>
+<p>接单模型是 LightGBM，使用类别平衡与早停，按时间顺序 80/20 划分训练和测试，训练侧留出部分用于 isotonic calibration（保序概率校准）。基础 13 个特征覆盖取餐距离、送餐距离、工作量、剩余路线、历史接单率、周末、峰时、区域需求、距预计出餐、距送达期限、速度、待取数量、待送数量。附录还加入平方项、距离合计、绕路比、紧迫性和交互项，所以不是最终严格只有 13 个模型输入。</p>
+<p>报告 AUC 0.850、ECE 0.003、accuracy 0.723、precision 0.967、recall 0.705、FPR 0.161，分类阈值 0.8656。AUC 衡量排序，ECE 衡量概率校准；在线评分用概率而非这个二元阈值，因此不能只根据分类准确率判断派单效果。高 precision 不代表“97% 订单都会被接”：预测为接受的人群、分类阈值与策略选择的人群不同。</p>
+<p>附录 B 的重要性排序以区域需求（2135）、历史接单率（1007）、预计出餐（963）、峰时（589）、周末（532）和接单率×峰时（513）为前列；还列取餐距离 362、工作量 338、剩余路线 321、送餐距离 279、绕路比 211、总距离 202。速度、期限或某些紧迫特征接近零不等于业务上没有作用：相关变量会替代，且未清楚说明 importance 是 gain 还是 split。最终树数、叶数、学习率等未完整披露，不能声称能逐参数复现。历史接单率与需求估计也需只用决策前数据构建，文章的切分描述不足以排除所有特征泄漏。</p>
+<h4>3.7 基线、指标与主要结果（正文 §6；Tables 3–4）</h4>
+<p>FIFO 先积累时间批次再按距离和迟到分派；最小绕路基线允许插入和延期；Immediate-only 用同类插入但只看立即成本，<strong>同时禁用了延期</strong>。因此 full vs Immediate-only 不是一个纯 CO 消融。Table 3 用统一 CFA 口径评估，去掉公平项；Table 4 才报告业务指标。Jain 指数 \(J=(\sum_g y_g)^2/(\lvert G\rvert\sum_g y_g^2)\) 衡量分配均匀度，越大越均匀；它不自动校正出勤时间、地域机会或收入差异。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>策略</th>
+<th style="text-align: right;">接单修正 CFA</th>
+<th style="text-align: right;">立即成本</th>
+<th style="text-align: right;">CO</th>
+<th style="text-align: right;">原始 CFA</th>
+<th style="text-align: right;">修正增加量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整方法</td>
+<td style="text-align: right;">57.77 ± 1.56</td>
+<td style="text-align: right;">11.68</td>
+<td style="text-align: right;">40.31</td>
+<td style="text-align: right;">51.99</td>
+<td style="text-align: right;">5.78</td>
+</tr>
+<tr>
+<td>最小绕路</td>
+<td style="text-align: right;">67.25</td>
+<td style="text-align: right;">7.43</td>
+<td style="text-align: right;">53.09</td>
+<td style="text-align: right;">60.53</td>
+<td style="text-align: right;">6.72</td>
+</tr>
+<tr>
+<td>Immediate-only</td>
+<td style="text-align: right;">70.00</td>
+<td style="text-align: right;">7.80</td>
+<td style="text-align: right;">55.20</td>
+<td style="text-align: right;">63.00</td>
+<td style="text-align: right;">7.00</td>
+</tr>
+<tr>
+<td>FIFO</td>
+<td style="text-align: right;">87.03</td>
+<td style="text-align: right;">15.46</td>
+<td style="text-align: right;">62.87</td>
+<td style="text-align: right;">78.32</td>
+<td style="text-align: right;">8.71</td>
+</tr>
+</tbody>
+</table></div>
+<p>完整方法确实降低作者定义的综合代理成本，但它不是人民币成本，也不是实际平均耗时。修正增加量同时依赖原始成本与接单概率，不能把差值直接解释成拒单率。误差为按日统计的标准差，不是 95% 置信区间。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/8c0a9e94e3d24c27e9c478b2.png" alt="原稿第 21 页 Table 4。最小绕路的及时性更好但工作量明显不均；完整方法没有支配所有基线。" loading="lazy"></div><figcaption>原稿第 21 页 Table 4。最小绕路的及时性更好但工作量明显不均；完整方法没有支配所有基线。</figcaption></figure>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>策略</th>
+<th style="text-align: right;">平均迟到 min</th>
+<th style="text-align: right;">p95 迟到 min</th>
+<th style="text-align: right;">迟到超过 5 min %</th>
+<th style="text-align: right;">准时率 %</th>
+<th style="text-align: right;">Jain</th>
+<th style="text-align: right;">每次决策 s</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完整方法</td>
+<td style="text-align: right;">0.5475</td>
+<td style="text-align: right;">4.1376</td>
+<td style="text-align: right;">4.4991</td>
+<td style="text-align: right;">92.3891</td>
+<td style="text-align: right;">0.6870</td>
+<td style="text-align: right;">0.0148</td>
+</tr>
+<tr>
+<td>FIFO</td>
+<td style="text-align: right;">5.5724</td>
+<td style="text-align: right;">63.9147</td>
+<td style="text-align: right;">9.7742</td>
+<td style="text-align: right;">89.3693</td>
+<td style="text-align: right;">0.1399</td>
+<td style="text-align: right;">5.6571</td>
+</tr>
+<tr>
+<td>Immediate-only</td>
+<td style="text-align: right;">0.5429</td>
+<td style="text-align: right;">4.4935</td>
+<td style="text-align: right;">4.6903</td>
+<td style="text-align: right;">89.5000</td>
+<td style="text-align: right;">0.7162</td>
+<td style="text-align: right;">0.0021</td>
+</tr>
+<tr>
+<td>最小绕路</td>
+<td style="text-align: right;">0.0008</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0054</td>
+<td style="text-align: right;">97.5769</td>
+<td style="text-align: right;">0.2584</td>
+<td style="text-align: right;">0.0664</td>
+</tr>
+<tr>
+<td>历史 Meituan</td>
+<td style="text-align: right;">0.7260</td>
+<td style="text-align: right;">4.966667</td>
+<td style="text-align: right;">4.945701</td>
+<td style="text-align: right;">85.0400</td>
+<td style="text-align: right;">0.6800</td>
+<td style="text-align: right;">未报告</td>
+</tr>
+</tbody>
+</table></div>
+<p>相对历史记录，完整方法准时率高 7.3491 个百分点、平均迟到低约 24.6%，但 Jain 只多 0.007。最小绕路的准时率、平均与尾部迟到均更好，代价是明显不公平；Immediate-only 比完整方法更快、更公平，平均迟到也略低，但准时率更低。<strong>完整方法并没有支配所有基线。</strong> 极小的平均迟到配合仍低于 100% 的准时率可表示很多极轻微迟到，必须联合看指标，不能从一个平均数反推全部订单体验。</p>
+<p>历史 Meituan 来自真实记录，其他策略来自仿真，这不是随机线上 A/B。即使使用同一订单流，改变派单会改变位置、接单人群和拥堵状态。超过 5 分钟的迟到仍有 4.4991%，与“硬窗保证”之间需要兜底实现解释。Fig.10–11 分析按日分布与波动；变异系数对均值接近零的方法尤其不稳定，不能替代多随机种子的误差条或统计显著性。</p>
+<h4>3.8 四种消融及正文内部不一致</h4>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/5ccd86f19e38731ae82e530a.png" alt="原稿第 25 页 Figure 12。No CO 和 No Filtering 改善多个业务指标；筛选的计算收益与可行集变化需分开审计。" loading="lazy"></div><figcaption>原稿第 25 页 Figure 12。No CO 和 No Filtering 改善多个业务指标；筛选的计算收益与可行集变化需分开审计。</figcaption></figure>
+<p>Fig.12 的箱线图纵轴分别是平均迟到、准时率、公平性，不是综合成本。No DCM 把接单概率设为 1，迟到更高、准时率更低，支持行为预测的价值。No Postponement 相对完整方法变化小，不能宣称延期在所有指标上带来大幅提升。<strong>No CO 反而改善及时性和公平性；No Filtering 改善最大，准时率接近 98%、Jain 接近 1，但作者称计算代价大。</strong> 这些是原图可见趋势，不将图像读数冒充精确表格值。</p>
+<p>作者对 CO 的解释是牺牲部分短期服务以控制路线负担，但没有给出足够长期收益证据抵消消融中业务指标的改善；第 26 页又出现去掉 CO 增加迟到的概括，与 Fig.12 和前页解释不一致。报告保留负结果，不据后面的概括覆盖图表。纯必要条件筛选若正确且后续穷举同一可行集，理论上应只减少无效计算；移除筛选却改变最佳可行解质量，说明还需要核查筛选是否过强、候选预算或停止规则是否不同。不能仅以“多看一些骑手”掩盖这个实现问题。</p>
+<h4>3.9 附录 C：调参、固定参数与公平门槛</h4>
+<p>成本权重用 15 次随机搜索、seed 42、对数范围 \(10^{-2}\) 至 \(10^2\)；FIFO 用 25 次搜索、批窗 10–180 秒，每日最多抽取 2,000 单。训练 Day 5–9、验证 Day 10–11、测试 Day 12；但主结果汇总 Day 5–12，因此不是整个表都只在未见测试日上计算。这个策略调参划分也不等于接单模型的时间 80/20 划分，二者如何对齐没有充分说明。</p>
+<p>调参目标为 \((1-\mathrm{OTR})+\mathrm{MeanLate}\)，并要求 Jain 至少 0.80、决策时间至多 0.25 秒。OTR 要使用比例而非百分数，且和分钟相加隐含单位权衡。实际完整方法 Jain 0.687，不满足所写的 0.80，说明不能把调参约束当作最终策略保证。附录公平网格在 \(\lambda_F=0\) 时 Jain 约 0.42，0.8 时约 0.67、准时率约 92.2%、平均迟到约 0.55，1.5 时 Jain 约 0.72 但准时率约 88%；提高公平权重有服务代价。文中又把约 0.67 与历史 0.68 比较为可行，需注意这一数值冲突。</p>
+<p>最终立即取餐、立即迟到、绕路、CO 取餐、CO 迟到权重依次是 0.2220、0.02350、0.02437、24.5458、2.5996；公平权重 0.8。骑行速度 30 km/h、取餐服务 2 分钟、送餐服务 3 分钟、距离修正因子 1.3、概率下限 0.05；FIFO 最终批窗 109.98 秒。出餐余量取出餐时间第 90 分位减中位数，插入余量取旅行时间第 90 分位。固定速度和分位余量使在线计算轻便，也弱化了不同道路、天气、商家、时段的异质性。仅有这些数值仍不足以复现全部结果：零占用分母、拒单转移、兜底松弛、筛选和最终 LightGBM 参数仍待澄清。</p>
+<h3>4. 相关工作与对美团项目的用法</h3>
+<p><a href="https://doi.org/10.1145/3583780.3615473" target="_blank" rel="noopener noreferrer">Liang 等的 Courier Occupancy 工作</a>提供用占用衡量派单后资源状态的相关路线；本篇将显式 CO、接单预测、延期与公平项拼进同一评分，但不能把前人系统中的学习能力直接算给本篇。<a href="https://doi.org/10.1287/trsc.2020.1000" target="_blank" rel="noopener noreferrer">Ulmer 等的随机出餐派单研究</a>关注出餐不确定性下派单时机；本篇新增行为与公平评分，也带来更多需要校准的权重。公平相关工作 <a href="https://arxiv.org/abs/2501.05808" target="_blank" rel="noopener noreferrer">Cheng 与 Azadeh</a>是正文参考文献中的比较对象，不作为已验证引用本篇的后续论文。</p>
+<p>对本项目最直接的可迁移内容是“在真实可行插入集合里按校准的接单概率调整评分”，而不是把整个公式当作最优策略。可以先保留统一模拟器与同样的延期、兜底规则，再独立开关接单修正、CO 和公平增量，记录 offer、接受、送达、丢单各层计数。公平项若改成接单后全局偏差增量，应明确标为项目改造；这不是论文已经实现的结论。</p>
+<h3>5. 局限、引用与证据强度</h3>
+<p>本篇的价值在于一个低计算开销、可解释的多目标派单组合。它依赖稳定的接单概率、出餐预测与历史需求估计；策略改变后，高接单骑手的负荷与接受意愿可能改变，静态分类器的低 ECE 不保证部署后仍校准。累计单量公平也没有覆盖小时收入、劳动强度、机会公平与上线时长。未见能核验的公开代码入口或独立复现，本文不补造；本次检索未确认明确的已发表后续引用，作者相关作品和竞赛记录不等于引用证据。</p>
+<p>具体复现风险已在 3.2–3.9 对应公式和结果旁解释：随机拒单分支缺口、对称公平惩罚与预算不一致、零占用分母、延期阈值与兜底、筛选消融、测试日混用、公平门槛和消融文字冲突。它们针对当前 34 页稿件，不推断后续修订仍保留相同问题。</p>
+<h3>6. 公开讨论</h3>
+<p>2026-11-09 用完整标题及论文 ID 检索 X、Reddit、知乎、小红书的公开索引，未取得可核验的实质讨论或评论正文；没有把检索不到写成“绝对不存在讨论”。<a href="https://www.informs.org/Recognizing-Excellence/Award-Recipients/Golman-Rahmanifar" target="_blank" rel="noopener noreferrer">INFORMS 作者获奖记录</a>可确认团队相关成果入围 TSL 数据挑战，但不是对本稿所有算法与数字的同行评议。未登录平台、未读取的评论不作为引文。</p>
+<p><strong>覆盖审计：</strong> B1→3.1；B2/B9→3.2–3.3、3.5、5；B3→3.4–3.5；B4/B7→3.7；B5/B6→3.6；B8→3.8；B10→3.9。正文、附录 A 的符号、B 的特征与 C 的全部方法性调参内容均已映射，原图和负结果已核对。</p><h3 id="simulator-ssrn6349239">7. 追加：事件驱动的商家、用户、骑手和平台交互</h3>
+<p><strong>代码状态：</strong>已检查用户提供的 34 页全文、附录和完整标题/GitHub 检索，并核查 <a href="https://research.tue.nl/nl/persons/golman-rahmanifar/" target="_blank" rel="noopener noreferrer">Golman Rahmanifar 的 TU/e 机构入口</a>。未定位到论文作者公开的模拟器或 LightGBM 训练仓库。因此下文逐事件解释以正文 §3–5、Algorithm 1、附录 A–C 为依据；不是声称已检查某个实际类或函数。</p>
+<h4>7.1 没有统一的每秒步长</h4>
+<p>决定时刻是订单到达、真实出餐、骑手完成/空闲、暂缓单超时等事件。若 12:00:00 到一单、12:00:07 另一家出餐、12:00:20 骑手送达，决策间隔就是 7 秒、13 秒，而不是每轮一秒。历史外生事件按时间揭示，算法不能在 12:00 读取 12:08 才发生的真实出餐值。论文把这个变长间隔过程写成 ED-SMDP；这是一种建模方式，本篇并未因此训练 RL 价值网络。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>当前事件看到什么</th>
+<th>状态在什么条件下改变</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户</td>
+<td>订单到达、客户坐标和承诺时刻</td>
+<td>到达后进入待派；送达后完成；没有独立的用户取消决策模型</td>
+</tr>
+<tr>
+<td>商家</td>
+<td>预计出餐时间；真实出餐尚未通知时不可见</td>
+<td>meal-ready 事件发生后，预计值替换成实际值；没有因系统改派而内生变化的厨房生产队列</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td>位置、剩余取送序列、实际携带量、历史接受特征、累计分配量</td>
+<td>接受后提交插入路线；拒绝后订单继续待派；取餐增负载、送达减负载</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>本次事件后的可观察状态</td>
+<td>先筛骑手、逐人枚举插入、验证整条路线，再按成本/接受概率/公平项选人；无合适方案可暂缓</td>
+</tr>
+</tbody>
+</table></div>
+<h4>7.2 路线评估不等于执行仿真</h4>
+<p>算法先试一个候选插入，沿路线按距离/速度加服务时间推算到达；取餐若早于当前可用的出餐估计就等待。每条旧单也重新检查，不能只确保新单准时。容量沿节点更新，实验上限 8；取餐不晚于出餐后 8 分钟、送达不晚于承诺后 5 分钟，是候选的硬可行边界。计算这些候选只是比较方案，骑手此时尚未实际移动。</p>
+<p>选定骑手后才产生接受随机结果。接受概率由 LightGBM、保序校准和决策前特征给出；环境按 Bernoulli 抽样，并不是把测试分类阈值 0.8656 当成所有真实骑手的接单规则。设 A 的预测接单概率 0.8，抽样值 0.9 时拒绝，订单仍未归 A；不能因为 A 的排序最好就直接增加其在手订单。论文 Algorithm 1 展示里却直接更新路线和计数，没有显式画拒绝分支，故真正实现如何连接抽样与计数仍需作者代码核验。</p>
+<p>成本除以接单概率体现“找一个经常拒绝的人可能白费一次派单”，公平项抑制长期把单集中给少数易接受骑手。LightGBM 是监督预测器，公平系数和其他权重是离线调参；不是骑手在模拟器里实时训练自己的接单策略，也不是平台联合训练多个实体 agent。</p>
+<h4>7.3 一个同时涉及出餐、拒单、暂缓的例子</h4>
+<p>自造例子：12:00 下单，预计 12:08 出餐。按文中 357−636.92 秒的余量，暂缓截止约为 12:03:20。12:00 没有合适候选，可以留待后续事件再算；12:01 有骑手空闲，重新筛选插入。若被选骑手拒绝，不应把路线当作已提交。若 12:02 商家通知实际已出餐，应从这次事件开始用真实时间重算，而不能回头说 12:00 就知道会提前出餐。</p>
+<p>12:03:20 到截止仍无人可行时，论文提到最近可行骑手等兜底并允许迟到，但没有完整说明如何放松既定 5 分钟硬送达窗、连续拒单最终是否丢单、旧 timeout 是否在出餐更新后取消重建。<strong>这些都是缺失的执行规则，不能自行补成具体 heap/event-handler 实现。</strong> 同刻事件顺序、零时间重派是否形成无限循环、路线途中是否可改当前路段也未披露。</p>
+<h4>7.4 寻路和随机性的证据边界</h4>
+<p>正文用距离、速度、服务时间的递推，不提供道路网最短路算法、交通灯模拟或逐秒 GPS 插值。订单到达和真实出餐在条件于历史样本路径后作为外生输入；仍有骑手接受随机性。不能泛称“所有时间都重新随机抽样”，也不能把 paper 中的随机需求语言当成已找到 Poisson 生成器。</p>
+<p>对项目最有用的是将“候选插入是否合法”“骑手是否接受”“真正发生了哪个事件”分开记录，否则公平计数和负载会在拒单时被错误增加。前文的完整方法、实验和附录已保留；此处新增的空缺清单是源码不可得情况下可确认的复现边界。</p></div><div class="qa-log"><strong>后续问答 · 2026-11-09</strong><p><strong>本次要求：</strong>受限论文已下载，精读并同步图书馆；文件为 ssrn-6349239、ssrn-5202084。</p><p><strong>处理：</strong>已按提供的全文补齐正文、技术附录、证明、实验、原图及局限，覆盖审计完成，撤销此前暂缓状态。</p></div>
+<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-ssrn5202084" data-paper-id="ssrn5202084" data-deep-read="true"><div class="kicker">MOVED FROM 11·05 · 07</div><h2>Mixed-Type Courier Dispatching and Pricing for Online Food Delivery Platforms</h2><p class="lede">混合全职与兼职骑手的定价和派单</p><div><span class="chip">order dispatching</span><span class="chip">incentive design</span><span class="chip">courier pricing</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Junlin Chen；Manxi Wu；Chiwei Yan；Zhanhao Zhang<br>University of California, Berkeley / Cornell University</p><p><strong>首发：</strong>2025-05-06；<strong>SSRN 索引修订日期：</strong>2026-01-31（35 页记录；本次 51 页全文未列明确日期）；SSRN working paper<br><strong>通讯 / 联系作者：</strong>Manxi Wu (SSRN Contact Author)</p><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">论文 / 摘要</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；长期机构偏好：Berkeley / Cornell。</p><p class="notice"><strong>中文摘要概述：</strong>把兼职骑手的接单、进入和退出行为与平台派单一起建模。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>Many online food delivery platforms employ a hybrid workforce combining full-time couriers</blockquote><p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：用户提供 51 页全文，正文、EC1–EC3 扩展/实验/全部证明及原图已覆盖；本地稿明确版本日期未列。</p></div>
+<p class="notice">由 2026-11-05 报告整体迁入，原摘要、全部精读、原图与问答保留。新增 <a href="#simulator-ssrn5202084">第 7 节：实体与模拟器核查</a>。</p><div class="deep-reading-content"><h3>全文精读 · 2026-11-09</h3>
+<p><strong>依据：用户提供的 ssrn-5202084.pdf，51 页，正文 36 页及 e-companion EC1–EC15。</strong> <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">SSRN / DOI 10.2139/ssrn.5202084</a>。公开 SSRN 索引仍显示 35 页、2026-01-31 修订；本次文件的页数、作者署名和附录均不同，因此不把该网页日期冒充这份 51 页稿件的明确版本日期。提供的 PDF 未明确列出版本日期。作者主页将工作列为修订中，不能据此写成已经正式接收。</p>
+<h3>1. 摘要完整中文翻译</h3>
+<p>许多在线外卖平台雇用混合劳动力：全职骑手按固定班次工作，构成一个封闭系统；众包兼职骑手则构成一个开放系统，其运作由进入、接单、重新定位和退出等策略性决策驱动。尽管两类骑手具有不同的运营特征，现有派单策略往往没有充分考虑如何在刻画兼职劳动力策略行为的同时，最优地将订单分配给这两类骑手。本文通过联合优化全职骑手规模、兼职骑手定价和订单派单来最小化平台总成本，并以带容量约束的 Wardrop 均衡刻画兼职骑手的策略行为。对于单餐厅场景，我们推导出确保接单激励相容的最优骑手定价策略，并完整刻画两类骑手之间的最优派单策略。最优派单策略具有三个阈值：中央阈值决定兼职骑手送达后返回餐厅还是退出系统；其两侧各有一个额外分界，将相对较短的行程交给全职骑手、较长的行程交给兼职骑手。我们进一步将分析扩展到一般的多餐厅网络，并建立高效的优化模型。使用首届 INFORMS TSL 数据驱动研究挑战的美团数据，我们表明，相比若干基准策略，该方案具有更低的运营成本和更短的取餐时间。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>本次 PDF 的机构</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Junlin Chen</td>
+<td><strong>University of California, Berkeley</strong>，IEOR</td>
+<td>首位署名；本轮新精读作者</td>
+</tr>
+<tr>
+<td>Manxi Wu</td>
+<td><strong>University of California, Berkeley</strong>，CEE</td>
+<td>SSRN Contact Author；PDF 没有用星号指定通讯作者</td>
+</tr>
+<tr>
+<td>Chiwei Yan</td>
+<td><strong>University of California, Berkeley</strong>，IEOR</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Zhanhao Zhang</td>
+<td><strong>Cornell University</strong>，ORIE</td>
+<td>末位署名</td>
+</tr>
+</tbody>
+</table></div>
+<p>Berkeley / Cornell 对应既有机构偏好。<a href="https://sites.google.com/view/manxi-wu/home" target="_blank" rel="noopener noreferrer">Manxi Wu 主页</a>说明其研究涉及博弈、信息与市场设计、多智能体学习及城市系统，当前 Berkeley 署名与本 PDF 一致；旧 SSRN 的 Cornell 记录不替代当前稿件署名。<a href="https://yanchiwei.github.io/research.html" target="_blank" rel="noopener noreferrer">Chiwei Yan 论文目录</a>列有动态匹配、定价与交通物流研究，并明确列出本篇。<a href="https://zhangz73.github.io/" target="_blank" rel="noopener noreferrer">Zhanhao Zhang 主页</a>列有 Atomic Proximal Policy Optimization、随机处理网络的 atomic action decomposition 和反射布朗运动稳态分布学习；这些是作者其他研究，不代表本篇使用 RL。Junlin Chen 的独立主页未能可靠匹配；检索到的 Rutgers 同名本科生网站与本文 Berkeley 作者身份不一致，已排除，不误挂主页。</p>
+<p>可进一步核对的作者代表工作包括 Manxi 的 Value of information in Bayesian routing games（主页论文目录）、Chiwei 的 Dispatching and Pricing in Two-Sided Spatial Queues（论文目录）、Zhanhao 的 Optimal Batched Scheduling of Stochastic Processing Networks Using Atomic Action Decomposition（主页目录）。这些链接支持作者背景，不作为引用本篇的证据。</p>
+<h3>3. 技术精读</h3>
+<h4>3.1 平台为什么不能把所有骑手当作固定运力</h4>
+<p>教学场景：餐厅把近单给固定班次骑手，对方送完还会返回继续工作；兼职骑手接一张远单后可能直接下线。若仅比较本单支付 8 元还是 10 元，会忽略“送完还剩多少可用运力”。平台还可以提高兼职报价，让骑手愿意返回再干一轮；但这会抬高之后所有诱导其留下的订单价格。本文研究的是这种长期稳定状态下的规模、价格和订单流分配，不是每秒对具体骑手路线做动态插入。</p>
+<p>作者在数据中用 <strong>da_id 分组后的接单记录</strong>识别类型：观测期全部接受的组作为全职代理，有拒绝的作为兼职代理。Table 1 报告全职 783、兼职 3,887，订单占比 31.73% / 68.27%，平均迟到 0.46 / 0.97 分钟，准时率 87.68% / 81.89%，取餐距离 0.96 / 0.74 km，接受率 100% / 80.12%。这是行为代理标签，不是劳动合同真值；既然以“从不拒单”定义全职，100% 接单率就不能再充当独立证据证明全职必然不拒单。</p>
+<p>日内从 5:00 起观察，午峰 10:30–13:00、晚峰 17:00–19:30；全职代理更接近固定长期供给，兼职代理上线和下线更活跃。餐厅中仅全职、仅兼职、两者都有分别占 12.44%、22.11%、65.44%。12 个区域的距离图显示较近订单更多交给全职、较远更多交给兼职；这只是历史分配规律，论文接着证明它不总是最优的一刀切规则。</p>
+<h4>3.2 全职骑手：守恒流和占用人数（正文 §3.1）</h4>
+<p>网络包括餐厅集合 \(\mathcal R\) 和客户集合 \(\mathcal C\)，两者不相交；节点之间有确定的正旅行时间 \(\tau_{ij}\)。订单以固定流率 \(\Lambda_{ij}\) 从餐厅 \(i\) 到客户 \(j\)。全职流量 \(\lambda_{f,ij}\) 送单，\(\rho_{f,ji}\) 从客户返回某个餐厅；允许返回别的餐厅，使各处运力保持平衡：</p>
+<p>\[
+\sum_j\lambda_{f,ij}=\sum_j\rho_{f,ji},\qquad
+\sum_i\lambda_{f,ij}=\sum_i\rho_{f,ji}.
+\]</p>
+<p>第一式是每家餐厅出去多少全职骑手就需要回流多少；第二式是每个客户收到多少就需继续离开多少。没有凭空产生或消失的全职供给。全职人数 \(N_f\) 满足：</p>
+<p>\[
+N_f\ge\sum_{i\in\mathcal R,j\in\mathcal C}\bigl(\lambda_{f,ij}\tau_{ij}+\rho_{f,ji}\tau_{ji}\bigr).
+\]</p>
+<p>“每小时经过多少人 × 每人占用多少小时”给出在途人数，这是 Little 定律的流体表达。工资 \(w&gt;0\) 时最优解会把这个下界取紧。\(N_f\) 在模型中连续可分，不包含随机队列的安全冗余或精细班次；平均供需平衡不意味着每一时刻都有人接单。基础模型每趟只送一单，批量扩展另见 3.12。</p>
+<h4>3.3 兼职骑手：带容量的 Wardrop 均衡（正文 §3.2；命题 1）</h4>
+<p>可进入的兼职骑手流率上限为 \(\mu_p\)，他们可以在任意节点进入、选可用订单、空驶到另一个节点、或退出。用 \(R\) 表示退出后的外部收益，\(c\) 表示单位旅行时间成本，\(\beta\in(0,1)\) 表示折扣因子，\(V_i\) 表示处在节点 \(i\) 的参考继续收益。\(R\) 是货币效用，不是餐厅集合 \(\mathcal R\)。</p>
+<p>在 \(i\) 接去 \(j\) 的单得到 \(p_{ij}-c\tau_{ij}+\beta^{\tau_{ij}}V_j\)；空驶去 \(k\) 得到 \(-c\tau_{ik}+\beta^{\tau_{ik}}V_k\)；直接退出得 \(R\)。支付、旅行成本和折扣后的未来机会都参加比较。流量足够小的骑手不会改变市场，他只选对自己划算且还有容量的动作。</p>
+<p>订单 offer 流率上限 \(\bar\lambda_{p,ij}\) 限制该路线每小时可被多少兼职骑手接走，实际流率满足 \(0\le\lambda_{p,ij}\le\bar\lambda_{p,ij}\)。<strong>这里的 capacity 是可用订单的流率，不是骑手车上能装几单。</strong> 若某类高报酬单已经被抢满，它可以比普通可用选择更有吸引力；其他骑手仍无法无限流入。因此带容量 Wardrop 均衡不同于简单要求“所有用过的动作收益都相等”。</p>
+<p>命题 1 把这套选择规则写成互补条件。令 \(\bar{V}=\max_iV_i\)，订单容量稀缺租金为 \(\delta_{ij}\ge0\)：</p>
+<p>\[
+\delta_{ij}(\bar\lambda_{p,ij}-\lambda_{p,ij})=0,\qquad
+V_i-p_{ij}+c\tau_{ij}-\beta^{\tau_{ij}}V_j+\delta_{ij}\ge0,
+\]</p>
+<p>\[
+\lambda_{p,ij}\bigl(V_i-p_{ij}+c\tau_{ij}-\beta^{\tau_{ij}}V_j+\delta_{ij}\bigr)=0.
+\]</p>
+<p>容量未满时 \(\delta=0\)，实际有人接的订单必须和参考收益相等；容量满时可以存在额外稀缺收益。其他互补关系是：</p>
+<p>\[
+\Bigl(\mu_p-\sum_i\mu^{\mathrm{in}}_{p,i}\Bigr)(\bar{V}-R)=0,\quad
+\mu^{\mathrm{in}}_{p,i}(\bar{V}-V_i)=0,\quad
+\mu^{\mathrm{out}}_{p,i}(V_i-R)=0,
+\]</p>
+<p>\[
+\rho_{p,ik}\bigl(V_i+c\tau_{ik}-\beta^{\tau_{ik}}V_k\bigr)=0.
+\]</p>
+<p>同时要求 \(R\le V_i\le\bar{V}\)、\(V_i+c\tau_{ik}-\beta^{\tau_{ik}}V_k\ge0\)、总进入不超过 \(\mu_p\)。于是有更高净收益时所有可用骑手进入；有人进入的节点必须最有吸引力；只有收益等于外部选项时才退出；实际发生的空驶必须让骑手无差异。每个节点仍要满足“进入+送达+空驶到达=接单出发+空驶离开+退出”的流量守恒。时间已经体现在旅行效用里，流量是稳态平均值。</p>
+<p>附录 EC3.1 的证明双向核验：由选择规则构造 \(\delta\)，未饱和设零、饱和设正收益差；反过来用互补条件恢复正流与空余容量的所有收益比较。若 \(\bar{V}&gt;R\)，总进入为正，存在被进入的节点达到 \(\bar{V}\)，从而辅助变量确实是最大值；这一步避免把一个松弛上界误当真实最高收益。</p>
+<h4>3.4 平台问题、强假设与降维（命题 2）</h4>
+<p>平台最小化：</p>
+<p>\[
+\min\quad wN_f+\sum_{i,j}\lambda_{p,ij}p_{ij},\qquad
+\lambda_{f,ij}+\lambda_{p,ij}=\Lambda_{ij},\quad
+\bar\lambda_{p,ij}\le\Lambda_{ij},\quad p_{ij}\ge0.
+\]</p>
+<p>工资和兼职逐单支付是唯一成本项，所有需求在稳态必须被服务。平台选择规模、价格、派单容量，并要求骑手流量满足前述均衡；这形成 MPEC，即带均衡约束的数学规划。当同样价格诱导多个均衡时，联合最小化选取对平台最有利的那个，属于 <strong>optimistic equilibrium selection</strong>；不能直接保证实际骑手会协调到它。</p>
+<p>关键假设 1 对任意不同节点要求：</p>
+<p>\[
+\tau_{ij}\le\tau_{ik}+\beta^{\tau_{ik}}\tau_{kj}.
+\]</p>
+<p>它比普通三角不等式更强。普通最短路只保证右端不折扣时成立；例如三个位置沿直线，直达距离正好等于两段相加，而 \(\beta&lt;1\)，折扣后右端变小就可能失败。作者的结构结论依赖该假设，不能无条件套在任意真实路网；实验部分没有充分展示对全部聚类节点三元组的检查。</p>
+<p>命题 2 证明<strong>存在</strong>一个最优解：兼职只在餐厅进入、只在客户退出、只从客户空驶回餐厅；可令所有订单稀缺租金为零，并取：</p>
+<p>\[
+p_{ij}^{\ast}=V_i+c\tau_{ij}-\beta^{\tau_{ij}}V_j,\qquad
+\bar\lambda_{p,ij}^{\ast}=\lambda_{p,ij}^{\ast}.
+\]</p>
+<p>价格恰好补足旅行成本和到达下一节点后损失的继续收益。最后一式表示在所选均衡中所有被提供的兼职订单流都被接受，不是说现实骑手将百分之百接任何报价，也没有证明均衡唯一。</p>
+<p>证明有三层。先用全部订单交给全职并原路返回构造有限成本可行解。再观察正空驶流必须让参考收益严格上升；强三角条件排除了两段连续空驶，否则直接到终点收益更高，违反均衡。结合流守恒，进入客户、离开餐厅或客户间空驶都可排除。然后降低支付、去掉容量租金，保持原流可行且不增加成本。最后限制在不比纯全职方案贵的集合中：需求限制配送和返回流，工资限制人数，有正退出流的客户收益等于 \(R\)，空驶收益不等式进一步界定全部 \(V\) 和支付上界；闭且有界的集合上连续目标达到最小值。这个紧致性步骤负责“最优解确实存在”，不是只凭直觉降维。</p>
+<p>降维后只剩餐厅—客户配送、客户—餐厅回流和参考收益，目标与互补条件含流量乘收益，仍是非凸双线性问题。参考收益没有计入未来抢到稀缺订单的额外租金，所选均衡语义和同质骑手假设均需保留。</p>
+<h4>3.5 单餐厅：返回还是退出（命题 3）</h4>
+<p>把餐厅记为 0，客户按对称往返旅行时间严格排序 \(0&lt;\tau_1&lt;\cdots&lt;\tau_K\)；等时间客户可合并。固定 \(V_0\) 后：</p>
+<p>\[
+V_\ell=\max\{R,-c\tau_\ell+\beta^{\tau_\ell}V_0\},\qquad
+N_f=2\sum_\ell\lambda_{f,\ell}\tau_\ell.
+\]</p>
+<p>客户处的兼职只需比较退出和回餐厅；全职必须往返，因此单单占用是两倍旅行时间。返回收益大于 \(R\) 就全部返回，小于 \(R\) 就全部退出，相等可以分流。餐厅进入量恰好等于全网退出量，所以：</p>
+<p>\[
+\sum_{\ell:\,-c\tau_\ell+\beta^{\tau_\ell}V_0&lt;R}\lambda_{p,\ell}
+\le\mu^{\mathrm{in}}_{p,0}\le
+\sum_{\ell:\,-c\tau_\ell+\beta^{\tau_\ell}V_0\le R}\lambda_{p,\ell},\qquad
+\mu^{\mathrm{in}}_{p,0}\le\mu_p.
+\]</p>
+<p>左右不同在无差异客户是否也退出。\(V_0&gt;R\) 时进入上限取满；\(V_0=R\) 时可以只吸引部分可用骑手。附录证明不仅把原模型投影为这些约束，也反向选择无差异客户的退出比例、恢复全部回流，证明两个问题同值；未使用的客户也可降低参考收益到上述最大值而不提高成本。这是消去流变量合法性的关键。</p>
+<h4>3.6 三个阈值、定价公式与算法 1（定理 1、命题 4）</h4>
+<p>返回与退出的中央阈值为 \(\ell^{\ast}\)。引理 EC2 指出，只需考察 \(K+1\) 个餐厅收益：</p>
+<p>\[
+V_0^{\ast}=\beta^{-\tau_{\ell^{\ast}}}(R+c\tau_{\ell^{\ast}}),\qquad \ell^{\ast}\in\{0,\ldots,K\},\quad \tau_0=0.
+\]</p>
+<p>这是让阈值客户刚好愿意返回的最低承诺收益。任意 \(V_0\) 处在相邻两个断点之间时，把它降低到左断点不会改变严格退出集合，却降低各订单支付；边界客户可从严格返回变成无差异，使可行退出分配更宽。因此不必连续搜索所有收益值。</p>
+<p>由价格恢复公式得到：</p>
+<p>\[
+p_\ell^{\ast}=c\tau_\ell+\min\left\{V_0^{\ast}(1-\beta^{2\tau_\ell})+c\tau_\ell\beta^{\tau_\ell},\ V_0^{\ast}-\beta^{\tau_\ell}R\right\}.
+\]</p>
+<p>第一支对应返回后再工作的收益，第二支对应送完退出。价格不是单纯按距离线性增加：它还要补偿未来工作的机会价值。给定中央阈值后，再比较兼职支付与全职往返成本 \(2w\tau_\ell\)，以及会消耗多少新进入骑手。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/afa6bf2425fcb5ae76de61ad.png" alt="原稿第 23 页 Figure 4。单餐厅最优解可按距离出现全职、兼职、全职、兼职四个区域；中央阈值区分返回与退出。" loading="lazy"></div><figcaption>原稿第 23 页 Figure 4。单餐厅最优解可按距离出现全职、兼职、全职、兼职四个区域；中央阈值区分返回与退出。</figcaption></figure>
+<p>原图从近到远出现 <strong>全职 → 兼职 → 全职 → 兼职</strong>。三个阈值满足 \(0\le\ell^-\le\ell^{\ast}\le\ell^+\le K\)：近端 \(\ell&lt;\ell^-\) 用全职；\(\ell^-\le\ell\le\ell^{\ast}\) 的相应区域用会返回的兼职；中央阈值外到 \(\ell^+\) 前又可用全职；最远端用送完退出的兼职，外侧边界可混合。退化情况下某些区域为空，\(\ell^{\ast}=0\) 表示无兼职返回；边界等价成本可有多解。</p>
+<p>为什么中央阈值外会重新使用全职？因为退出一次就消耗一个新进入骑手名额。内侧兼职可以循环送单，外侧兼职则是有限资源；平台把这些名额留给省下全职往返成本最多的远单。\(\ell^-\) 找到内侧兼职开始划算的位置；\(\ell^+\) 从最远处往回填充，累计退出流刚好耗尽可用进入量。若 \(\ell^+&gt;\ell^{\ast}\)，边界兼职量为 \(\mu^{\mathrm{in}}_{p,0}-\sum_{\ell&gt;\ell^+}\Lambda_\ell\)，其余由全职承担。</p>
+<p>算法 1 输入距离排序、需求、工资、旅行成本、折扣和可进入流量。依次枚举中央阈值，恢复 \(V_0\) 和所有价格；正阈值若供给超过该阈值及外侧总需求，或该阈值兼职比全职还贵，则排除。对可行候选，内部把有成本优势的返回订单给兼职，外部按最远优先分配有限退出名额；在无差异客户调节返回/退出比例，计算全职人数与总成本；最后选择最便宜候选。每个候选线性扫描，排序后总时间 \(O(K^2)\)。这只是单餐厅定理，不是一般网络的多项式求解保证。</p>
+<p>证明的另一个关键是引理 EC1：固定中央收益后的支付函数对旅行时间严格凹，两支交界的斜率向下跳。于是节省 \(2wt-p(t)\) 一旦变为非负，之后随距离增加；固定候选的问题就是带上下界的连续背包，远端贪心才成立。不能把这个结论脱离价格函数和返回阈值单独引用。</p>
+<p>命题 4 在多个最优方案中选最小中央阈值，证明 \(\mu_p\) 增大时该阈值弱下降。附录比较两个候选的分段线性成本：低阈值承诺的收益与每单价格都更低；增加供给时两者先在同一个最远未填满位置增加流量，高阈值相对成本差不减。若更多供给却选择更高阈值，就与最小最优阈值约定矛盾。特别是 \(\mu_p&gt;\sum_\ell\Lambda_\ell\) 时，只能选中央阈值 0，实际进入的兼职送一单就退出；这不代表所有潜在骑手都必须进入，也不代表所有订单都交给兼职。</p>
+<h4>3.7 多餐厅：用运力位置的边际价值修正成本（命题 5；EC2–EC3）</h4>
+<p>一般网络里，送到客户后可能去另一家餐厅，单看本单距离不能确定机会成本。令 \(\phi_{f,i},\phi_{p,i}\) 是两类骑手流平衡约束的对偶变量，定义：</p>
+<p>\[
+C_{f,ij}=w\tau_{ij}+\phi_{f,i}-\phi_{f,j},\qquad
+C_{p,ij}=p_{ij}+\phi_{p,i}-\phi_{p,j}.
+\]</p>
+<p>它们计算“直接支付/工资占用 + 从起点移走运力 − 在终点留下运力”的边际代价。注意 \(\phi\) 是平台优化的影子价格，\(V\) 是骑手的继续收益；二者不能互换，也不是训练得到的 RL critic。</p>
+<p>命题 5：若 \(C_f&lt;C_p\)，该 OD 全给全职；若 \(C_p&lt;C_f\)，全给兼职；相等时可混合。证明先固定收益得到流量 LP，再固定流量得到收益 LP，利用每个乘积约束至少一个因子为零，把两个线性规划的对偶条件组合起来；双零时导数为零。全职规模为零的退化情况也调整工资约束乘子，使其可取 \(w\)。随后配送流的互补松弛要求实际使用类型的修正成本等于共同需求影子价，较贵类型必须为零。这里解释的是最优解的必要结构，不是随便估一组对偶数就有全局最优保证。</p>
+<p>命题 EC2 进一步说明：全职客户影子价至少是各个返回餐厅的“餐厅影子价减返回工资成本”的最大值，实际回流路径取等号。兼职方面，只对允许进入的最高收益餐厅、允许退出的 \(V_j=R\) 客户、允许无差异空驶的弧分别有 \(\phi_{p,i}\le\chi_p\)、\(\phi_{p,j}\ge0\)、\(\phi_{p,j}\ge\phi_{p,i}\)，正流时取等。\(\chi_p\) 表示总进入约束的边际影响；在所有人进入的等式分支它未必非负。</p>
+<p>命题 EC3 给出单餐厅的具体对偶选择：\(\phi_{f,0}=0\)、\(\phi_{f,\ell}=-w\tau_\ell\)，所以 \(C_f=2w\tau_\ell\)；兼职餐厅为 \(\chi_p\)，返回区客户为 \(\chi_p\)，退出区为 0，无差异客户为 \(\max\{\chi_p,0\}\)。故返回区兼职修正成本就是支付，退出区还加进入稀缺价 \(\chi_p\)。附录还处理零进入与未用节点，保证这些归一化不破坏 KKT 条件。这个解释把三阈值与多餐厅结构连上，同时指出为什么任意网络不能再只按距离排序。</p>
+<h4>3.8 两个分支求解与安全剪枝（命题 6）</h4>
+<p>进入互补条件使可行域是两个集合的并：第一分支 \(\bar{V}=R\)，所有节点收益均为 \(R\)，没有兼职空驶，每人送一单退出，支付为 \(p_R(t)=ct+(1-\beta^t)R\)，因而是线性规划，最优成本记为 \(\Pi_1\)。第二分支所有可进入骑手都进入，即总进入为 \(\mu_p\)，但收益和流量仍双线性；两分支允许在边界重叠。</p>
+<p>命题 6 利用流守恒与互补关系，把第二分支目标重写为：</p>
+<p>\[
+wN_f+\mu_p(\bar{V}-R)
++\sum_{i,j}\lambda_{p,ij}\bigl[c\tau_{ij}+(1-\beta^{\tau_{ij}})V_j\bigr]
++\sum_{j,i}\rho_{p,ji}\bigl[c\tau_{ji}+(1-\beta^{\tau_{ji}})V_i\bigr].
+\]</p>
+<p>原本的支付在网络内相消，剩下吸引全部进入的收益溢价、配送成本、回流成本和时间折扣损失。将方括号里的 \(V\) 用下界 \(R\) 替代，放松相关约束后得到 LP 下界 \(L\)。若 \(L\ge\Pi_1\)，第二分支不可能更好，可以直接用第一分支；否则所有不比 \(\Pi_1\) 贵的候选满足：</p>
+<p>\[
+R\le V_i\le\bar{V}\le R+\frac{\Pi_1-L}{\mu_p}=:V_{\max}.
+\]</p>
+<p>这为 McCormick 双线性松弛和 spatial branch-and-bound 提供紧边界。若某客户—餐厅弧满足 \(R+c\tau_{ji}-\beta^{\tau_{ji}}V_{\max}&gt;0\)，即使给餐厅最高允许收益，客户也不愿返回，因此可将其兼职回流固定为零。剪枝保留所有能改善已知方案的解；它不是宣称所有可能价格下这条弧都永不使用。一般网络仍需非凸求解器，运行时间依赖实例。</p>
+<h4>3.9 数据、标定与离散仿真（正文 §6；EC2.1–EC2.2）</h4>
+<p>原始样本为 2022 年 10 月 17–24 日八天 568,546 单。清理缺失、保留主要子区并排除两个离群区域后有 4,147 家餐厅、506,485 单；关注占约 31.3% 订单的午峰，保留同时使用两类骑手的餐厅，去掉约 4.19% 预订单。用 k-means 将餐厅/客户聚成 20/30、40/60、80/120 个节点，OD 小于每小时 0.1 单的设零。<strong>求解规模是聚类网络，不是直接对四千家餐厅逐单求解。</strong> 固定平均需求与统一旅行速度便于稳态标定，也抹掉峰内波动和局部拥堵。</p>
+<p>全职时薪 \(w=33.6\) CNY/h 来自 2024–2025 调查，兼职时间成本 \(c=17.5\) CNY/h 借用北京通勤时间价值，\(\beta=0.9\) 配合小时单位，外部收益 \(R=150.4\) 由 8 小时、26.4 CNY/h 的最低工资相关假设折扣得到。它们不是从每个骑手的进入/退出选择结构估计的真值；改用分钟必须同步变换折扣和工资，不能直接把 \(0.9^{\text{分钟}}\) 填进去。可用进入供给以观察到的进入代理，数据看不到被价格劝退、从未上线的人。</p>
+<p>EC2.2 把“没有未完成订单且 30 分钟无活动”定义为退出，按距最近餐厅 0.5 km 分箱，退出比例由不足 0.5 km 的 38.3% 上升至超过 3 km 的 74.8%。它支持远处更常观察到离开，但可能混入休息、观测结束和转去其他平台；不是个体理性效用函数已经被因果识别。</p>
+<p>优化用 Apple M5 MacBook Pro、16 GB、Gurobi，限时 20 分钟，报告所用解最优性 gap 低于 0.05%。仿真将连续流率变成订单的类型概率 \(\lambda_f/(\lambda_f+\lambda_p)\)，再找该类首个可用骑手；这不是在线重新求均衡。兼职空闲 30 分钟退出，订单 30 分钟未成功派出计未履约。每策略跑 100 次，表格没有提供充分的置信区间。</p>
+<p>由于约 19.8% 出餐时间缺失或不可靠，仿真<strong>不模拟备餐时间</strong>；pickup latency 是下单到骑手抵达餐厅，而不是食物准备好到取走，也不是完整送达时延。“Order fulfillment”是 30 分钟内成功派单比例，不是送达准时率。稳态约束全部需求被服务，离散有限运力下却仍可能派不出去，两者不能混读。</p>
+<h4>3.10 主结果、基线和历史美团的比较边界</h4>
+<p>三个基线均重新优化其允许的决策：纯全职令兼职流为零；纯兼职令 \(N_f=0\)；距离计价限制 \(p_{ij}=\gamma\tau_{ij}\)，其中统一费率 \(\gamma\) 仍被优化。第三者测试位置相关灵活定价的价值，而不是随意选一个差费率来衬托本文。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/d5bcbb7a935daa57f00a6082.png" alt="原稿第 31 页 Table 2。成本与取餐延迟改善，同时成功派出率低于纯全职；不是完整送达准时率。" loading="lazy"></div><figcaption>原稿第 31 页 Table 2。成本与取餐延迟改善，同时成功派出率低于纯全职；不是完整送达准时率。</figcaption></figure>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>餐厅/客户数</th>
+<th>策略</th>
+<th style="text-align: right;">成本 CNY/h</th>
+<th style="text-align: right;">全职人数</th>
+<th style="text-align: right;">全职订单 %</th>
+<th style="text-align: right;">30 分钟内派出 %</th>
+<th style="text-align: right;">取餐延迟 min</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20/30</td>
+<td>纯全职</td>
+<td style="text-align: right;">68417.56</td>
+<td style="text-align: right;">2037</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">97.38</td>
+<td style="text-align: right;">19.27</td>
+</tr>
+<tr>
+<td>20/30</td>
+<td>纯兼职</td>
+<td style="text-align: right;">66018.83</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">96.46</td>
+<td style="text-align: right;">24.30</td>
+</tr>
+<tr>
+<td>20/30</td>
+<td>距离计价</td>
+<td style="text-align: right;">63390.02</td>
+<td style="text-align: right;">1704</td>
+<td style="text-align: right;">92.11</td>
+<td style="text-align: right;">96.92</td>
+<td style="text-align: right;">18.37</td>
+</tr>
+<tr>
+<td>20/30</td>
+<td>本文</td>
+<td style="text-align: right;">63196.36</td>
+<td style="text-align: right;">1173</td>
+<td style="text-align: right;">52.40</td>
+<td style="text-align: right;">96.69</td>
+<td style="text-align: right;">18.01</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td>纯全职</td>
+<td style="text-align: right;">65097.65</td>
+<td style="text-align: right;">1938</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">95.28</td>
+<td style="text-align: right;">20.66</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td>纯兼职</td>
+<td style="text-align: right;">不可行</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td>距离计价</td>
+<td style="text-align: right;">60467.97</td>
+<td style="text-align: right;">1630</td>
+<td style="text-align: right;">92.10</td>
+<td style="text-align: right;">95.05</td>
+<td style="text-align: right;">19.39</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td>本文</td>
+<td style="text-align: right;">60201.52</td>
+<td style="text-align: right;">1256</td>
+<td style="text-align: right;">63.20</td>
+<td style="text-align: right;">94.88</td>
+<td style="text-align: right;">17.39</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td>纯全职</td>
+<td style="text-align: right;">60855.28</td>
+<td style="text-align: right;">1812</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">92.20</td>
+<td style="text-align: right;">20.91</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td>纯兼职</td>
+<td style="text-align: right;">不可行</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td>距离计价</td>
+<td style="text-align: right;">56039.22</td>
+<td style="text-align: right;">1493</td>
+<td style="text-align: right;">92.07</td>
+<td style="text-align: right;">91.63</td>
+<td style="text-align: right;">19.76</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td>本文</td>
+<td style="text-align: right;">54809.69</td>
+<td style="text-align: right;">919</td>
+<td style="text-align: right;">51.72</td>
+<td style="text-align: right;">91.23</td>
+<td style="text-align: right;">16.49</td>
+</tr>
+</tbody>
+</table></div>
+<p>相对纯全职，成本低约 7.5%–9.9%（作者平均约 8.4%），取餐延迟更短，但派出比例低 0.40–0.97 个百分点。小网络纯兼职成本比本文高约 4.5%、取餐延迟高约 34.9%；较大网络不可行限于所标定的供给、效用和需求条件，不是对所有兼职市场的普遍不可能性。距离计价的兼职订单占比约 7.9%，<strong>不是接单成功率 7.9%</strong>。</p>
+<p>Table 3 比较的是两种“从美团特征推导的政策”：固定全职订单占比为 31.73%，或固定全职人数为 783，再优化其余变量。它们不是实际美团派单系统的 replay，更不是在线实验。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>网络</th>
+<th>固定全职份额：成本 / 人数 / 派出率 / 延迟</th>
+<th>固定全职人数：成本 / 份额 / 派出率 / 延迟</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20/30</td>
+<td>63430.87 / 752 / 96.44% / 19.29 min</td>
+<td>63403.46 / 34.52% / 96.57% / 18.95 min</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td>60322.87 / 681 / 94.28% / 18.08 min</td>
+<td>60238.30 / 37.84% / 94.36% / 17.75 min</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td>56694.23 / 456 / 90.48% / 16.63 min</td>
+<td>56083.89 / 52.21% / 90.35% / 16.88 min</td>
+</tr>
+</tbody>
+</table></div>
+<p>相对这些受限再优化基线，成本收益约 0.1%–3.3%，按固定人数/固定份额平均约 0.9%/1.3%。这比相对纯全职的改善小得多。时间成本和外部选项的估计误差足以影响这么小的差距；在同一模拟框架内它是结构价值的证据，不能直接换算成美团实际可节省金额。</p>
+<h4>3.11 弹性需求扩展（EC1.1、EC2.3）</h4>
+<p>基础模型所有需求外生。扩展让服务费 \(f\) 与履约程度 \(\alpha\) 影响需求 \(D(f,\alpha)\)，实际服务量 \(\Lambda=\alpha D(f,\alpha)\)。在对价格连续严格递减、对服务程度增加等假设下，可把任意部分履约方案的服务量保持不变，改成 \(\alpha=1\) 并提高价格；成本相同、收入不低。因此可用逆需求 \(f(\Lambda)\)，外层最大化 \(\sum_{ij}\Lambda_{ij}f_{ij}(\Lambda_{ij})-\Pi(\Lambda)\)，其中 \(\Pi\) 是固定需求的最低配送成本。</p>
+<p>这表示原来的固定流量结构定理仍可用于内层；不是证明随机排队中拒单与提价完全等价，也不涵盖顾客异质性、公平或未知需求曲线。实验设：</p>
+<p>\[
+f_{ij}(\Lambda)=u_0\tau_{ij}\left[1+\frac{1-\Lambda/\Lambda^0_{ij}}{\epsilon}\right],\qquad
+0\le\Lambda\le(1+\epsilon)\Lambda^0_{ij}.
+\]</p>
+<p>\(\Lambda^0\) 是观测流量，\(u_0=150\) CNY/h 将原需求映射到参考距离价格；\(\epsilon\in\{1.3,1.5,1.7\}\) 控制弹性，原来零需求 OD 保持关闭。这是指定的线性需求敏感性，不是从数据估出的因果价格弹性。</p>
+<p>EC Table 1 中，弹性从 1.3 到 1.7，小/中/大网络成本分别从 57933.83→66485.13、55600.33→63887.58、51296.38→59013.78，全职人数 1028→1226、1124→1356、871→973；利润约 136,611–138,186 CNY/h，份额约 50.83%–65.89%。派出率和取餐延迟变化较小。这支持所测参数下结构和份额大体稳定，不支持任意需求曲线下数值收益不变。</p>
+<h4>3.12 拼单扩展与履约率下降（EC1.2、EC2.4；命题 EC1）</h4>
+<p>一般扩展预先给出批次类型 \((i,j,b)\)：起点餐厅 \(i\)、终点客户 \(j\)、中间访问顺序已确定，旅行时间 \(\tau_{ijb}\)，并用 \(a_{ijb,rs}\) 记录它包含多少个 OD \((r,s)\) 的订单。守恒改为：</p>
+<p>\[
+\sum_{i,j,b}a_{ijb,rs}\bigl(\lambda_{f,ijb}+\lambda_{p,ijb}\bigr)=\Lambda_{rs}.
+\]</p>
+<p>流率现在是“每小时出发多少批”，不是多少单；因此不能漏掉 \(a\)。人数按每批行程占用，兼职价格仍为 \(V_i+c\tau_{ijb}-\beta^{\tau_{ijb}}V_j\)。批次可行路线要事先给定，模型并不证明在线能及时凑齐这些单，也没有解决所有路线枚举的组合爆炸。</p>
+<p>命题 EC1 固定同一起终点，按批次旅行时间排序，存在两阈值使较短与较长批次交给兼职，中间给全职，边界可混合。证明固定每个批型总流及两类总流，将替换为全职的增量成本写成 \(g(t)=(w-c)t-V_i+\beta^tV_j\)；二阶导为 \(V_j(\log\beta)^2\beta^t&gt;0\)，严格凸函数的低成本集合是一个区间，连续背包优先填这个中间区间。这里的排序变量是给定批型的总旅行时间，不是任意网络所有订单的距离；结论说存在这种最优分配，不能忽略并列解与固定流前提。</p>
+<p>数值实验只允许<strong>同一餐厅—客户 OD</strong>内拼单，额外一单增加 5 分钟，最大批量 \(B=2,3,4\)，即 \(\tau_{ijb}=\tau_{ij}+(b-1)\Delta\tau\)。这比一般跨客户在线拼单简单。下表保留 EC Table 2 的全部批量分支：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>网络</th>
+<th style="text-align: right;">B</th>
+<th style="text-align: right;">成本 CNY/h</th>
+<th>全职人数 / 订单份额</th>
+<th style="text-align: right;">派出率 %</th>
+<th style="text-align: right;">取餐延迟 min</th>
+<th style="text-align: right;">平均批量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20/30</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">38511.66</td>
+<td>954 / 84.22%</td>
+<td style="text-align: right;">95.41</td>
+<td style="text-align: right;">16.93</td>
+<td style="text-align: right;">1.84</td>
+</tr>
+<tr>
+<td>20/30</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">30391.76</td>
+<td>681 / 76.33%</td>
+<td style="text-align: right;">94.21</td>
+<td style="text-align: right;">15.12</td>
+<td style="text-align: right;">2.58</td>
+</tr>
+<tr>
+<td>20/30</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">26434.24</td>
+<td>535 / 68.43%</td>
+<td style="text-align: right;">93.32</td>
+<td style="text-align: right;">13.70</td>
+<td style="text-align: right;">3.23</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">37079.37</td>
+<td>909 / 84.20%</td>
+<td style="text-align: right;">92.31</td>
+<td style="text-align: right;">17.14</td>
+<td style="text-align: right;">1.84</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">29513.09</td>
+<td>653 / 76.30%</td>
+<td style="text-align: right;">90.69</td>
+<td style="text-align: right;">15.19</td>
+<td style="text-align: right;">2.57</td>
+</tr>
+<tr>
+<td>40/60</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">25865.32</td>
+<td>515 / 68.40%</td>
+<td style="text-align: right;">89.11</td>
+<td style="text-align: right;">13.23</td>
+<td style="text-align: right;">3.21</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">34463.46</td>
+<td>571 / 54.08%</td>
+<td style="text-align: right;">87.74</td>
+<td style="text-align: right;">14.00</td>
+<td style="text-align: right;">1.83</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">27989.72</td>
+<td>528 / 63.74%</td>
+<td style="text-align: right;">85.64</td>
+<td style="text-align: right;">13.14</td>
+<td style="text-align: right;">2.55</td>
+</tr>
+<tr>
+<td>80/120</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">24771.49</td>
+<td>483 / 68.27%</td>
+<td style="text-align: right;">83.01</td>
+<td style="text-align: right;">12.77</td>
+<td style="text-align: right;">3.24</td>
+</tr>
+</tbody>
+</table></div>
+<p>批量越大，优化成本、人数和取餐延迟下降，但派出率也下降。大网络 \(B=4\) 派出率只有 83.01%，明显低于不拼单方案的 91.23%；不能把“更便宜、更快”解释为所有顾客服务更好。平均批量小于最大值说明解仍使用较小批次。大网络全职份额随 B 增加而上升，而小/中网络下降，避免给出所有网络方向一致的结论。模拟指标对未成功派出订单的处理与优化的全量服务前提不同，也是解释成本—服务取舍的必要背景。</p>
+<h4>3.13 多餐厅的局部距离边界（EC1.4；命题 EC4）</h4>
+<p>附录在<strong>第一分支 \(\bar{V}=R\)、兼职不回流</strong>中恢复部分距离规则，不是一般双线性均衡的完整三阈值。对餐厅 \(i\) 定义两个几何比率：</p>
+<p>\[
+\kappa_i^{\mathrm{upper}}=\max_j\frac{\tau_{ij}+\tau_{ji}}{\tau_{ij}},\qquad
+\kappa_i^{\mathrm{lower}}=\min_{j,k}\frac{\tau_{ij}+\tau_{jk}-\tau_{ik}}{\tau_{ij}}.
+\]</p>
+<p>第一个用原路返回给全职成本上界，第二个扣除可去其他餐厅的替代路径给下界。强假设使后者为正。该 LP 分支的进入影子价 \(\chi_p\ge0\)，兼职修正成本在实际使用的 OD 上为 \(p_R(t)+\chi_p\)。短端阈值由 \((w\kappa_i^{\mathrm{upper}}-c)t=R(1-\beta^t)\) 的最大非负根决定，长端阈值由 \((w\kappa_i^{\mathrm{lower}}-c)t=R(1-\beta^t)+\chi_p\) 决定。若相应 \(w\kappa-c\le0\)，阈值为无穷；没有正根时可为零，不能一律假设两个有限正阈值存在。</p>
+<p>命题 EC4 说短于下阈值全部给全职、长于上阈值全部给兼职，中间区域仍要比较网络影子成本。证明用 \(R(1-\beta^t)/t\) 随 \(t\) 严格下降，将旅行时长比较转成成本比较，再用命题 5 排除较贵类型；\(\kappa^{\mathrm{lower}}\le\kappa^{\mathrm{upper}}\) 与 \(\chi_p\ge0\) 保证两阈值有序。短阈值为 0 时“所有更短单”是空集合，长阈值为无穷时也没有保证交给兼职的远端，结论可以是空泛边界而非实用切分。</p>
+<h3>4. 相关工作与项目应用</h3>
+<p>正文区分偶发配送员路径问题、外卖运营、网约车战略司机均衡等研究。Archetti、Savelsbergh 与 Speranza 的 The vehicle routing problem with occasional drivers 侧重给定偶发司机参与下的路线；本篇明确把进入、接单、回流、退出一起放进平台成本优化。Afèche、Liu 与 Maglaras 的 Ride-hailing networks with strategic drivers 研究战略司机与平台控制；本篇则用全职闭合流与兼职开放流并存，产生单餐厅三阈值。这两篇可在 <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5202084" target="_blank" rel="noopener noreferrer">SSRN 参考文献目录</a>核验，比较基于本文的文献定位，不宣称已逐篇精读。</p>
+<p>本报告另一篇 <a href="#paper-ssrn6349239" class="is-deep-read-link" data-deep-read="true">Behaviorally Informed Dispatch</a>把接单概率作为预测输入，再做实时路线插入；本篇让支付改变进入和退出均衡。两者的互补关系是本报告分析，不是作者已经集成的系统。对美团项目，可以先用本篇做时段级规模、价格和 OD 配额，再由实时派单器执行；必须重新检验费用改变后的供给、备餐、随机排队和公平，不能把连续均衡流直接当作逐单可执行调度。</p>
+<h3>5. 局限、后续引用与可信边界</h3>
+<p>最强的结果是明确假设下的单餐厅结构定理，以及一般网络的可求解降维和界。限制来自稳态固定流率、确定旅行时间、同质理性骑手、任意地点进入、完全掌握未来机会、乐观均衡选择和强于普通三角不等式的几何条件。实际兼职骑手有班次结束、家庭目的地、多平台切换和不同机会成本；这些会改变返回阈值，而不是只改变一个标量概率。</p>
+<p>实验依赖行为代理类型、未完全识别的潜在供给、外借的时间价值和指定需求曲线。没有备餐时间，且服务指标是成功派出与到店时间，不能推广到完整顾客送达体验。聚类网络上的小 gap 证明的是这个优化模型求解充分，并不等于真实平台模型误差小；相对推导美团基线的节省较小，更需要敏感性与真实行为验证。附录弹性与拼单是模型扩展，不是删除某个组件的消融，正文也没有以组件开关实验验证每个建模假设。</p>
+<p>本次检索未确认可以可靠列出的已发表后续引用；作者目录里的相近研究不能当作引用本篇的论文。也未找到与这份 51 页稿件配套、可核验的专属代码入口，因此不宣称已复现数值实验或已经验证原证明的每个细节；本精读逐一解释了正文命题 1–6、定理 1、引理 EC1–EC2、命题 EC1–EC4 的论证路线和条件。</p>
+<h3>6. 公开讨论</h3>
+<p>2026-11-09 的完整标题、论文 ID 与 X / Reddit / 知乎 / 小红书公开索引检索未取得可核验的实质讨论正文。Manxi Wu、Chiwei Yan、Zhanhao Zhang 的作者页可核验这项工作及其修订/竞赛背景，但论文目录不是社交评论，也不是正式接收通知；不虚构平台评论或引用量。</p>
+<p><strong>覆盖审计：</strong> M1/M16→3.1、3.9；M2→3.2；M3→3.3；M4→3.4；M5→3.5；M6/M7→3.6；M8/M14→3.7；M9→3.8；M10→3.9；M11→3.10；M12→3.11；M13→3.12；M15→3.13；M17→5。正文、EC1 全部扩展、EC2 全部实验、EC3 全部证明均完成机制、依据和适用范围解释。</p><h3 id="simulator-ssrn5202084">7. 追加：从稳态流量到逐单仿真，各实体做什么</h3>
+<p><strong>代码状态：</strong>检查 51 页用户全文、EC 附录、完整标题/GitHub 检索，以及 <a href="https://sites.google.com/view/manxi-wu/home" target="_blank" rel="noopener noreferrer">Manxi Wu</a>、<a href="https://yanchiwei.github.io/research.html" target="_blank" rel="noopener noreferrer">Chiwei Yan</a>、<a href="https://zhangz73.github.io/" target="_blank" rel="noopener noreferrer">Zhanhao Zhang</a>作者入口，未定位到作者公开优化/仿真源代码。文中链接的<a href="https://github.com/meituan/Meituan-INFORMS-TSL-Research-Challenge" target="_blank" rel="noopener noreferrer">美团挑战数据仓库</a>没有本篇离散事件模拟器。下述严格区分理论行为和 §6.2 披露的执行规则。</p>
+<h4>7.1 优化模型没有每秒推进的骑手状态</h4>
+<p>主体模型先求每小时的订单流、骑手返回/退出流、全职车队规模和兼职报酬。全职车队在网络内守恒；兼职可进入、接单、转移到其他餐厅或退出。Wardrop 均衡表示被使用选项的收益不低于有剩余容量的替代选项，不是每个时间步用一个神经网络输出离散动作，也不是 LightGBM 接单概率。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>理论主体模型</th>
+<th>仿真实际披露</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户</td>
+<td>餐厅—客户节点的固定到达率；弹性需求只在扩展中加入</td>
+<td>到单后进入类型分配流程；未派超过 30 分钟记未履约；不等于用户自主取消策略</td>
+</tr>
+<tr>
+<td>商家</td>
+<td>聚类后的餐厅节点，等待与订单流守恒</td>
+<td><strong>不模拟备餐时间</strong>；取餐时延从下单到骑手抵达餐厅算</td>
+</tr>
+<tr>
+<td>全职骑手</td>
+<td>固定车队，按平台分配送餐、返回，服从流守恒和占用约束</td>
+<td>根据计算出的全职流比例接受订单，找该类型首个可用骑手；个体拒单模型未披露</td>
+</tr>
+<tr>
+<td>兼职骑手</td>
+<td>根据报酬、旅行成本、折扣和外部机会进行进入/接单/返回/退出均衡选择</td>
+<td>使用兼职流比例，空闲 30 分钟后退出；逐个骑手在线重新求最优回应的代码未提供</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>离线求流量、车队、报酬；在均衡约束下优化成本</td>
+<td>将分数流率变为逐单随机类型分配，不是每来一单就重新求完整均衡</td>
+</tr>
+</tbody>
+</table></div>
+<h4>7.2 一单到来时真正披露的分配步骤</h4>
+<p>对 OD 对 (i,j)，优化结果给出全职流率 λ_f 与兼职流率 λ_p。订单到达时，以 λ_f/(λ_f+λ_p) 的概率交给首个可用全职骑手，否则交给首个可用兼职骑手。自造例子：优化流率每小时 6 单全职、4 单兼职，类型硬币概率为 0.6/0.4；十单不保证恰好六单全职，短时间内可能偏向同一类型，导致一类缺人、另一类闲置。</p>
+<p>这里“随机选类型”不是“骑手以 60% 概率接受”，也不是挑最近骑手。正文用 first-available，但没有说多个可用人同刻出现时按距离、等待时间还是 ID 打破平局；所选类型暂时没人时是否重抽类型、何时跨类型兜底也未完整披露。不能自行写成最短队列或最近骑手规则。</p>
+<p>订单超过 30 分钟仍未派出计未履约；兼职超过 30 分钟无活动退出。前者作用于待派池，后者作用于运力，两者不是同一个超时。例：12:00 下单、12:31 仍无人派，是未履约；已经 12:20 派出但 12:50 才送达，不会仅据这条派单超时规则算同一类未履约。</p>
+<h4>7.3 移动、退出与接受：不能把流体解当成轨迹</h4>
+<p>理论中旅行时间来自聚类节点间距离与统一速度，返回流说明送到客户后应该往哪些餐厅补位，兼职远处退出的诱因由均衡价值解释。它没有提供道路图上 A* / Dijkstra、路口移动、厨房等待和送餐服务事件的源程序。分数返回流在仿真中如何离散成每一名骑手的轨迹、是否每次按比例抽样、同时事件的先后顺序，正文没有完整给出。</p>
+<p>命题 2 的最优解把指定给兼职的订单设为全部接受，依赖平台能设计报酬与所选择的均衡。它不是证明现实兼职不会拒单。若改用一个经验接受率模型，例如高峰雨天同样报酬只有 70% 人愿接，原流守恒和车队需求都会改变，不能继续直接用原稳态成绩。混合车队的“全职/兼职”也不能无条件等同于 MGI/MRI 的“单店专属/公共骑手”。</p>
+<h4>7.4 没有备餐过程意味着什么</h4>
+<p>本篇因出餐记录缺失/不可靠而在仿真中明确省略备餐。若餐厅 12:00 收单、12:15 才好餐，骑手 12:05 到，现实应等待 10 分钟；本仿真没有这个等待过程。因此 pickup latency 改善不能直接解释成食物备好后更快取走，也不能推断完整送达准时率。理论稳态全部订单有服务流，离散随机仿真仍可因临时缺人而未派，两者不矛盾。</p>
+<p>扩展的拼单从单订单流改成预设可拼组合/批量的流量描述，并非提供一个像 IG 那样在每次到单时重排所有在手取送点的执行程序。弹性需求扩展允许价格影响需求，但主体固定需求仿真不能据此宣称已模拟用户随价格实时下单。</p>
+<h4>7.5 可用于项目的层次</h4>
+<p>本篇适合作为小时或更长尺度的运力结构、报酬和返回方向建议；逐单执行还需要可用骑手池、接拒、路线容量、备餐和超时处理。原文没有给出这些程序的完整代码，不能把它作为开箱即用 simulator。前文已覆盖全部命题、证明、分支求解和扩展，本节补充的是“均衡结果如何转成实际随机派单、哪些细节仍不可核验”的边界。</p></div><div class="qa-log"><strong>后续问答 · 2026-11-09</strong><p><strong>本次要求：</strong>受限论文已下载，精读并同步图书馆；文件为 ssrn-6349239、ssrn-5202084。</p><p><strong>处理：</strong>已按提供的全文补齐正文、技术附录、证明、实验、原图及局限，覆盖审计完成，撤销此前暂缓状态。</p></div>
+<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-calibrated-dispatch2026" data-paper-id="calibrated-dispatch2026" data-deep-read="true"><div class="kicker">MOVED FROM 11·05 · 08</div><h2>Calibrated Counterfactual Evaluation of Dispatch Policies Under Cascading Divergence</h2><p class="lede">用历史行为校准派单策略的反事实仿真评估</p><div><span class="chip">counterfactual evaluation</span><span class="chip">order dispatching</span><span class="chip">simulator drift</span><span class="chip deep-label">Deep Read</span></div>
+<div class="paper-summary"><p class="meta">Amr Abdelbaky；Zhiwei Qin；Nourhan Sakr<br>The American University in Cairo / Santa Clara University</p><p><strong>首发：</strong>2026-10-17；<strong>当前版本日期：</strong>2026-10-17；ECML PKDD 2026 / LNCS<br><strong>通讯 / 联系作者：</strong>Amr Abdelbaky</p><p><a href="https://doi.org/10.1007/978-3-032-37679-4_11" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence" target="_blank" rel="noopener noreferrer">作者代码</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；近期偏好：RL evaluation。</p><p class="notice"><strong>中文摘要概述：</strong>单步模仿很准，也可能在连续派单后产生很大的状态漂移。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>On-demand meal-delivery platforms make dispatch decisions over courier–order offers in real time</blockquote><p><a href="https://doi.org/10.1007/978-3-032-37679-4_11" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：Springer 正式版全文 16 页及 3 页补充材料已覆盖；完整精读。</p></div>
+<p class="notice">由 2026-11-05 报告整体迁入，原摘要、全部精读、原图与问答保留。新增 <a href="#simulator-calibrated-dispatch2026">第 7 节：实体与模拟器核查</a>。论文方法描述与当前公开代码存在差异，涉及实际执行行为时请同时看第 7 节的更正和证据。</p><div class="deep-reading-content"><h3>1. 摘要中文翻译与阅读来源</h3>
+<p><strong>精读日期：2026-11-09。</strong> 已取得并读完 <a href="https://link.springer.com/content/pdf/10.1007/978-3-032-37679-4_11.pdf" target="_blank" rel="noopener noreferrer">Springer 正式版 16 页</a>及<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/main/supplementary_material/supplementary_material.pdf" target="_blank" rel="noopener noreferrer">作者仓库中的 3 页补充材料</a>。相较 11 月 5 日的摘要调研，本次补齐训练划分、重派流程、全部结果表与附录。</p>
+<p>即时餐饮配送平台需要实时判断骑手—订单 offer，而每次决定都会改变骑手路线、工作量、可用性以及未来分配的可行性。离线评估其他派单策略很困难，因为即使稍微偏离历史决定，也会在紧密耦合的系统中持续传播并累积成状态漂移；作者称之为 cascading divergence。为研究该问题，本文构建事件驱动的反事实模拟框架，明确规定策略与历史决定一致或不一致时的处理，并模拟重新分配。核心经验发现是：行为克隆（BC）虽然匹配 97.1% 的日志决定，反事实 rollout 仍出现 52.5% 事件级偏离，说明单步模仿准确不保证可靠的策略评估。作者用 BC 作为接近历史行为时模拟器漂移的保守参照。在约 63 万次骑手—订单 offer 数据上，Double DQN 相对该参照将模拟配送完成率从 95.5% 提升到 98.9%、丢单率从 4.5% 降至 1.1%，同时维持相近准时表现。结果支持在部署前进行校准过的策略筛选与运营诊断，不能据此认为现实因果收益已经得到证明。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>正式版署名</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amr Abdelbaky</td>
+<td>The American University in Cairo</td>
+<td>第一作者、明确通讯作者</td>
+</tr>
+<tr>
+<td>Zhiwei Qin</td>
+<td>Santa Clara University</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Nourhan Sakr</td>
+<td>The American University in Cairo</td>
+<td>末作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>机构依据正式版首页；不凭邮箱域名改写署名。第一作者的可核验技术入口是<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence" target="_blank" rel="noopener noreferrer">论文项目仓库</a>，未找到可可靠消歧的独立履历，故不混入同名医学作者。新作者介绍：<a href="https://www.aucegypt.edu/fac/nouri-sakr" target="_blank" rel="noopener noreferrer">Nourhan / Nouri Sakr 的 AUC 机构页</a>说明其研究连接数据科学与组合优化；相关作品包括 <a href="https://arxiv.org/abs/2207.01010" target="_blank" rel="noopener noreferrer">Government Intervention in Catastrophe Insurance Markets: A Reinforcement Learning Approach</a>。Zhiwei Qin 的相关论文 <a href="https://arxiv.org/abs/2202.05118" target="_blank" rel="noopener noreferrer">Reinforcement Learning in the Wild</a>研究实际网约车调度部署；这个背景不等于本篇外卖评估已经线上验证。该文属于 ECML PKDD 2026，首次在线 2026-10-17，书目卷年为 2027；这三个时间口径应保留区分。</p>
+<h3>3. 详细技术精读</h3>
+<h4>3.1 一个拒单如何改变后面几小时（C1）</h4>
+<p>历史上 A 接了一单，下一次 offer 时 A 正在去餐厅。新策略现在拒绝它，模拟器把单转给 B，于是 A 和 B 的位置、负载、完成数都变了。下一条日志虽然还写着“给 B 发另一单”，B 的真实反事实状态已经不同。把原日志的状态和最终送达时间机械复用，会把两个不同世界拼在一起。</p>
+<p>本文只处理<strong>平台已经提出的一对骑手—订单，建议接或拒</strong>。agent 不能从全城骑手里自由选人、不能直接输出路线；替换骑手由模拟器固定的最近骑手规则完成。若想用它评估一个全局匹配策略，必须先扩展动作和候选生成机制。</p>
+<p>BC 的作用是先回答“一个很像历史的策略，在这个模拟器里会走偏多少”。历史 replay 天生不偏离，不能检验走出日志后的模型；BC 会有少量错误，能激发反事实链条。BC–历史差距同时含 BC 策略误差和模拟器误差，<strong>不是一个被识别出来、可从所有 RL 分数上直接减掉的纯偏差量</strong>。</p>
+<h4>3.2 状态、动作与奖励到底优化谁（C2）</h4>
+<p>状态 \(s\in\mathbb R^{17}\) 的构成是：餐厅、骑手代理位置、客户的经纬度共 6 维；一天中时间的正余弦 2 维；骑手同时在手订单数、当日收到 offer 数、接单数、完成数、迟到比例、距上次接单秒数、当日活跃秒数共 7 维；平台预计配送时间与预计骑手报酬 2 维。累积统计按工作日更新，反事实下应使用实时模拟状态。原始坐标只是空间输入，不等于提供了道路图或 GPS 轨迹。</p>
+<p>\[r(s,a)=\begin{cases}I_o,&amp;a=1\text{（接受）},\\-0.3,&amp;a=0\text{（拒绝）}.\end{cases}\]</p>
+<p>\(I_o\) 是从基础费与距离加价构造的骑手 payout 代理，典型约 CNY 2–5。拒绝小罚分防止学成“全部拒单”；但奖励没有直接加入迟到、工作量公平或占用运力的机会成本。若接受总能立即拿正奖励，模型可能倾向多接，长期效果只能通过后续状态间接体现。因此提高完成率不能被解释成优化了平台利润或骑手福利，必须另查负载和迟到指标。</p>
+<h4>3.3 BC 和 DDQN 的训练细节与目标公式（C3–C4、C14）</h4>
+<p>BC 是四层 MLP，隐藏维度 512/256/256/128，LayerNorm、GELU、无 dropout，sigmoid 输出接单概率。监督目标是日志中的接／拒标签：</p>
+<p>\[\mathcal L_{BC}=-\frac1N\sum_i[y_i\log\widehat p_i+(1-y_i)\log(1-\widehat p_i)].\]</p>
+<p>交叉熵惩罚对错误标签过分自信；作者在验证数据上按 F1 选择 0.47 阈值，而非默认 0.5。AdamW 学习率 \(10^{-3}\)、batch 2048、10 epochs。重要区别是最终 BC 用完整日志训练和测拟合忠实度，不是独立的部署泛化成绩。</p>
+<p>DDQN 网络为 256/256/128，LayerNorm、ReLU、dropout 0.1，输出接和拒两项 Q 值。策略在模拟器中交互收集转移，把经验放到 500K 的 prioritized replay buffer，优先级指数 0.6；Adam 学习率 \(10^{-3}\)、batch 1024、20 epochs，\(\gamma=0.99\)。探索率从 1 降到 0.01，评估关掉探索且不再更新。标准 DDQN 目标应为：</p>
+<p>\[y_i=r_i+(1-d_i)\gamma Q_{\theta^-}(s_i',\arg\max_a Q_\theta(s_i',a)),\qquad\mathcal L_{TD}=\frac1N\sum_i(Q_\theta(s_i,a_i)-y_i)^2.\]</p>
+<p>\(d_i\) 为终止标识；在线网络挑下一状态的动作，目标网络估值，减少同一个估计器既挑最大又评分的偏高。目标参数用 \(\theta^-\leftarrow(1-\tau)\theta^-+\tau\theta\) 缓慢跟随，\(\tau=0.01\)。输入归一化均值和方差只从 DDQN 训练窗口估计。</p>
+<p><strong>公式核查：</strong>正式版式 3 下方将目标的两个状态都排为 \(s_i\)，没有下一状态撇号；上式是解释标准 DDQN 时的规范写法，不声称论文印刷式完全正确。若真的用当前状态做自举，会改变 Bellman 目标，复现必须核对代码。补充表没有完整给出优先回放 importance-sampling 权重和探索衰减日程，不能凭默认库参数补写为作者配置。</p>
+<p>DDQN 是<strong>在日志驱动模拟器里在线训练的 RL</strong>；其 Q 更新利用回放、属于 off-policy。它不是仅在固定历史转移上学习的 offline RL，也没有 Conservative Q-Learning 那类保守约束。</p>
+<h4>3.4 四种 agent—history 分支与重派（C5–C6）</h4>
+<p>模拟器输入为按时间排序的 offer 日志、已接受订单的取餐／完成／ETA 结果、骑手工作班次。每次取历史候选对，用当前模拟状态构造特征，查询 agent，按下表处理并更新订单与骑手，然后推进时间。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>策略决定</th>
+<th>历史决定</th>
+<th>处理与主要风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>接受</td>
+<td>接受</td>
+<td>Case 1：重放历史结果。若骑手更早已走偏，仅当前动作一致并不保证原结果仍可达</td>
+</tr>
+<tr>
+<td>接受</td>
+<td>拒绝</td>
+<td>Case 2：没有该配对历史结果，模拟取送时间</td>
+</tr>
+<tr>
+<td>拒绝</td>
+<td>接受</td>
+<td>Case 3：订单转入重派，可能改变另一名骑手及其未来 offer</td>
+</tr>
+<tr>
+<td>拒绝</td>
+<td>拒绝</td>
+<td>Case 4：执行了一次决定但不改变配送；不是 skipped event</td>
+</tr>
+</tbody>
+</table></div>
+<p>Case 3 先剔除拒过该单、不在班次内、忙于 diverged delivery 或距餐厅超过 3 km 的骑手，再按 haversine 球面距离选最近者。新骑手的地点、负载、累积统计全部重算后再询问 agent。找不到可行骑手就进入 pending queue，后续 dispatch cycle 重试，最多五次，仍失败记 lost。这一 lost 定义依赖半径、候选过滤与五次上限，不能直接对照现实顾客取消。</p>
+<p>作者用历史接受距离分布支持 3 km，约 99% 在 2.47 km 内；用 99.8% 历史订单在五次 offer 内解决支持重试上限。但新策略改变了候选和接受分布，历史 99.8% 不保证反事实仍是 99.8%。排除正忙于 diverged delivery 的骑手还可能压缩可用拼单容量；它是模拟规则，非真实平台全局最优派单器。</p>
+<h4>3.5 非历史配送的时间和位置如何生成（C7）</h4>
+<p>从训练窗口已完成配送构造取餐与送达两个经验查表。距离分七档：0–0.5、0.5–1、1–2、2–3、3–5、5–10、10+ km；时间分早高峰、午高峰、下午、晚高峰、其他五档。每格存中位时间，计算便宜，也压掉了尾部不确定性。</p>
+<p>\[t_{pickup}=t_{dispatch}+T_{pickup}(d_1,h),\quad t_{fetch}=\max(t_{pickup},t_{meal}),\quad t_{arrive}=t_{fetch}+T_{delivery}(d_2,h).\]</p>
+<p>\(d_1\) 是骑手到餐厅、\(d_2\) 是餐厅到客户的距离档，\(h\) 是时段；\(t_{meal}\) 有历史记录时直接重放。到餐厅早于出餐就等，\(t_{arrive}\) 超过平台 ETA 判迟到。lookup 名为旅行时间，但来自时间戳的经验间隔可能包含服务等待，不能当作纯物理车速。</p>
+<p>骑手位置在“dispatch 位置→餐厅→客户”两段按已过时间线性插值。没有真实道路轨迹，因此近在直线另一侧、却隔河或绕路的骑手可能被估得过近。动态交通、个体速度、餐厅负载响应、骑手因多单而减速或离线都不建模；需求到达与班次基本固定于历史。即使状态内部自洽，也不能声称 counterfactual travel model 已经由真实反事实数据验证。</p>
+<h4>3.6 数据划分和三个不同分母（C8–C10）</h4>
+<p>完整日志有 630063 次 offers，正文说约 546000 唯一订单、约 4900 骑手，历史接受比例 86.7%。BC 用全日志拟合；DDQN 只在第 0–48 小时训练，第 48–96 小时冻结评估。评估窗包含 151695 次 offers、131852 个唯一订单和 4156 名骑手。原文称九天，但图 1 和挑战数据说明为八天，不能把它默默改成统一九天；跨午夜工作日与自然日是否造成这一差异未解释。</p>
+<p>BC 全日志 confusion matrix 是 TP 528544、FN 17821、FP 306、TN 83392，准确率 97.1%、接受 recall 96.7%、拒绝 recall 99.6%、F1 0.984。错误高度不对称：主要把原来接受的 offer 拒掉，恰好触发会传播的重派分支。接受样本预测概率均值 0.961、拒绝样本 0.033，也只是原日志输入下的拟合；状态一变，这种分离未必维持。</p>
+<p>作者把 \(52.5\%/(1-97.1\%)\approx18.1\) 称 amplification factor。分子来自反事实评估窗的执行决定，分母来自全日志内样本拟合错误，<strong>这是描述性比值，不是同分布配对实验估出的因果放大倍数或定理常数</strong>。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Table 4：订单层指标</th>
+<th style="text-align: right;">历史 replay</th>
+<th style="text-align: right;">BC</th>
+<th style="text-align: right;">DDQN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完成数</td>
+<td style="text-align: right;">131852</td>
+<td style="text-align: right;">125930</td>
+<td style="text-align: right;">130361</td>
+</tr>
+<tr>
+<td>完成率</td>
+<td style="text-align: right;">100.0%</td>
+<td style="text-align: right;">95.5%</td>
+<td style="text-align: right;">98.9%</td>
+</tr>
+<tr>
+<td>准时率</td>
+<td style="text-align: right;">85.5%</td>
+<td style="text-align: right;">82.1%</td>
+<td style="text-align: right;">83.1%</td>
+</tr>
+<tr>
+<td>迟到率</td>
+<td style="text-align: right;">14.5%</td>
+<td style="text-align: right;">17.9%</td>
+<td style="text-align: right;">16.9%</td>
+</tr>
+<tr>
+<td>丢单数</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5922</td>
+<td style="text-align: right;">1491</td>
+</tr>
+<tr>
+<td>丢单率</td>
+<td style="text-align: right;">0.0%</td>
+<td style="text-align: right;">4.5%</td>
+<td style="text-align: right;">1.1%</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/45954ad5f9143a08a7284735.png" alt="Springer 正式版第 10 页 Table 4。DDQN 相对 BC 减少模拟丢单，但准时率仍低于历史 replay；所有结果依赖相同模拟器规则，不是线上 A/B 效果。" loading="lazy"></div><figcaption>Springer 正式版第 10 页 Table 4。DDQN 相对 BC 减少模拟丢单，但准时率仍低于历史 replay；所有结果依赖相同模拟器规则，不是线上 A/B 效果。</figcaption></figure>
+<p>同一订单集合里 DDQN 比 BC 多送 4431 单；丢单相对减少约 74.8%，不是全平台损失减少 75%。准时率只增加 1 个百分点，且仍低于历史 2.4 个百分点。表内准时与迟到比例相加为 100%，应与未完成单的丢单率分开读，不能三者直接相加；论文表题没有充分写出所有指标的分母，复现应输出 delivered-based 与 all-orders-based 两套口径。历史 100% 完成是该 replay/样本定义的锚点，不是现实平台永无丢单。</p>
+<p>事件层分母也不同：</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Table 5：事件状态</th>
+<th style="text-align: right;">BC</th>
+<th style="text-align: right;">DDQN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aligned</td>
+<td style="text-align: right;">72015</td>
+<td style="text-align: right;">70076</td>
+</tr>
+<tr>
+<td>diverged</td>
+<td style="text-align: right;">79654</td>
+<td style="text-align: right;">76835</td>
+</tr>
+<tr>
+<td>skipped</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">4784</td>
+</tr>
+<tr>
+<td>拒绝历史接受</td>
+<td style="text-align: right;">79638</td>
+<td style="text-align: right;">73846</td>
+</tr>
+<tr>
+<td>接受历史拒绝</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">2989</td>
+</tr>
+</tbody>
+</table></div>
+<p>偏离率只除以非 skipped 的事件：BC \(79654/(151695-26)\approx52.5\%\)，DDQN \(76835/(151695-4784)\approx52.3\%\)。skipped 表示此前重派或解决订单已使当前日志行无效，根本不再查询 agent；Case 4 仍是执行过决定的 aligned event。DDQN 不是“偏离更少所以更好”，而是偏离方向改变：较少破坏历史接单，并接受一些历史拒单，从而减少重派失败。</p>
+<h4>3.7 运力、报酬与解释性证据（C11–C12）</h4>
+<p>利用率用实际配送时间段的并集除以班次时长，并把时间段裁到班次边界；合并重叠拼单区间以免重复计时。History/BC/DDQN 分别为 99.7%/88.3%/89.0%，active hours 为 30095/27143/27325，block hours 为 30194/30735/30705，idle hours 为 99/3592/3380。三组 block-hour 总数并不完全相同，原文未充分解释聚合范围差异，不能只比较百分比便认定效率因果改善。</p>
+<p>利用率低于 50% 的骑手为 2/14/8。DDQN 比 BC 少 6 人是特定严重低利用阈值下的改善，不等价于整体收入公平得到证明。报酬差额为历史 0、BC −6622、DDQN −7042 CNY：它在追踪到的 income events 上比较模拟与历史 payout，并不是完整订单量乘均价，所以 DDQN 多完成订单仍可出现更负的差额。论文用 4431×3.22≈14268 CNY 表示多完成单对应的报酬量，只是另一口径的近似，不可和 −7042 直接相减成平台利润。</p>
+<p>作者分析 18048 条 DDQN 不一致决定，用 \(|\nabla_sQ\odot s|\) 与逐特征置零造成的 \(\Delta Q\) 排名。时间正余弦在约 1.7 万条中进入前五；late ratio、capacity、income 次之；骑手经度仅 33 次、ETA 仅 25 次。原表主要值为 tod_cos 梯度 3.63／扰动 0.248，tod_sin 2.57／0.327，late_ratio 1.20／0.050，capacity 0.18／0.016，income 0.10／0.011。这说明该网络主要依赖时间及部分累积状态；梯度受单位和归一化影响，置零可能离开有效数据分布，二者不是特征的因果贡献。</p>
+<p>补充 S3 的丢单关联剖面也反直觉：丢单对应骑手平均负载 0.69，已送达组 1.16；距上次接单 3059 vs 1652 秒；累计接单 10.6 vs 13.7，active seconds 6606 vs 8635，late ratio 0.087 vs 0.126。表题说 z-score 排序，但所列数值带秒数等原始单位；应读成原始均值对照，不能当成 z 值。空闲表象可能是临近下班或低活跃，并不保证愿意接新单。论文也指出 Q 的接／拒差对负载变化较稳定，未学到足够的容量机会成本。</p>
+<p>42.7% 丢单集中 10–13 时、31.2% 集中 17–19 时；这些时间骑手数量也高，说明供给绝对数高不代表供需比足够。图 1 用八天平均和一倍标准差阴影说明日内变化，不是跨训练种子的性能置信区间。</p>
+<h4>3.8 附录、消融缺口与版本差异（C13–C15）</h4>
+<p>补充 S1 训练 20 epochs 后 loss 0.077、平均 Q 17.88、mean reward 0.229、接受率 88.1%。第 3 个 epoch 丢单最好 1779，最终反而 2052，最终迟到 22986；<strong>loss 收敛不等于业务指标单调改善</strong>，不能只引用最终 loss。这里是训练窗口，不能和测试窗 1491 丢单混用。</p>
+<p>补充图 S1 图注与正文写 3 km 重派半径，但图内箭头标成“15 km”；其距离桶计数为 285046、164020、83166、11580、1743、69、2，远端格极稀疏。图 S2 共 568545 个订单，1 次 offer 510775、2 次 41233、3 次 10470、4 次 3444、5 次 1356、6 次以上 1267。它与正文清洗后约 546000 单不是同一量级口径的完全一致统计，可能来自不同处理阶段，作者未完整对齐，报告不能替作者补出原因。</p>
+<p>正式版运行环境写 RTX 4060 Laptop 8 GB／PyTorch 2.6／CUDA 12.4／Python 3.12；仓库 README 则描述 RTX 4080 可用 6 GB、训练可至三天，并示例 episodes=10。补充训练为 20 epochs。三者是不同文档口径，复现必须记录 commit、命令及实际配置。没有完整架构、奖励、半径、重试次数、旅行时间模型和 BC 阈值的消融，也没有充分的多种子／多市场统计区间。</p>
+<h3>4. 相关方法与实际采用方式</h3>
+<p><a href="https://doi.org/10.1287/trsc.2025.0129" target="_blank" rel="noopener noreferrer">Auad 等人的方法</a>优化派给谁与路线；本文只对已有 offer 提建议，其重派规则固定。两者不能按“完成率多少”直接排行。<a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">PB</a>处理订单拼对，能启发机会成本特征，但本文没有使用 PB。论文引用的 imitation learning 误差累积结果提供背景；这里的 18 倍是经验比值，§4.1 的 drift 链示意不是一个新的收敛／误差上界定理。</p>
+<p>若用于本项目，先用历史 replay 检查日志重建，再用 BC rollout 测状态漂移，最后让新策略和 BC 在相同候选生成、travel model、重试规则下比较。还应对这些模拟器规则做敏感性分析，避免策略只利用“五次后算丢单”或固定 payout 奖励的漏洞。此建议是本报告的实验设计判断，不是作者已经完成的验证。</p>
+<h3>5. 局限、结论强度与引用追踪</h3>
+<p>最有价值的结果是揭示“单步预测好”与“长时间反事实可信”之间的差距；但 BC 参照并没有辨识真实策略效应。DDQN 和 BC 的访问状态不同，同一个模拟器也可能对它们产生不同误差，校准差距不能消掉这部分偏差。近似旅行时间、历史出餐重放、固定需求与班次、最近骑手重派以及接受奖励都可能改变算法排序。结论应限于单市场、短窗口、二元 offer 决策的模拟比较。</p>
+<p>本次没有核实清楚的后续引用文献，不把一般 offline RL 或配送文献列成引用它的工作。正式出版与仓库已能支持本次精读，但缺少可信反事实真实标签的问题仍在。</p>
+<h3>6. 社交反馈与覆盖核查</h3>
+<p>按题名搜索 X、Reddit、知乎、小红书，没有取得可核验的实质讨论原帖，因此未引用评论。</p>
+<p>覆盖映射：C1→3.1；C2→3.2；C3/C4→3.3；C5/C6→3.4；C7→3.5；C8/C9/C10→3.6；C11/C12→3.7；C13→3.8及第 4–5 节；C14→3.3、3.8；C15→3.8。正文 §1–5、Table 1–7、Figure 1、补充 S1–S3 和 Figure S1–S2 均已解释其机制、证据与边界。</p><h3 id="simulator-calibrated-dispatch2026">7. 追加源码精读：模拟器实际做了什么（2026-11-09）</h3>
+<p><strong>阅读边界：</strong>上文 §1–6 保留论文、补充材料的完整精读。本节检查作者<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence" target="_blank" rel="noopener noreferrer">公开仓库</a>，固定提交 <code>ed3de56e30732735b5e43d08d6f9a5afcec3e2f5</code>。以下源码链接全部指向该提交。论文描述与该版本代码有多处差异，不能把前文的模型意图直接当作代码事实；也不能反推论文实验一定运行了这个提交。</p>
+<p>仓库有模拟器、特征处理、BC、DDQN、训练脚本和结果 JSON，但没有提供复现所需的完整预处理数据、训练权重和旅行时间查表。本次做了调用链静态分析，并用少量自造输入运行原方法验证边界；<strong>没有重跑 63 万条日志、没有重新训练，也没有验证论文成绩可以复现</strong>。探针只替换日志/收入副作用和 NumPy 的标量球面距离运算依赖，时间、排队、路由和骑手状态方法直接使用原源码。</p>
+<h4>7.1 从历史文件到一个决策：不是四种实体轮流行动</h4>
+<p>入口 <code>run_simulation.py</code> 建立 <code>Simulator</code>，<code>setup()</code> 加载 agent、manifest 指定的特征顺序、Parquet offers、历史 ETA 和骑手工作块。<code>Dispatcher</code> 逐行创建 <code>OfferEvent</code>，保留 waybill/order/courier ID、派单时刻、历史接拒标签、周期编号和周期内 offer 顺序，排除预订单。<strong>一行是一次 offer，不一定是一张独立订单</strong>。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/dispatcher.py#L40" target="_blank" rel="noopener noreferrer">dispatcher.py</a></p>
+<p><code>_build_cycles()</code> 按数据的 <code>dispatch_cycle_id</code> 分组，用 <code>dispatch_start_time/end_time</code> 排周期，组内按 <code>offer_index_in_cycle</code> 排序。<code>run()</code> 每轮先清候选缓存、重试 pending，再按顺序处理本周期日志 offer；不是固定每秒或每分钟推进一次。缓存使用一分钟粒度，不等于模拟周期就是一分钟。完成全体周期后，统计在途订单的最晚完成时刻、扩展利用率区间，剩余 pending 记丢失。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L778" target="_blank" rel="noopener noreferrer">simulator.py L778–915</a></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>实体</th>
+<th>源码里实际维护的状态和触发</th>
+<th>不存在的自主行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户</td>
+<td>日志中的订单 ID、收货坐标、承诺时间；首次被接受后屏蔽后续同订单 offer</td>
+<td>没有选餐厅/价格敏感需求、满意度、用户主动取消策略</td>
+</tr>
+<tr>
+<td>商家</td>
+<td>发货坐标、可用时读取 <code>estimate_meal_prepare_time</code>；到早时等到该时间</td>
+<td>没有厨师、厨房队列、餐厅容量或接单动作；不是商家 agent</td>
+</tr>
+<tr>
+<td>骑手</td>
+<td><code>CourierState</code> 的位置、工作块、拒过的单、偏离标志、单条 pending 配送时间、累计统计</td>
+<td>无道路驾驶控制、抢单博弈；接拒由统一 BC/DDQN 替代</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>重放原候选对；拒单时按 scorer 选替代骑手；维护 pending 和失效历史单</td>
+<td>没有全局优化匹配、内生定价或完整多单联合路线求解</td>
+</tr>
+</tbody>
+</table></div>
+<p>骑手初始位置被设成该骑手第一条事件的<strong>餐厅坐标</strong>；不是第一条 GPS 或 <code>proxy_lat/lng</code>。工作块从文件载入，无块时用首次/末次 offer 估班次边界。初始位置这个近似直接影响后来最近骑手选择。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L410" target="_blank" rel="noopener noreferrer">simulator.py L410–490</a></p>
+<h4>7.2 一条 offer 的四个分支：读条件，不能只信注释</h4>
+<p><code>_process_event()</code> 先跳过已接受/完成的 order ID 和 active/completed waybill；再更新偏离骑手状态、记收到 offer。若该单已因先前偏离被标为失效，直接进入重派。否则检查工作块，调用 agent，再进入四个分支。历史接受的 offer 被直接视作骑手当时可用；历史拒绝才做常规班次检查。一般原事件仍调用 <code>agent.act(event.features)</code>，<strong>并非所有已偏离骑手都会先重算特征</strong>。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L1183" target="_blank" rel="noopener noreferrer">simulator.py L1183–1342</a></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>历史 / agent</th>
+<th>实际执行</th>
+<th>一个具体影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>接 / 接</td>
+<td>取历史 grab/fetch/arrive，立刻登记 delivered、收入和累计统计，并把当前位置写成客户位置</td>
+<td>若 12:00 接、历史 12:20 才送到，函数在处理 12:00 offer 时已记录这次未来完成；不是等 12:20 的事件再写</td>
+</tr>
+<tr>
+<td>接 / 拒</td>
+<td>原骑手记拒单并标偏离；选一个替代骑手、再问 agent；不成功就 pending</td>
+<td>本轮只试一个替代人，没有遍历直到所有候选都拒绝</td>
+</tr>
+<tr>
+<td>拒 / 接</td>
+<td>若预计送达早于该骑手下一条历史派单，使用 replay 分支；否则模拟配送</td>
+<td>replay 用预计送达时间标 delivered，并直接把迟到设 False，不一定有该新配对的真实结果</td>
+</tr>
+<tr>
+<td>拒 / 拒</td>
+<td>记拒绝并沿用后续历史流</td>
+<td>不主动为这次一致拒绝新开 pending；以后是否还有 offer 取决于日志</td>
+</tr>
+</tbody>
+</table></div>
+<p>这些分支位于 <a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L1523" target="_blank" rel="noopener noreferrer">L1523–2195</a>。<code>_handle_case_1_2_reject_to_accept</code> 的函数注释把“预计送达早于下一次派单时 replay/simulate”的方向写反，真正 <code>if est_arrive_int &lt; next_dispatch</code> 走 replay。正文解释以条件语句为准。</p>
+<p>这里 BC/DDQN 的动作是直接决定接或拒，没有在动作之后另抽一个“真实骑手是否接受”的 Bernoulli。BC 输出概率后与阈值比较是确定性决策；DDQN 比两个 Q 值，评估同样确定。训练时的 epsilon 探索才额外随机选动作。它与另一篇 Behaviorally Informed 中“平台选人后，骑手按接受概率随机响应”不同。</p>
+<h4>7.3 替代骑手怎么选，拒单记到哪里</h4>
+<p>常规 <code>score_couriers()</code> 过滤不在班次、已拒过该 waybill、正在执行偏离配送、以及离餐厅超过默认 3 km 的骑手；有工作块时要求派单和预计完成都落在同一块的 60 秒缓冲内。默认评分只是 Haversine 球面距离，选最小；可选复合评分再加负载、历史迟到比、空闲奖励，权重默认 1、0.35、0.35、0.15。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/scorer.py#L403" target="_blank" rel="noopener noreferrer">scorer.py L403–736</a></p>
+<p>这个距离是地球表面两点距离，没有道路网、河流绕行、路口或交通信号。例：A 直线 0.8 km 但隔河，B 直线 1.1 km 且同一侧，默认 scorer 会优先 A；不能称其找到道路时间最短者。<code>update_location_for_time()</code> 是阶段位置更新，不是 <code>get_interpolated_location()</code> 的连续插值；scorer 用的是前者更新后的 <code>current_lat/lng</code>，两个函数不能混写。</p>
+<p>重派时 <code>_build_features_for_courier()</code> 把新骑手位置、统计、时间编码重算，再问 agent，这一步确实存在。但 ETA 剩余秒数仍从原事件拿，pending 等久后不会自动减掉等待；新骑手的 <code>offers_so_far</code> 也不是在每次重派询问前都统一加一。原始日志与重派路径的特征口径并不完全一致。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L1407" target="_blank" rel="noopener noreferrer">simulator.py L1407–1521</a></p>
+<h4>7.4 pending 是按周期计数，默认实际只有四次后续候选尝试</h4>
+<p>进入队列时 <code>cycles_remaining=5</code>。后续每个周期先减一，再判断是否小于等于零；第五次遇到它时直接丢失，不再找候选。小探针运行原方法，计数依次为 4、3、2、1、removed，scorer 实际只调用 4 次。因此“再试五次”的注释与代码不符；原周期的一次替代尝试是另一回事。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L960" target="_blank" rel="noopener noreferrer">simulator.py L960–1103</a></p>
+<p>另有两个重要细节：默认 <code>max_pending_per_cycle=50</code>，实际切片是前 <code>50+10=60</code> 项；排在后面的项既不尝试也不减寿命，不能把“5 周期”当作严格全局过期上限。快速 scorer 复用本周期预选可用名单，名单内骑手接新单后没有再次完整检查 busy/完成时刻，可能把已经变忙者仍当候选。这是从当前调用和过滤顺序得到的实现风险，未用完整日志量化发生率。</p>
+<p><strong>等待时间会被漏计的路径：</strong>pending 询问使用新周期开始时间重算部分特征，但接单后仍把原 <code>OrderState</code> 和原 event 传给 <code>_simulate_order_delivery()</code>；后者取 <code>order.dispatch_time</code>，没有改成重派时刻。若 12:00 首次派单、12:05 重派成功，配送计算仍可能从 12:00 起算，而非 12:05。这个问题直接影响迟到和收入，不是展示时间格式的小差别。</p>
+<p><code>OrderState.add_rejection()</code> 到五次把 <code>force_accept=True</code>，但主模拟器没有读取这个字段来强制接单；不要看到字段名就宣称“第五次拒绝后必须接受”。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/order_tracker.py#L93" target="_blank" rel="noopener noreferrer">order_tracker.py L93–108</a></p>
+<h4>7.5 配送时间：经验查表与兜底路径是两回事</h4>
+<p>加载旅行模型时，<code>_simulate_order_delivery()</code> 分别计算“骑手→餐厅”和“餐厅→客户”的 Haversine 距离，按距离桶与时段查中位数；默认还加噪声。<code>TravelTimeModel</code> 若有 p25/p75，噪声使时长在这两个分位点之间均匀抽取，最后至少 60 秒。它不是从完整经验分布采样，也不表达超过 p75 的长尾。缺桶时回退到 <code>距离×300+60</code> 秒。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/travel_time_model.py#L34" target="_blank" rel="noopener noreferrer">travel_time_model.py</a></p>
+<p>\[t_{grab}=t_{dispatch},\quad t_{fetch}=\max(t_{grab}+T_{pickup},\widehat t_{ready}),\quad t_{arrive}=t_{fetch}+T_{delivery}.\]</p>
+<p>示例：12:00 开始、去店 3 分钟、12:06 出餐、店到客户 8 分钟，取餐为 12:06、送达 12:14；厨房等待 3 分钟。备餐只是输入的一个时间戳，没有因为商家同时收到更多单而延长。<code>meal_prep_wait</code> 虽被模型载入，主配送函数并不使用它生成厨房队列。</p>
+<p><strong>没有加载查表文件时</strong>，去店时间用距离×180 秒，截在 60–1200 秒；仍计算等待出餐。但完成时间却直接取原派单时间加历史 <code>actual_eta</code>，没有从 fetch 往后累计。这会产生取餐晚于送达的时间线。原方法小探针：派单 1000 秒、出餐 1600 秒、历史 ETA 60 秒，得到 fetch=1600、arrive=1060。这个边界已实测；不能据此断言论文使用查表时也一定出现同一问题。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L2214" target="_blank" rel="noopener noreferrer">simulator.py L2214–2350</a></p>
+<p>查表时段用 <code>datetime.fromtimestamp(...).hour</code>，随运行机器本地时区；特征与收入模块则显式用 Asia/Shanghai。跨时区运行会选错时段，复现需要统一时间解释。</p>
+<h4>7.6 “路线规划类”没有在主路径上做多单路线优化</h4>
+<p><code>Router.route_batch()</code> 若收到多单，会最近邻地取完所有餐，再最近邻地送完所有单；不允许取送交错，也不检查硬容量。返回完成时间是最早 dispatch 加最大 ETA，不由计算出的路线长度换算。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/router.py#L40" target="_blank" rel="noopener noreferrer">router.py L40–123</a></p>
+<p>但主路径调用明确是 <code>orders=[router_order]</code>，每次只有当前一单，返回路线并不用于决定已算好的 completion time；只拿 <code>realized_capacity=len(orders)</code> 做容量记录，因此模拟配送这条路径的容量固定为 1。<code>CapacityTracker</code> 只记观察，不阻止超载。它既不是 TSFH，也不是 IG、VRP 求解器，更不能据其名称声称实现了多单插入。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L2351" target="_blank" rel="noopener noreferrer">simulator.py L2351–2383</a></p>
+<p>原方法探针得到 realized_capacity=1，即便事件历史容量为 4；这不是证明现实骑手只带一单，而是本调用没有传入另外三单。接着 <code>record_delivery()</code> 立即移除 pending_deliveries 中该单，主路径也没有对应调用 <code>start_delivery()</code>；用该集合长度作为实时负载，会经常得到 0。与此同时 <code>is_busy_until</code> 仍可保留未来完成时刻，所以“负载为零”和“不可派单”可以同时出现。两个状态变量维护的不是同一个执行阶段。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/scorer.py#L274" target="_blank" rel="noopener noreferrer">scorer.py L274–310</a></p>
+<h4>7.7 位置、完成统计与 40 分钟失效如何传播</h4>
+<p><code>_mark_courier_diverged()</code> 将历史接受且派单落在 <code>[偏离时刻,偏离时刻+2400秒]</code> 内的该骑手订单标为失效。以后遇到这些 offer 直接重派。没有“40 分钟后自动恢复未偏离”的复位逻辑；40 分钟是每次扫描的失效窗口，不是偏离标志有效期。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L542" target="_blank" rel="noopener noreferrer">simulator.py L542–650</a></p>
+<p>一条模拟配送在同一个 Python 函数里就登记为 delivered、累计完整未来配送时长与收入，之后再保存 pending 的 fetch/arrive 供位置更新。也就是说，它不是严格按“先派单事件→以后取餐事件→以后完成事件”依次改变所有统计。12:00 就把一笔 12:20 的完成数算进重新派单特征，会让后续状态提前知道未来结果。</p>
+<p><code>CourierState.get_interpolated_location()</code> 本身能在起点→餐厅→客户两段线性插值，但主调用的赋值顺序有问题：模拟函数末尾把 <code>simulated_lat</code> 写成餐厅，再让 <code>set_pending_delivery()</code> 保存“配送起点”，于是保存的起点也是餐厅，丢了原骑手位置。探针初始纬度 31.00、餐厅 31.01，最终保存的 <code>delivery_start_lat</code> 为 31.01。前半段插值因此可能原地停在店里，并不能由函数存在就推断移动正确。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/simulator.py#L2439" target="_blank" rel="noopener noreferrer">simulator.py L2439–2469</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/scorer.py#L113" target="_blank" rel="noopener noreferrer">scorer.py L113–265</a></p>
+<p>此外，接收原拒绝单和部分重派分支会先把骑手当前位置写成客户，再调用配送模拟；去店距离因此可能从客户倒算。其他重派分支没有完全相同的预写行为，不能一概说所有分支相同。上述位置、时钟和历史失效共同决定连锁偏离，BC 的偏离率未必只反映策略差异。</p>
+<h4>7.8 BC/DDQN 的输入、输出与训练实际连接</h4>
+<p>17 个输入维度在特征 CLI 中逐项列出。BC 按权重文件的 feature_names 排列，缺值用训练均值填补，标准化后送入 MLP，sigmoid 后按阈值 keep/prune；阈值文件缺失时默认 0.5。深层模型为 Linear/LayerNorm/GELU 堆叠，虽然类注释说 residual，<code>forward</code> 没有残差相加。实际网络形状取自 checkpoint，本仓库不含本文权重，不能凭类默认值确认论文所用网络。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/data/preprocessing_code/features/cli.py#L17" target="_blank" rel="noopener noreferrer">features/cli.py L17–34</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/agents/agents/bc_agent.py#L23" target="_blank" rel="noopener noreferrer">bc_agent.py</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/agents/training/bc/model.py#L31" target="_blank" rel="noopener noreferrer">model.py</a></p>
+<p>DDQN 输出 \(Q(s,拒)\) 和 \(Q(s,接)\)，后者大或相等则接；softmax 的第二项仅作为接口中的 confidence，不是经校准的真实骑手接单概率。训练使用 epsilon-greedy，默认从 0.3 线性降到 0.01，而非补充表的初始 1。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/agents/agents/ddqn_agent.py#L155" target="_blank" rel="noopener noreferrer">ddqn_agent.py L155–182</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L259" target="_blank" rel="noopener noreferrer">train_ddqn_integrated.py L259–303</a></p>
+<p>更新确实用下一状态：在线网选动作、目标网估值，按优先经验回放抽 batch，Huber 损失乘重要性权重，梯度裁剪 10；每 1000 次 update <strong>硬复制</strong>目标网。它不是前文论文描述的 MSE 加 \(\tau=0.01\) 软更新。优先回放默认容量 500000、alpha=0.6、beta 起始 0.4。这些是该提交的默认实现，不能与论文参数混成一张表。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L73" target="_blank" rel="noopener noreferrer">训练 L73–138</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L311" target="_blank" rel="noopener noreferrer">L311–366</a></p>
+<p>训练转移的下一状态索引选择<strong>同一骑手的下一条历史 offer</strong>，无下一条则终止；<code>bandit_mode</code> 会把全部转移设 terminal。偏离骑手的下一状态会重建部分特征，但在当前事件后就构建，没有先执行到下一 offer 之间其他事件；因此不等于完整环境实际推进后的状态。当前状态则先取历史 <code>event.features</code>，当前/下一状态口径也不完全相同。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L1292" target="_blank" rel="noopener noreferrer">训练 L1292–1508</a></p>
+<h4>7.9 奖励参数与动作归属：两个会改变学习目标的问题</h4>
+<p>源码定义了 <code>PaperReward</code>：接单给收入、拒单为 −0.3；还定义 balanced、income-only 等实验奖励。但 <code>train_ddqn_integrated()</code> 读 <code>--reward_type</code> 后只建立局部 <code>reward_calc</code> 用来打印；创建 <code>DDQNTrainingSimulator</code> 时没有传入，也未随后赋给 <code>training_sim.reward_calc</code>。后者构造函数始终 <code>RewardCalculator()</code>。所以这个入口即使选择 paper，实际回调仍使用默认拒单 −0.05、迟到 −0.3、准时 +0.1、容量阈值 6 等配置。小探针直接实例化该构造器，拒单参数为 −0.05，收入 3、准时、空载的接单奖励为 3.1，而不是 PaperReward 的 3。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L1013" target="_blank" rel="noopener noreferrer">L1013–1060</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L1196" target="_blank" rel="noopener noreferrer">L1196–1222</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L1613" target="_blank" rel="noopener noreferrer">L1613–1693</a></p>
+<p>训练循环在 <code>_process_event()</code> 返回后读取 <code>agent.last_action</code>。但一次事件可以先问原骑手，再问替代骑手；第二次 <code>act()</code> 会覆盖 last_action。例：原骑手 A 拒、替代 B 接，保存的 state 仍是 A 的历史特征，action 却可能是 B 的“接”，next_state 仍找 A 的下一 offer。强制拒绝或失效处理没有常规 act 时，也存在读到上一动作的路径。这里是调用顺序可直接看出的归属问题，不是已量化的论文训练错误率。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/simulation/train_ddqn_integrated.py#L1430" target="_blank" rel="noopener noreferrer">L1430–1508</a></p>
+<p>奖励输入也要核对：income 来自原事件历史 <code>order_income_value</code>，不是模拟重新算的收入；capacity_before 用的是 <code>capacity_observations</code> 计数，不是当前带单数；order_state 的 <code>is_late</code> 是方法，却被不加括号读取。随后若原骑手的 delivered 集合含该单，又用不存在的 <code>late_waybills</code> 默认空集合覆盖，常变为 False。探针验证未迟到订单的 <code>bool(order.is_late)</code> 为 True、调用 <code>order.is_late()</code> 才为 False。pending 当下仍待重试，也被直接作为 <code>order_lost=True</code> 传给奖励。不能把这组奖励称作已经忠实对应环境的最终履约结果。</p>
+<h4>7.10 特征预处理：有“so_far”后缀也不保证只含过去</h4>
+<p><code>history_builder.py</code> 先按骑手/日期/派单时刻累加 <code>is_completed</code> 和 <code>is_late</code>，而 <code>is_completed</code> 只看整条历史记录有没有 arrive_time，<strong>不检查 arrive_time 是否早于当前 offer</strong>。例：12:00 offer 的餐要 12:20 才到，12:05 的下一 offer 仍可能把它算作已完成。随后 <code>.shift(1)</code> 在合并后的整张表上执行，没有 <code>.over(courier_id,local_day)</code>；分组第一行可能承接上一组的累计值。两者分别是未来结果提前进入状态、组边界串值的静态风险。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/data/preprocessing_code/features/history_builder.py#L90" target="_blank" rel="noopener noreferrer">history_builder.py L90–132</a></p>
+<p><code>features_assembler.py</code> 用历史实际 <code>arrive_time</code> 计算 income，再别名为模型输入 <code>order_income_value</code>；收入函数晚到减半，还按实际完成时段加夜间补贴。原单将来迟到这件事可能通过收入进入当前决策输入，不能仅因为字段叫“estimated income”就视为无泄漏。日收入率也用全日累计，但<strong>不在 CLI 的 17 维清单里</strong>，所以不能把那项当作已证实进入模型的泄漏。<code>active_seconds.py</code> 则只累加结束早于当前 offer 的配送批次，未把正在进行批次的已过时间计入；它与实时状态中的累积时长口径不同。<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/data/preprocessing_code/features/features_assembler.py#L109" target="_blank" rel="noopener noreferrer">features_assembler.py L109–169</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/agents/utils/income_utils.py#L30" target="_blank" rel="noopener noreferrer">income_utils.py L30–95</a>、<a href="https://github.com/amrkhaled122/Calibrated-Counterfactual-Evaluation-of-Dispatch-Policies-under-Cascading-Divergence/blob/ed3de56e30732735b5e43d08d6f9a5afcec3e2f5/data/preprocessing_code/features/active_seconds.py#L160" target="_blank" rel="noopener noreferrer">active_seconds.py L160–178</a></p>
+<p>收入模型明确是基础 3.15 CNY、超过 3 km 部分每 100 m 加 0.2 CNY（连续计算而非向上取整）、凌晨补贴、迟到减半。比如白天 4 km 准时单为 5.15 CNY、迟到为 2.575 CNY；是代码设定，不是所有美团骑手的真实薪酬合同。</p>
+<h4>7.11 这份代码对项目的实际价值和使用边界</h4>
+<p>可以借鉴其 offer 日志接口、按订单去重、四种历史/策略分支、重派排队和偏离失效的组织方式。要拿来比较新策略收益，优先需要把完成统计改成在完成事件发生时更新，统一重派时钟和骑手位置，令真实在手订单进入路线/容量评估，修好训练奖励和动作归属，并用仅含已知信息的特征重新训练。这些是本次源码审计提出的改进方向，本任务没有修改作者代码或宣称已修复。</p>
+<p>本节实测范围只有原方法的小输入边界：四次后续重试、单单容量、兜底时间先送后取、起点被餐厅覆盖、默认训练奖励和迟到方法误用。其余结论是固定提交的静态调用链分析；缺少数据与权重使论文数字的复现仍无法核验。<strong>BC 与历史分数接近是诊断线索，不能自动校正这些状态、特征和奖励实现问题。</strong></p></div><div class="qa-log"><strong>后续问答 · 2026-11-09</strong><p><strong>本次要求：</strong>精读 11 月 5 日报告中与美团项目有关的论文；本轮先完成已取得全文的三篇，另外两篇暂缓。</p><p><strong>处理：</strong>正文与技术附录已逐项分析，保留原推荐信息、稳定锚点与原图，并补充方法、实验和复现边界。</p></div>
+<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div></section><footer><p>全文和技术附录覆盖已逐篇核对。论文报告数字、教学例子、源码静态发现和小输入实测分开标明。公开代码检索截止 2026-11-09；未找到不等于不存在私有实现。五篇迁移保持原身份、原选读日期与问答。</p></footer></main><script>
+window.addEventListener('DOMContentLoaded',()=>{
+ renderMathInElement(document.body,{delimiters:[{left:String.raw`\[`,right:String.raw`\]`,display:true},{left:String.raw`\(`,right:String.raw`\)`,display:false}],throwOnError:false});
+ document.querySelectorAll('.figure-block').forEach(b=>{
+  const v=b.querySelector('.figure-viewport'),s=b.querySelector('[data-zoom]'),im=v.querySelector('img');
+  function zoom(){const xr=v.scrollLeft/Math.max(1,v.scrollWidth-v.clientWidth),yr=v.scrollTop/Math.max(1,v.scrollHeight-v.clientHeight);im.style.width=(Math.min(im.naturalWidth||v.clientWidth,Math.max(280,v.clientWidth))*Number(s.value))+'px';requestAnimationFrame(()=>{v.scrollLeft=xr*Math.max(0,v.scrollWidth-v.clientWidth);v.scrollTop=yr*Math.max(0,v.scrollHeight-v.clientHeight)})}
+  im.addEventListener('load',zoom);zoom();s.addEventListener('input',zoom);let state=null;
+  v.addEventListener('pointerdown',e=>{state=[e.clientX,e.clientY,v.scrollLeft,v.scrollTop];v.classList.add('is-dragging');v.setPointerCapture(e.pointerId);e.preventDefault()});
+  v.addEventListener('pointermove',e=>{if(state){v.scrollLeft=state[2]+state[0]-e.clientX;v.scrollTop=state[3]+state[1]-e.clientY}});
+  for(const event of ['pointerup','pointercancel'])v.addEventListener(event,()=>{state=null;v.classList.remove('is-dragging')});
+ });
+
+});
+</script></body></html>
