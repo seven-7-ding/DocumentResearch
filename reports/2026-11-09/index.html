@@ -839,7 +839,47 @@ pre{overflow:auto;max-width:100%;font-size:13px}code{overflow-wrap:anywhere}h2{o
 <h4>7.4 能还原到什么程度</h4>
 <p>论文足以还原状态/动作/外生信息接口和规划递推，无法定位道路最短路函数、厨房排队程序、接拒随机数的抽样语句、同时发生事件的处理顺序。其正文活跃集合更新式只显式减去 delivered，未完整减去 lost，反映形式化描述仍需实现补足。前文已列 SARSA 时标、softmax 分母、特征维数和正负号疑点；没有公开代码就不能替作者决定哪一个是排版错、哪一个进入实验。</p>
 <p>对美团项目可借用固定 30 秒滚动接口和“拒单保留待派”的状态结构；应分别记录实际当前位置、目标点、已承诺任务数、实际携带量，再明确服务完成和丢单的移除事件。这里是复现建议，不是声称作者源码已经实现。</p></div><div class="qa-log"><strong>后续问答 · 2026-11-09</strong><p><strong>本次要求：</strong>精读 11 月 5 日报告中与美团项目有关的论文；本轮先完成已取得全文的三篇，另外两篇暂缓。</p><p><strong>处理：</strong>正文与技术附录已逐项分析，保留原推荐信息、稳定锚点与原图，并补充方法、实验和复现边界。</p></div>
-<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div></section>
+<div class="qa-log"><strong>追加问答 · 2026-11-09</strong><p><strong>Q：</strong>将 11.5 的五篇美团精读移到今天，并分析每个实体、时钟推进、寻路、接拒和对应代码。</p><p><strong>A：</strong>原完整内容已迁入本模块；第 7 节逐项说明论文模型、公开源码核查范围与无法确认的执行细节。图书馆身份和原选读日期保留。</p></div><div class="qa-log" id="qa-auad-action-search-20261110">
+<h3>追问 · 2026-11-10：SARSA 的动作 x 与搜索中的 h、g 各在决定什么？</h3>
+<p><strong>Q：</strong>这里的 SARSA 只讲解了怎么进行 value 估计，那么这里的每个 action x 会是什么呢（是决策每个订单派给哪个骑手吗）？后面的 g/h 这些决策又是在决策什么？</p>
+<p><strong>A：</strong>是，派给哪个骑手是其中一部分。更准确地说，\(x_t\) 是平台在本轮提交的一整套<strong>发单与取送顺序方案</strong>；\(h,g\) 则是计算这个方案时选择的<strong>修改方案的方法</strong>。SARSA 学的是给方案打分的函数，搜索过程负责根据这个分数找方案。原报告没有把“评分怎样变成具体动作”连起来，下面补全。</p>
+<h4>1. 一个 x 是全平台这一轮的方案，不能只理解成一个骑手编号</h4>
+<p>原文 §3（PDF 第 8–9 页）先选本轮要发出的未分配订单、接收 offer 的骑手，再为每位骑手提出有序的取送任务表。它同时决定：</p>
+<ul><li>哪些待派单现在发，哪些继续等；</li><li>现在发的每一单交给哪位骑手考虑；</li><li>新单的取餐和送餐分别插入该骑手路线的哪个位置；</li><li>在允许范围内，怎样调整已接订单的后续任务顺序。</li></ul>
+<p>论文写作 \(x_t=(x_t^{c,o})_{c\in C_t,o\in O_t}\)。其中 \(x_t^{c,o}=(k_1,k_2)\) 记录订单 \(o\) 在骑手 \(c\) 路线中的取、送位置。对未分配单，这个非零项同时表达“给这位骑手发 offer”；对已经接受的订单，它只表达在<strong>原骑手</strong>路线内重排，不允许换人。\((0,0)\) 则分别表示“不向此人发这张新单”或“不改变该旧单的位置”。因此，旧单的零值不表示取消配送。</p>
+<p>同一个新单若对所有骑手都是 \((0,0)\)，就表示<strong>本轮暂不发它</strong>。每张新单至多选一位骑手，每名骑手每轮至多收到一张新 offer；已经在执行的首任务固定，取餐必须先于送餐，还要满足容量与拒单记录等约束。这些限制使各个 \(x_t^{c,o}\) 不能独立随便取值。</p>
+<p><strong>自造例子：</strong>12:00 有待派单 A、B，甲已经在去送旧单 O，乙空闲。一个候选方案是：甲的路线“送 O → 取 A → 送 A”，乙的路线“取 B → 送 B”。另一个候选方案把 A、B 的 offer 对调；第三个给甲发 A，但 B 本轮暂缓。它们分别是三个完整的 \(x\)，而不是在 SARSA 中先做“A 给甲”的一步、再做“B 给乙”的另一步。</p>
+<p>即使人选相同，取送顺序也能不同。例如甲原路线是“送 O1 → 取 O2 → 送 O2”，给甲发 A 后，可以试“送 O1 → 取 A → 取 O2 → 送 A → 送 O2”，也可以把 A 的取送全接在末尾。两者是不同动作，预计绕路和迟到可能不同。预计时间由路线递推计算，并非另给一个任意送达时间让骑手照做。</p>
+<p>这里“发给”仍是 <strong>offer</strong>。搜索结束后平台发出方案，骑手才在环境转移中接受或拒绝。算法在候选方案里把 A 写给甲，并不等于已经观察到甲接受了 A。</p>
+<h4>2. 学到了 Q，具体如何选 x？</h4>
+<p>用成本越小越好的记号，选动作的意图是：</p>
+\[x_t\approx\arg\min_{x\in\mathcal X(s_t)}\left[c_0(s_t,x)+\theta_{best}^{\top}\phi(s_t,x)\right].\]
+<p>\(\mathcal X(s_t)\) 是当前可行方案集合。\(c_0\) 根据候选路线算新增距离和预计迟到；\(\phi(s_t,x)\) 根据该候选方案算还剩多少未发单、这些单多久到期、还有多少骑手没收到 offer 等特征。<strong>把一个具体 x 填进去，才得到这个 x 的分数。</strong>这里没有一个神经网络一次输出全平台所有骑手编号，也不枚举全部组合保证全局最优。</p>
+<p>必须区分文中的两种策略（§4.4.4–4.4.5）：</p>
+<ul><li><strong>单独的 SARSA 策略：</strong>把待派订单随机排一个顺序，逐单检查可行骑手和合法取送插入位置，用 \(\widehat Q\) 比较，逐步构成完整方案。另有 \(\widehat Q\leq0\) 才发 offer 的条件，否则暂缓。这是“学评分＋贪心构造”。</li><li><strong>SARSA＋Hyper 主方法：</strong>还使用 Algorithm 2，在完整候选方案上反复拆除 offer、重新插入、调整路线，并用同一个学习评分比较，限时返回找到的最好方案。这是“学评分＋更充分的组合搜索”。</li></ul>
+<p>所以 SARSA 的价值更新公式本身没有写出所有派单操作；这些操作由动作构造/搜索过程补上。零阈值是本文给定规则，不是任意价值函数都天然有意义的阈值；原稿的成本/负奖励符号疑点仍见 §3.3。</p>
+<h4>3. h、g 是哪一种决策？</h4>
+<p>原文 §4.3 的 \(\mathcal H=\{h_1,\ldots,h_7\}\) 是七种修改候选方案的操作。矩阵 \(T_{h,g}\) 中的 \(h\) 是上一个选中的操作，\(g\) 是准备接着选的操作；<strong>两者都来自同一组七种操作</strong>，不是分别表示订单和骑手，也不是另有一套 g 类派单动作。</p>
+<p>例如 \(T_{h_2,h_5}\) 表示“序列中刚选了 \(h_2\)，下一项选 \(h_5\) 的概率”。\(P_{h,g}\) 是用于计算该概率的分数。它不表示把订单 h 派给骑手 g。若看到大写 \(G\)，那是 SARSA 的累计回报目标，又是另一符号。</p>
+<div class="table-scroll"><table><thead><tr><th>操作</th><th>它改候选方案的什么部分</th></tr></thead><tbody>
+<tr><td>\(h_1\)</td><td>撤下承诺送达时间最远的一批拟发 offer，再把这些订单按 deadline 从近到远重插。</td></tr>
+<tr><td>\(h_2\)</td><td>选一张拟发订单，撤下在餐厅和客户位置上靠近它的一批 offer；整理受影响骑手的旧路线，再重插这些新单。</td></tr>
+<tr><td>\(h_3\)</td><td>随机撤下一批拟发 offer，再随机排列订单和骑手，调用插入程序，尝试不同组合。</td></tr>
+<tr><td>\(h_4\)</td><td>抽一些骑手，调整其已分配但尚未取餐、且取餐不是当前首任务的订单位置；旧订单仍由原骑手服务。</td></tr>
+<tr><td>\(h_5\)</td><td>抽骑手对，撤下两人的拟发 offer，再在这两人之间重新试插。可能形成交换，也可能保留原归属，并非强制互换。</td></tr>
+<tr><td>\(h_6\)</td><td>随机撤 offer，先整理相关骑手的旧路线，再把撤下的单随机重插。</td></tr>
+<tr><td>\(h_7\)</td><td>撤下远 deadline 的 offer，整理相关骑手的路线；再把所有当前未发 offer 的待派单按 deadline 排序，尝试插给这些骑手。</td></tr>
+</tbody></table></div>
+<p>这些操作是在<strong>候选方案</strong>里撤下尚未真正发出的 offer，不是通知现实中的骑手“取消刚才已经接受的单”。例如 \(h_5\) 可把草稿中的“A→甲、B→乙”改成“A→乙、B→甲”，但甲已经接下的 O 不因此交给乙。</p>
+<p>另外，\(h^{aux}_1\) 至 \(h^{aux}_4\) 是被上述操作调用的四个辅助程序：贪心插入、打乱顺序后插入、撤最远 deadline 的 offer、随机撤 offer。它们也不是额外四个 SARSA 动作。真正的“选哪个骑手、选哪两个插入位置”，主要是在这些插入程序内部通过候选比较完成。</p>
+<h4>4. 搜索一次和环境走一步，不能混在一起</h4>
+<p>Algorithm 2 在固定的 \(s_t\) 上，根据 \(T_{h,g}\) 抽取操作并组成序列 \(\kappa\)。另一个变量 \(u\) 决定继续加操作（\(u=1\)），还是停止延长这段序列、把整段操作用于当前候选方案并评分（\(u=2\)）。<strong>这里的“停止”不是结束整次搜索，也不是马上给骑手发单。</strong>搜索仍可继续，直到计算时间预算耗尽。</p>
+<p>自造例子：搜索选出 \(\kappa=(h_2,h_5)\)，先做空间邻近订单的拆插，再试两个骑手之间的 offer 重分配，得到一个新候选 \(x'\)。若 \(\widehat Q(s_t,x')\) 比当前方案好，就奖励这次操作序列的选择分数，并按接受准则更新候选和最好方案。这个评价来自<strong>当前 Q 评分的改善</strong>，不需要先让骑手跑完这条路线取得一次真实配送回报。</p>
+<p>一次派单计算中可以尝试许多操作序列；这些试算不会每做一个 h 就让配送环境推进 30 秒。计算结束输出 \(x_t\) 后，模拟器才产生接拒、行驶、到单等结果，推进到下一决策状态，并产生供 SARSA 使用的运营成本。</p>
+<p>因此有两组不同的学习量：SARSA 用配送经历更新 \(\theta\)，改善“方案打多少分”；超启发式用搜索是否改善该评分来更新 \(P,L\)，改善“更常尝试哪些操作序列”。不能把后者写成 SARSA 在学习 \(Q(s,h_1),\ldots,Q(s,h_7)\)。</p>
+<p><strong>完整连接：</strong>当前状态 \(s_t\) → 构造候选发单/路线方案 → 用 h 操作修改候选、用 \(\widehat Q\) 比较 → 选出完整 \(x_t\) → 模拟器产生接拒与配送变化 → 得到成本和 \(s_{t+1}\) → 用 n-step SARSA 更新评分参数。</p>
+<p class="meta">核对依据：作者稿 §3，第 8–9 页；§4.1–4.3、Algorithm 1–2，第 12–20 页；§4.4.4–4.4.5，第 22 页。<a href="https://optimization-online.org/wp-content/uploads/2025/10/Meituan_INFORMS_TSL_OO.pdf" target="_blank" rel="noopener noreferrer">原文 PDF</a>。上述小例子用于解释流程，不是论文实验数值。公开伪代码中 S 的归一化、序列清空等疑点见原精读 §3.4；本次解释概念与文中步骤，不声称已获得作者源码验证。</p>
+</div></section>
 <section class="paper-card is-deep-read" id="paper-2502.16862" data-paper-id="2502.16862" data-deep-read="true"><div class="kicker">MOVED FROM 11·05 · 05</div><h2>Potential-Based Greedy Matching for Dynamic Delivery Pooling</h2><p class="lede">用订单距离估计机会成本的动态拼单</p><div><span class="chip">online optimization</span><span class="chip">order pooling</span><span class="chip">opportunity cost</span><span class="chip deep-label">Deep Read</span></div>
 <div class="paper-summary"><p class="meta">Hongyao Ma；Will Ma；Matias Romero<br>Columbia Business School</p><p><strong>首发：</strong>2025-02-24；<strong>当前版本日期：</strong>2026-01-11；arXiv v3<br><strong>通讯 / 联系作者：</strong>not explicitly listed</p><p><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">论文 / 摘要</a> · <a href="https://arxiv.org/pdf/2502.16862" target="_blank" rel="noopener noreferrer">PDF</a></p><p><strong>推荐理由：</strong>当前明确任务：同一 Meituan TSL 数据；主题：online optimization。</p><p class="notice"><strong>中文摘要概述：</strong>给贪心拼单扣除机会成本，不预测未来订单也能减少短视决策。</p><details><summary>英文摘要原文摘录与来源</summary><blockquote>We study the dynamic pooling of multiple orders into a single trip, a strategy widely adopted by online …</blockquote><p><a href="https://arxiv.org/abs/2502.16862" target="_blank" rel="noopener noreferrer">查看完整英文摘要</a>；中文部分为本报告概述，不标成全文逐句翻译。</p></details><p class="meta">证据状态：arXiv v3 全文 55 页、正文 §1–5 与附录 A–E 已覆盖；完整精读。</p></div>
 <p class="notice">由 2026-11-05 报告整体迁入，原摘要、全部精读、原图与问答保留。新增 <a href="#simulator-2502.16862">第 7 节：实体与模拟器核查</a>。</p><div class="deep-reading-content"><h3>1. 摘要中文翻译与版本</h3>
