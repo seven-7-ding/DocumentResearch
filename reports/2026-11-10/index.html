@@ -1,0 +1,834 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>2026-11-10 · 骑手推荐、并发派单与公平性精读</title>
+<style>
+:root{--ink:#172b3a;--muted:#566b7a;--line:#d5e1e8;--teal:#087f8c;--amber:#a94d0a;--bg:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}main{max-width:1160px;margin:auto;padding:24px 30px 80px}header{padding:48px 0 28px;border-bottom:2px solid var(--ink)}h1{font-size:36px;line-height:1.35;letter-spacing:-.5px;max-width:940px}h2{font-size:28px;line-height:1.5;margin-top:20px}h3{font-size:23px;line-height:1.5;margin-top:40px;border-top:1px solid var(--line);padding-top:24px}h4{font-size:19px;margin-top:32px}p{margin:15px 0}a{color:#1763ad;text-decoration-thickness:1px;text-underline-offset:3px}a:visited{color:#6550a1}strong{font-weight:650}.kicker{text-transform:uppercase;color:var(--teal);font:700 13px/1.5 system-ui;letter-spacing:2px}.lede{font-size:20px;max-width:920px}.muted,.meta,figcaption{color:var(--muted);font-size:14px}.sticky-nav{position:sticky;top:0;z-index:20;background:#fffef8f5;border-bottom:1px solid var(--line);backdrop-filter:blur(10px);padding:10px 24px;display:flex;gap:15px;align-items:center;overflow-x:auto;white-space:nowrap;font-size:14px}.sticky-nav a{text-decoration:none}.section,.paper-card{background:white;border:1px solid var(--line);border-radius:12px;padding:32px 40px;margin:32px 0}.paper-card.is-deep-read{border-left:5px solid #e99632;background:linear-gradient(90deg,#fff7ed,#fff 24rem)}a.is-deep-read-link,a[data-deep-read="true"]{color:var(--amber);font-weight:750;text-decoration:underline;text-decoration-thickness:2px}.chip{display:inline-block;background:#e9f3f5;color:#266572;font-size:12px;padding:3px 9px;border-radius:5px;margin:3px 5px 3px 0}.deep-label{color:#a94d0a;background:#ffead3}.notice{border-left:3px solid var(--teal);padding:12px 20px;background:#f0f8f8}.table-scroll{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:15px}th,td{border:1px solid var(--line);padding:12px 14px;vertical-align:top;min-width:105px}th{background:#edf4f6;text-align:left}tr:nth-child(even){background:#fafcfd}table.catalog{min-width:1300px}table.catalog td:first-child{min-width:50px}table.catalog td:nth-child(2){min-width:300px}blockquote{border-left:3px solid #b7cad6;padding:8px 20px;margin:15px 0;background:#f7f9fa;color:#4a5f6e;font-size:15px}.figure-block{margin:28px 0}.figure-tools{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:8px}.figure-viewport{overflow:auto;max-height:70vh;min-height:100px;resize:both;max-width:100%;border:1px solid var(--line);background:#f9fbfc;cursor:grab}.figure-viewport img{display:block;max-width:none;height:auto;transform:none}.figure-viewport.is-dragging{cursor:grabbing}figcaption{margin-top:10px}.katex-display{overflow-x:auto;overflow-y:hidden;padding:8px 0}.katex{font-size:1.04em}.tutorial-toc{columns:2;font-size:15px}.tutorial-toc a{display:block;break-inside:avoid;margin:5px 0}.interactive{padding:22px;border:1px solid #a3cbd1;background:#f4fafb;border-radius:10px;margin:28px 0}.interactive canvas{width:100%;height:auto;display:block;background:white;border-radius:6px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:15px;margin:14px 0}.controls input[type=range]{min-width:210px;flex:1}select,button{font:inherit;padding:6px 10px;border:1px solid #9ab5bf;border-radius:5px;background:white;color:var(--ink)}.read-route{display:flex;flex-wrap:wrap;gap:10px}.read-route a{border:1px solid var(--line);border-radius:6px;padding:6px 12px}.number{color:var(--teal);font-weight:700}.qa-log{font-size:14px;border-top:1px dashed var(--line);margin-top:30px;padding-top:10px}footer{color:var(--muted);font-size:13px;padding-top:20px}details{margin:14px 0}summary{cursor:pointer;font-weight:600}@media(max-width:700px){main{padding:12px}.section,.paper-card{padding:22px 18px}h1{font-size:28px}h2{font-size:24px}h3{font-size:21px}body{font-size:16px}.tutorial-toc{columns:1}.sticky-nav{gap:14px;padding:10px 12px}header{padding:28px 10px}.interactive{padding:12px}}
+pre{overflow:auto;max-width:100%;font-size:13px}code{overflow-wrap:anywhere}h2{overflow-wrap:anywhere}.audit-jump{display:block;font-size:14px;margin:8px 0}.evidence-table{min-width:760px}</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"><style id="portal-font">html,body,button,input,select,textarea{font-family:"Times New Roman","Noto Serif CJK SC","SimSun",serif!important}</style></head><body><nav class="sticky-nav"><strong>11.10 · 三篇精读</strong><a href="#top">概览</a>
+<a class="is-deep-read-link" href="#paper-drlor2023">DRLOR</a>
+<a class="is-deep-read-link" href="#paper-tcac2021">TCAC</a>
+<a class="is-deep-read-link" href="#paper-faircod2023">FAIRCOD</a>
+</nav><main id="top"><header><div class="kicker">Selected Papers · Full-text Reading</div><h1>骑手怎样选单，平台怎样派单，<br>公平如何进入决策</h1><p class="lede">2026 年 11 月 10 日 · 截图指定的三篇文章 · 全文精读完成</p><p class="meta">来源：用户提供的原文 PDF、作者托管论文、FairCod 官方代码。原图已裁切核对；共 37 页。所有标签使用英文。</p></header>
+<section class="section"><h2>阅读导航</h2><p>三篇处理不同决策环节。先分清谁作出最终选择，再读各自的状态、动作、奖励、约束和实验。</p><div class="table-scroll"><table><thead><tr><th>文章</th><th>平台决定</th><th>证据与阅读重点</th></tr></thead><tbody>
+<tr><td><a class="is-deep-read-link" href="#paper-drlor2023">An Online Deep Reinforcement Learning-Based Order Recommendation Framework for Rider-Centered Food Delivery System</a><br>Xing Wang · 2023-01-23<br>IEEE Transactions on Intelligent Transportation Systems 24(5):5640–5654</td><td>给骑手的订单排序</td><td>真实区域 A/B；注意模拟器、统计口径与 AGD 单位。<br>选读原因：用户指定；应用型强化学习。</td></tr>
+<tr><td><a class="is-deep-read-link" href="#paper-tcac2021">Concurrent Order Dispatch for Instant Delivery with Time-Constrained Actor-Critic Reinforcement Learning</a><br>Baoshen Guo · 2021-12<br>IEEE RTSS 2021:176–187</td><td>订单与骑手的批量分配</td><td>开发环境仿真；预测剪枝不是现实零迟到保证。<br>选读原因：用户指定；应用型强化学习。</td></tr>
+<tr><td><a class="is-deep-read-link" href="#paper-faircod2023">FairCod: A Fairness-aware Concurrent Dispatch System for Large-scale Instant Delivery Services</a><br>Lin Jiang · 2023-08-04<br>ACM KDD 2023:4229–4238</td><td>兼顾收入效率差异的逐单分配</td><td>仿真与公开 toy 代码；核对公平定义、提升百分比和实现差异。<br>选读原因：用户指定；应用型强化学习。</td></tr>
+</tbody></table></div><p class="notice">本文保留原文实验数字，并单独标出复算结果、公式歧义及缺失的实现细节。解释性场景不是论文实验样本。</p></section>
+<section class="paper-card is-deep-read" id="paper-drlor2023" data-paper-id="drlor2023" data-deep-read="true"><div class="kicker">Selected Paper · 01</div><h2>An Online Deep Reinforcement Learning-Based Order Recommendation Framework for Rider-Centered Food Delivery System</h2><p class="lede">骑手自主抢单场景中的强化学习订单推荐</p><div><span class="chip">reinforcement learning</span><span class="chip">food delivery</span><span class="chip">order recommendation</span><span class="chip">rider behavior</span><span class="chip">attention</span><span class="chip deep-label">Deep Read</span></div><div class="paper-summary"><p class="meta">Xing Wang；Ling Wang；Chenxin Dong；Hao Ren；Ke Xing<br>Tsinghua University · Qingdao Hengxing University of Science and Technology · Meituan<br>2023-01-23 · IEEE Transactions on Intelligent Transportation Systems 24(5):5640–5654</p><p><strong>第一作者：</strong>Xing Wang；<strong>通讯作者：</strong>Ling Wang；<strong>最后作者：</strong>Ke Xing。</p><p><strong>选读原因：</strong>用户在截图中明确选中；实际外卖配送中的强化学习。<br><strong>一句话：</strong>用反馈关联网络理解刷新历史，Actor 输出订单评分权重，让骑手更快抢到一单。</p><p><a href="https://doi.org/10.1109/TITS.2023.3237580" target="_blank" rel="noopener noreferrer">论文来源 · DOI</a></p><details><summary>English abstract · 原文（仅合并 PDF 换行与连字）</summary><blockquote>As an important part of intelligent transportation systems, On-demand Food Delivery (OFD) becomes a prevalent logistics service in modern society. With the continuously increasing scale of transactions, rider-centered assignment manner is gaining more attraction than traditional platform-centered assignment among food delivery companies. However, problems such as dynamic arrivals of orders, uncertain rider behaviors and various false-negative feedbacks inhibit the platform to make a proper decision in the interaction process with riders. To address such issues, we propose an online Deep Reinforcement Learning-based Order Recommendation (DRLOR) framework to solve the decision-making problem in the scenario of OFD. The problem is modeled as a Markov Decision Process (MDP). The DRLOR framework mainly consists of three networks, i.e., the actor-critic network that learns an optimal order ranking policy at each interaction step, the rider behavior prediction network that predicts the grabbing behavior of riders and the feedback correlation network based on attention mechanism that identifies valid feedback information from false feedbacks and learns a high-dimensional state embedding to represent the states of riders. Extensive offline and online experiments are conducted on Meituan delivery platform and the results demonstrate that the proposed DRLOR framework can significantly shorten the length of interactions between riders and the platform, leading to a better experience of both riders and customers.</blockquote></details></div><div class="deep-reading-content"><h3>1. 摘要中文全译</h3>
+<p>作为智能交通系统的重要组成部分，即时餐饮配送（OFD）已成为现代社会中一种普遍的物流服务。随着交易规模持续增长，在外卖配送企业中，以骑手为中心的分配方式正比传统的平台主导分配获得更多关注。然而，订单动态到达、骑手行为不确定，以及各种假负反馈等问题，使平台难以在与骑手的交互过程中作出合适决策。为解决这些问题，我们提出基于在线深度强化学习的订单推荐框架 DRLOR，用于解决 OFD 场景中的决策问题。该问题被建模为马尔可夫决策过程（MDP）。DRLOR 主要包含三个网络：在每个交互步骤学习最优订单排序策略的 Actor-Critic 网络；预测骑手抢单行为的骑手行为预测网络；以及基于注意力机制的反馈关联网络，该网络从虚假反馈中识别有效反馈信息，并学习用于表示骑手状态的高维状态嵌入。我们在美团配送平台开展了大量离线与在线实验，结果表明，所提出的 DRLOR 框架能够显著缩短骑手与平台之间的交互长度，从而改善骑手和顾客的体验。</p>
+<p>以上是作者摘要的完整翻译。“最优”“识别有效反馈”“显著”等措辞沿用作者表述，其证据强度在下文单独分析。阅读全文 15 页，重点核对式（1）—（24）、算法 1—3、表 I—VI 与图 1—9；所给版本没有附录。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>发表时机构</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Xing Wang</td>
+<td>Tsinghua University, Department of Automation</td>
+<td>第一作者；论文简介称当时研究复杂调度的智能优化</td>
+</tr>
+<tr>
+<td>Ling Wang</td>
+<td>Tsinghua University, Department of Automation</td>
+<td>通讯作者；<a href="https://www.au.tsinghua.edu.cn/info/1077/3265.htm" target="_blank" rel="noopener noreferrer">清华机构主页</a></td>
+</tr>
+<tr>
+<td>Chenxin Dong</td>
+<td>Qingdao Hengxing University of Science and Technology</td>
+<td>School of Mechanical and Automotive Engineering</td>
+</tr>
+<tr>
+<td>Hao Ren</td>
+<td>Meituan</td>
+<td>产业合作作者</td>
+</tr>
+<tr>
+<td>Ke Xing</td>
+<td>Meituan</td>
+<td>最后作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>本文由用户明确选择；与用户关注的实际调度强化学习直接相关。作者机构按论文署名保留。Xing Wang 同名较多，未核实独立个人主页，不把其他同名研究者履历填入本文。团队在这里解决的是配送平台中的交互推荐，不能因发表在智能交通期刊就把动作理解为车辆路径。</p>
+<h3>3. 技术精读</h3>
+<h4 id="drlor-mdp">3.1 骑手刷新列表之后，平台究竟决定什么</h4>
+
+<p>解释性场景：骑手已经带着两单，打开平台看到十个可抢订单。他没有马上选，而是刷新，想看看有没有更顺路的餐厅。如果平台把这次刷新理解成“十单全都不喜欢”，下一次可能把本来适合他的订单全部排后；如果只看距离，也不知道骑手是否偏好某个方向、是否已经背负太多任务。DRLOR 学习下一次怎样排列候选订单，使骑手尽早选中一单。</p>
+<p>平台是执行推荐动作的 agent，骑手响应构成环境反馈。每次会话从骑手开始浏览到抢下一单或停止浏览结束；停止可能因为休息或下班。多名骑手的状态分别维护，但他们争抢的订单池会因其他人的操作改变。原文以单个骑手的交互轨迹构造 MDP，没有给出联合建模所有抢单竞争的多智能体博弈。动态订单池和不可观测意愿也意味着“当前特征足够满足 Markov 性”是一项建模假设。</p>
+<p>状态记作 \(s_t=(C_t,H_t,h_t,v_t)\)：\(C_t\) 是已接且在途的订单；\(H_t\) 是上次抢单后、当前列表之前浏览过的列表；\(h_t\) 是眼前列表；\(v_t\) 是骑手属性。前两者包含正反馈和可能的负反馈，但刷新未必代表讨厌。订单按 26 维特征表示，骑手属性有 28 维，含身份、位置、已完成单量、平均工作量与时长；正文没有逐项公开这 26 和 28 维的完整字段及归一化表。</p>
+<p>式（1）—（3）先定义强化学习目标。统一时间下标后，可以写成：</p>
+<p>\[G_t=\sum_{j=0}^{\infty}\gamma^j r_{t+j+1},\quad V^\pi(s)=\mathbb E_\pi[G_t\mid s_t=s],\quad Q^\pi(s,a)=\mathbb E_\pi[G_t\mid s_t=s,a_t=a].\]</p>
+<p>\(r\) 是交互反馈奖励，\(\gamma\) 是折扣。\(V\) 评价当前局面，\(Q\) 评价当前局面先采取某个排序动作再继续交互的价值。求 \(\pi^{\ast}\) 是希望最大化期望累计反馈，不是直接最小化所有订单总配送距离。原式（1）从 \(\gamma^1\) 开始计折扣；在同一无限时域目标下这是整体常数缩放，不改变最优策略的比较。</p>
+<p>式（4）尝试把目标改写为折扣状态访问分布下的平均奖励。其意图是 \(J(\theta)=\mathbb E_{s\sim\rho^{\pi_\theta}}[R(s,\pi_\theta(s))]\)，其中 \(\rho\) 表示策略经常到达哪些状态。原文的访问分布表达把初始分布和转移概率压缩在求和里，对多步转移的写法不够严谨；应把它视为策略梯度的背景说明，不能按该式逐字实现一个只重复单步转移的占据分布计算器。本文没有新的收敛定理或证明。</p>
+<h4 id="drlor-ac">3.2 固定长度动作如何给变化的订单池排序：式（5）—（13）</h4>
+
+<p>Actor 不输出“选第 7 号订单”，而是输出 26 维连续权重 \(a_t=\mu_\theta(s_t)\in[-1,1]^{26}\)。对于候选订单 \(o_i^t\in\mathbb R^{26}\)，原式（8）计算：</p>
+<p>\[\sigma_i^t=(o_i^t)^\top a_t.\]</p>
+<p>按分数从高到低取前 \(N_t\) 单就是推荐列表。候选从 20 单变成 100 单时，Actor 的输出维度仍为 26，只需对更多订单算点积。这样把可变长度列表推荐变成连续参数控制；代价是所有订单共享一个线性评分向量，复杂的订单间互补关系必须经状态和权重间接表达。没有 KM 匹配，也没有由 Actor 安排取送节点顺序。特征尺度会改变点积分数，因此复现时不能忽略归一化缺失。</p>
+<p>式（7）将网络简写为 \(a_t=\tanh(\operatorname{ReLU}(FC(s_t)))\)；实际是若干带权重的前馈层，隐藏层采用 leaky ReLU，最后 tanh 限制动作范围。这里 \(FC\) 是反馈关联网络，不是泛指一层 fully connected。式（9）将动作与状态表示拼接后送给 Critic：</p>
+<p>\[Q_w(s_t,a_t)=\operatorname{MLP}_{w}([FC(s_t),a_t]).\]</p>
+<p>Critic 输出层为线性，因为回报无需被压在动作的 \([-1,1]\) 内。将原文网络缩写写成 MLP 是为显式保留可学习仿射层，不能把原式理解成连续套几个无参数激活函数。</p>
+<p>式（5）—（6）使用确定性策略梯度。对访问到的状态，先问 Critic“怎样改变动作可以提高价值”，再把这个方向反传给 Actor：</p>
+<p>\[\nabla_\theta J\approx\mathbb E[\nabla_\theta\mu_\theta(s)\,\nabla_a Q_w(s,a)|_{a=\mu_\theta(s)}],\qquad\theta\leftarrow\theta+\eta_a\nabla_\theta J.\]</p>
+<p>等价地，式（10）最小化负的 Critic 评价：\(L_a=-B^{-1}\sum_b Q_w(s_b,\mu_\theta(s_b))\)。这里 \(B\) 为小批量大小。Actor 增加估计价值高的权重方向；它没有对真实的 top-\(N\) 离散排序和骑手行为直接求导，而是通过可微 Critic 近似这个反馈。</p>
+<p>式（11）用一步时序差分（TD）拟合 Critic。结合原文随后引入的目标网络，可按一致记号理解为：</p>
+<p>\[y_b=r_b+\gamma Q_{w&#x27;}(s_{b+1},\mu_{\theta&#x27;}(s_{b+1})),\qquad L_c=\frac1B\sum_b(y_b-Q_w(s_b,a_b))^2.\]</p>
+<p>\(y_b\) 是当前奖励加下一步预测价值，目标值在本次更新中应停止梯度。原式（11）未把目标网络参数显式写成带撇号的形式；这里是依据正文做的实现层面澄清。终止会话的目标通常应只留当前奖励，但论文伪代码没有完整列出 terminal mask，不能声称其具体实现已经公开。</p>
+<p>式（12）—（13）让目标参数慢慢跟随在线网络：</p>
+<p>\[\theta&#x27;\leftarrow\lambda_1\theta&#x27;+(1-\lambda_1)\theta,\qquad w&#x27;\leftarrow\lambda_2w&#x27;+(1-\lambda_2)w.\]</p>
+<p>两项 \(\lambda\) 都为 0.99，即每次保留 99% 旧目标、吸收 1% 新参数，以缓和训练目标同时变化。正文据策略梯度论述“最终找到最优策略”，但非凸函数逼近、近似环境和不连续排序并不满足一个自动成立的全局最优保证；损失下降只能提供经验性训练证据。</p>
+<h4 id="drlor-rbp">3.3 RBP 是什么环境：式（14）—（15）</h4>
+
+<p>真实骑手不会为每次离线训练试验即时反馈，因此作者训练 Rider Behavior Prediction（RBP）网络模拟是否抢单。状态表示经两层隐藏变换、ReLU/tanh 和 sigmoid 输出 \(\hat{y}_t\in(0,1)\)，用 0.5 阈值判断“抢／不抢”。式（14）是这一前馈映射的缩写；它的监督目标由式（15）的二元交叉熵给出：</p>
+<p>\[L_s=-\frac1B\sum_{i=1}^B[y_i\log\hat{y}_i+(1-y_i)\log(1-\hat{y}_i)].\]</p>
+<p>\(y_i=1\) 表示日志中确实抢了一单，\(y_i=0\) 表示没抢。损失促使预测匹配观测标签，并同时训练 FC 的状态表征。它不是“选中具体哪一单”的多类模型，也不是完整的未来状态转移器：当算法说更新 \(C,H,h,v\) 时，所选订单的身份、其他骑手抢走订单的动态等具体生成规则没有被 RBP 的一个二元输出充分确定。</p>
+<p>这也限定了离线证据：历史上看见某种列表后是否抢单，是行为预测；把从未展示过的新列表交给预测器得到回报，是反事实外推。AUC 高说明历史分布上分类排序好，不等于模拟器在任意新策略下都准确，更不等于概率经过校准。策略可能寻找预测器误判为“会抢”的列表。</p>
+<h4 id="drlor-fc">3.4 FC 怎样处理刷新中的假负反馈：式（16）—（19）</h4>
+
+<p>FC 不是直接给每条刷新打真假标签，而是让已接订单、历史列表和当前列表互相提供上下文。四路输入先投影到嵌入空间：已接订单加入一维顺序位置；浏览历史加入“第几次刷新 × 列表内第几名”的二维位置；当前列表保留排名位置；骑手身份采用 embedding lookup，并纳入连续属性。这样同一订单在列表第 1 名和第 30 名、第一次和第十次出现，可以产生不同表示。</p>
+<p>对已接订单做一层 self-attention，得到 \(F_t^c\)；对历史做两级 self-attention，先捕捉一张列表内订单关系，再捕捉不同历史列表关系，得到 \(F_t^b\)。式（16）的计算意图可用常见行向量约定写为：</p>
+<p>\[\operatorname{Att}(Q,K,V)=\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.\]</p>
+<p>\(Q\) 是要查询的信息，\(K\) 用于计算相似性，\(V\) 是被加权汇总的内容，\(d_k\) 缩放点积，防止维度增大时 softmax 过度尖锐。8 个 head 在不同投影空间分别算注意力，再合并。原文排版的转置约定与常用写法不同；这里明确约定而不照搬可能混淆矩阵方向的抽取文本。</p>
+<p>式（17）—（18）在注意力和前馈层周围加入残差连接与层归一化，可概括为：</p>
+<p>\[Z=\operatorname{LN}(X+\operatorname{Att}(Q,K,V)),\qquad F=\operatorname{LN}(Z+\operatorname{FFN}(Z)).\]</p>
+<p>残差保留原始信息，LN 稳定每个位置的表示尺度，FFN 提供逐位置非线性变换。它们帮助网络训练和组合反馈，不承担订单可行性检查。</p>
+<p>随后有两条 cross-attention。第一条以已接订单表示 \(F^c\) 为 query、历史 \(F^b\) 为 key/value，得到 \(F^{cb}\)：例如骑手虽然刷新了某张列表，但其中有与他已接路线相似的订单，不必把整张列表当作彻底不喜欢。第二条以当前列表嵌入 \(E^h\) 查询历史 \(F^b\)，得到 \(E^{bh}\)：当前列表与过去几次列表是否高度重复、是否提供新选项，可影响当前抢单预测。两个分支都使用历史信息，但查询对象不同。</p>
+<p>最后按式（19），对 \(F^c,F^{cb},F^b,E^{bh}\) 分别平均池化，得到 \(f^c,f^{cb},f^b,f^{bh}\)，与骑手向量 \(f^v\) 拼接，再经 dense 层变成 128 维状态：</p>
+<p>\[FC(s_t)=\operatorname{Dense}([f_t^c,f_t^{cb},f_t^b,f_t^{bh},f_t^v]).\]</p>
+<p>平均池化解决输入长度不一；序列位置信息此前已进入注意力表示，不能说池化后网络完全不看顺序。正文没有充分交代 padding mask 的边界行为，复现时尤其要防止空历史、未满 40 单的补位污染均值。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/d78127e7d9187278b16f2b84.png" alt="DRLOR 原图 4：已接订单、历史列表、当前列表与骑手属性进入 FC。" loading="lazy"></div><figcaption>DRLOR 原图 4：已接订单、历史列表、当前列表与骑手属性进入 FC。</figcaption></figure>
+<p>原图 4 中间的“两层 self-attention”对应历史的两个层级，左右 cross-attention 对应上述两种查询。图支持数据流的解读；它不能证明网络真的识别出了每一次刷新背后的心理动机。该论文没有人工标注的“假负反馈真值”测试集，后面的消融测的是抢单分类性能。</p>
+<h4 id="drlor-train">3.5 从预训练到模拟交互：算法 1—3、式（20）</h4>
+
+<p>算法 1 先读真实状态和抢单标签，随机初始化 FC/RBP，按批次计算状态嵌入和抢单概率，以交叉熵联合更新。目的在于先建立能用的反馈预测器，否则 Actor 在随机奖励信号上训练没有意义。算法 2 使用已训练的 FC/RBP，初始化 Actor、Critic 和 replay buffer；每个 session 随机生成初态，在最多 \(T\) 步内重复：编码当前状态、输出权重并排序、把新列表交给预测器、生成奖励、更新交互状态、保存 \((s,a,r,s&#x27;)\)、抽样 replay、先更新 Critic 再更新 Actor，最后软更新目标网络。伪代码没有声明 AC 梯度继续端到端更新 FC，应按预训练后供 AC 使用来读。</p>
+<p>式（20）把预测概率阈值化为奖励：</p>
+<p>\[r_t=\begin{cases}g_1,&amp;\hat{y}_t\ge0.5,\\-g_2,&amp;\hat{y}_t&lt;0.5.\end{cases}\qquad g_1=10,\quad g_2=0.2.\]</p>
+<p>成功获得一次较大奖励，每多刷新一次付小代价，从而鼓励尽快抢单。0.49 与 0.51 的预测只相差 0.02，却会使奖励从 −0.2 变成 10，因而阈值误差会被放大。它不是配送收入或准时率奖励。</p>
+<p>算法 3 被称为 “Online Test”，但此处仍用 FC/RBP 模拟骑手反馈，只在会话内动态推进状态，不再更新模型；真正上线 A/B 是另一节。测试累计的是未折扣奖励 \(R=\sum_t r_t\)，训练的价值目标则用 \(\gamma=0.95\)，两者不能混称同一个数值。</p>
+<p>若会话在第 \(L\) 步抢到一单立即终止，\(R=10-0.2(L-1)\)；40 步都不抢则为 −8。图 6 的 11 步例子因此得到 8，首步成功上界为 10。这是按作者奖励与会话定义复算。算法 2—3 的印刷伪代码却没有明确的抢单即 break 条件；若实现机械执行满 40 步并重复奖励，上界就不再是 10，因此复现必须确认终止逻辑。停止浏览而非成功抢单的终止奖励也未详列。</p>
+<p>原文给出的训练复杂度与样本／会话数量、训练轮数、步数线性相关，是把网络计算等当成固定代价的概括。实际每步还需要对候选池逐单打分及排序，完整排序约为 \(\lvert O_t\rvert\log\lvert O_t\rvert\)；历史注意力成本也受截断长度影响。论文没有披露生产推理延迟的独立基准，不能据此称其任意规模都实时。</p>
+<h4 id="drlor-setup">3.6 实验怎样划分，哪些结果来自模拟器</h4>
+
+<p>数据为美团 2022 年 2 月 11—18 日的 293 万次交互。FC/RBP 使用 11—17 日训练、18 日测试；AC 使用 18 日前 70% 训练、后 30% 测试。这能考察次日行为预测和同日留出轨迹上的推荐，但并非跨城市、跨月份泛化实验。AC 测试仍依赖同一类预训练模拟器；这不等于已证明标签泄漏，也不能消除分布外模拟误差。</p>
+<p>推荐列表最多 40 单，浏览历史最多 40 次，在途最多 15 单，会话最多 40 步；截断控制计算量，但长历史意图可能被丢弃。FC 输出 128 维、8 头注意力、dropout 0.1、学习率 \(10^{-4}\)；RBP 层宽为 128、128、1。Actor／Critic 学习率分别 \(10^{-4}\)、\(10^{-3}\)，batch 64，目标旧参数比例 0.99，折扣 0.95，每 session 的训练轮数设为 500。实现为 Python 3.6、TensorFlow 2.0，在美团服务器运行。这些是原实验配置，本次仅精读，不安装其旧环境或重训。</p>
+<h4 id="drlor-classification">3.7 抢单预测与反馈网络消融：表 II—III</h4>
+
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>预测器</th>
+<th style="text-align: right;">AUC</th>
+<th style="text-align: right;">AUPR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naïve Bayes</td>
+<td style="text-align: right;">0.5750</td>
+<td style="text-align: right;">0.3261</td>
+</tr>
+<tr>
+<td>Decision tree</td>
+<td style="text-align: right;">0.7367</td>
+<td style="text-align: right;">0.4877</td>
+</tr>
+<tr>
+<td>Random forest</td>
+<td style="text-align: right;">0.7414</td>
+<td style="text-align: right;">0.5140</td>
+</tr>
+<tr>
+<td>XGBoost</td>
+<td style="text-align: right;">0.8050</td>
+<td style="text-align: right;">0.5715</td>
+</tr>
+<tr>
+<td>DeepFM</td>
+<td style="text-align: right;">0.8357</td>
+<td style="text-align: right;">0.6749</td>
+</tr>
+<tr>
+<td>RBFC（完整 FC + RBP）</td>
+<td style="text-align: right;"><strong>0.8864</strong></td>
+<td style="text-align: right;"><strong>0.7514</strong></td>
+</tr>
+<tr>
+<td>RBFC_noid</td>
+<td style="text-align: right;">0.8625</td>
+<td style="text-align: right;">0.6987</td>
+</tr>
+<tr>
+<td>RBFC_noatn</td>
+<td style="text-align: right;">0.7217</td>
+<td style="text-align: right;">0.3902</td>
+</tr>
+<tr>
+<td>RBFC_nofb</td>
+<td style="text-align: right;">0.5295</td>
+<td style="text-align: right;">0.2919</td>
+</tr>
+</tbody>
+</table></div>
+<p>AUC 衡量正例排在负例前的能力，AUPR 更直接体现精确率与召回率之间的权衡；二者都不是“88.64% 样本预测正确”。DeepFM 能组合高低阶特征，XGBoost 利用树集成，故比简单分类器更有竞争力；RBFC 额外建模历史时序与列表关联，是作者解释其优势的机制。</p>
+<p>去掉身份会损失个性化线索；去掉注意力则无法按相互关系筛选反馈，两个指标下降较大；去掉反馈历史，AUC 接近 0.5，说明只看当前信息严重不足。这个结果支持使用交互历史，不直接证明每条注意力权重都是可解释的骑手偏好，也不是“RL 比监督学习好”的实验，因为这里各项都在比较反馈预测。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/1a21ae37f8d7da3326651760.png" alt="DRLOR 原表 II–III：抢单预测结果与反馈网络消融。" loading="lazy"></div><figcaption>DRLOR 原表 II–III：抢单预测结果与反馈网络消融。</figcaption></figure>
+<p>原表 II—III 同时给出主预测结果和消融，便于核查数字。论文没有对这些 AUC/AUPR 提供重复种子置信区间；不能把数值差自动解释为完成了显著性检验。</p>
+<h4 id="drlor-offline">3.8 推荐策略离线对比：表 IV—V 与图 7—9</h4>
+
+<p>五种排序基线是：Rem_time 按剩余配送时间<strong>降序</strong>排，Delivery_dis 按商家到顾客距离升序，Fetch_dis 按骑手到商家距离升序，Rider_pref 用 XGBoost 预测骑手—订单偏好后降序，Rand 随机。尤其 Rem_time 不是优先快到期的 EDF 策略。Rider_pref 有个体和订单特征但没有本文的交互历史关联，是最接近的强基线。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>周围订单数</th>
+<th style="text-align: right;">DRLOR 平均步数 ± 标准差</th>
+<th style="text-align: right;">Rider_pref 平均步数 ± 标准差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[0,40)</td>
+<td style="text-align: right;">3.198 ± 1.803</td>
+<td style="text-align: right;">3.385 ± 3.666</td>
+</tr>
+<tr>
+<td>[40,80)</td>
+<td style="text-align: right;">2.973 ± 2.810</td>
+<td style="text-align: right;">3.149 ± 2.789</td>
+</tr>
+<tr>
+<td>[80,120)</td>
+<td style="text-align: right;">2.642 ± 2.948</td>
+<td style="text-align: right;">2.820 ± 3.302</td>
+</tr>
+<tr>
+<td>[120,160)</td>
+<td style="text-align: right;">2.513 ± 2.163</td>
+<td style="text-align: right;">2.782 ± 3.421</td>
+</tr>
+<tr>
+<td>[160,200)</td>
+<td style="text-align: right;">2.527 ± 2.126</td>
+<td style="text-align: right;">2.752 ± 2.578</td>
+</tr>
+</tbody>
+</table></div>
+<p>在这五组中 DRLOR 的平均交互步数均最低。Fetch_dis 约 5.5—5.8 步，Rem_time／Delivery_dis 约 9—13 步，Rand 约 15—19 步，说明“先取到餐”的距离在这个行为模型中很重要。图 8 的总体趋势是候选较多时 DRLOR、Rider_pref 和 Fetch_dis 奖励提高，另外三种缺乏合适筛选能力的方法反而更容易展示不合适的单。这不是每一相邻分组严格单调；表中的最后一组 DRLOR 步数就略回升。</p>
+<p>按在途订单分组时，DRLOR 在 [0,3)、[3,6)、[6,9)、[9,12)、[12,15) 的平均步数依次为 2.350、2.710、3.338、3.275、3.144；Rider_pref 为 2.631、3.413、3.632、3.477、3.589。总体上较重负担使抓取新单意愿降低、回报降低，但仍不是所有指标随负担严格单调。图 9 的曲线支持“重负担下更难推荐”，不能把作者的趋势叙述替代逐格数据。</p>
+<p>标准差在部分组接近平均值，说明不同 session 的行为很不均匀；作者将其归因于一些骑手本来没有抢新单意愿。候选充足时简单偏好模型也较容易找到合适订单，重载时复杂推荐也难以创造意愿，所以优势有边界。图 7 的 500 轮训练中 Critic loss 降低、回报升高，只说明在该训练反馈下趋于稳定；没有证明全局最优。</p>
+<h4 id="drlor-online">3.9 真正上线的 A/B：式（21）—（24）、表 VI</h4>
+
+<p>作者随机选择一个城市，再选前期指标最接近的两个区域作为对照与实验区；对照运行 Rider_pref，实验运行 DRLOR。空白期为 2022 年 11 月 3—22 日，实验期为 11 月 23—29 日。它是区域对照并扣除前期差异，并非文中已证明的骑手级随机分流。</p>
+<p>\[AGD=\frac1{\lvert O\rvert}\sum_{i\in O}(GT_i-ET_i),\qquad ARTG=\frac1{\lvert V\rvert}\sum_{v\in V}\frac{RT_v}{O_v}.\]</p>
+<p>式（21）的 \(GT\) 是抢单时刻，\(ET\) 是首次曝光时刻，\(O\) 仅含已完成订单。式（22）先对每个至少完成一单的骑手算“刷新次数／完成单数”，再对骑手取平均；它不是全平台总刷新数除以总单量。筛选完成订单和活跃骑手会影响解释范围，不能据此知道永远没抢到单的人是否改善。</p>
+<p>\[GR_5=\frac{\mid O_{5-}|}{\lvert O\rvert}\times100\%,\qquad GR_2=\frac{\mid O_{2-}|}{\lvert O\rvert}\times100\%.\]</p>
+<p>式（23）—（24）统计从<strong>订单创建</strong>到被抢是否在 5 或 2 分钟内，和 AGD 从首次曝光计时不同；也不是最终送达准时率。作者用实验区减对照区，再扣前期区域差：\(\Delta_{true}=\Delta_{exp}-\Delta_{blank}\)。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>指标</th>
+<th style="text-align: right;">空白期差异</th>
+<th style="text-align: right;">实验期差异</th>
+<th style="text-align: right;">原表校正后差异</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AGD</td>
+<td style="text-align: right;">+2.38</td>
+<td style="text-align: right;">−25.71</td>
+<td style="text-align: right;"><strong>−28.09</strong></td>
+</tr>
+<tr>
+<td>ARTG</td>
+<td style="text-align: right;">+0.08</td>
+<td style="text-align: right;">−1.27</td>
+<td style="text-align: right;"><strong>−1.35</strong></td>
+</tr>
+<tr>
+<td>GR5</td>
+<td style="text-align: right;">−0.46 个百分点</td>
+<td style="text-align: right;">+2.39 个百分点</td>
+<td style="text-align: right;"><strong>+2.85 个百分点</strong></td>
+</tr>
+<tr>
+<td>GR2</td>
+<td style="text-align: right;">−0.67 个百分点</td>
+<td style="text-align: right;">+2.58 个百分点</td>
+<td style="text-align: right;"><strong>+3.24 个百分点</strong></td>
+</tr>
+</tbody>
+</table></div>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/0419ae797b8c4d91bf05e111.png" alt="DRLOR 原表 VI：区域 A/B 结果；AGD 单位与舍入疑点见正文。" loading="lazy"></div><figcaption>DRLOR 原表 VI：区域 A/B 结果；AGD 单位与舍入疑点见正文。</figcaption></figure>
+<p><strong>必须保留的单位与舍入疑点。</strong> 正文将 AGD 单位标为 minute，但原表区域均值为 163.49、165.87、263.43、237.73；这与同表大量订单在 2／5 分钟内被抢的叙述不易协调。可能有单位或统计口径问题，但原文没有澄清，因此本报告不擅自改成秒，也不宣称“减少 28.09 分钟”。GR2 由印刷的两个差值相减为 3.25 个百分点，原表写 3.24，可能来自未显示的小数舍入。表内 AGD 与 ARTG 的中间差异也有末位舍入差；原表值与复算应分开。</p>
+<p>方向上四个指标都改善，是真实上线证据，强于只在 RBP 模拟器上评估。但区域可能存在交通、订单结构或季节变化；空白期配对和差分不能自动保证平行趋势。作者未给区域样本量、标准误、随机重复或显著性检验，也未报告长期留存、骑手收入、公平性和最终配送质量。不能把短期更快抢单推广为所有劳动体验都更好。</p>
+<h3>4. 相关工作比较</h3>
+<p>推荐系统中的 <a href="https://arxiv.org/abs/1509.02971" target="_blank" rel="noopener noreferrer">DDPG</a> 提供连续 Actor、Critic、replay 与目标网络基础；本文将连续动作解释为订单特征权重。<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener noreferrer">Attention Is All You Need</a> 提供注意力构件，但本文的新设计集中在已接订单、历史列表、当前列表的关系。与本报告的 TCAC/FairCod 相比，DRLOR 让骑手最终自主选择；后两者由平台直接派单。三者都遇到候选数量变化，但 DRLOR 用固定维度权重对任意订单池评分，另外两篇对可变数量骑手—订单组合评分。</p>
+<h3>5. 后续引用与局限</h3>
+<h4 id="drlor-limits">5.1 能借用什么，不能据此承诺什么</h4>
+
+<p>作者在结论明确提出三项后续方向：缩小模拟环境与真实互动的差距；增加“dislike”这类明确负反馈；研究奖励塑形。对实际研究最有价值的设计是把刷新序列看成信息，而非一次次孤立的拒绝。但需要同时处理冷启动身份、历史截断、列表曝光偏差、跨骑手订单竞争和反事实模拟误差。没有假负反馈真值，不应宣称网络已准确读懂骑手意图；没有路线可行性动作，也不应把该方法直接当配送 VRP 求解器。</p>
+<p>已检索到《计算机工程》<a href="https://www.ecice06.com/EN/10.19678/j.issn.1000-3428.0069559" target="_blank" rel="noopener noreferrer">2025 年论文页面的参考文献</a>列出本篇，可作为后续引用入口；本次没有精读该后续论文，不把引文存在当作独立复现实验。没有在原文中找到作者公开完整训练代码与原始交互日志的链接，故完整复现仍依赖未公开业务细节。</p>
+<h3>6. 社交媒体反响</h3>
+<p>以论文标题和 DRLOR 相关词检索 X、Reddit、知乎、小红书，未检索到可核实、明确针对本论文的公开讨论。搜索结果为空不表示各平台从未讨论；这里不编造评论、点赞或用户态度。</p></div><div class="qa-log"><strong>本次要求 · 2026-11-10</strong><p>精读截图标蓝的三篇文章，按规范加入图书库。全文已读取，原图与结果表已核对；PDF 保存在本次临时目录并记录来源。FairCod 另含作者代码静态核查。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-tcac2021" data-paper-id="tcac2021" data-deep-read="true"><div class="kicker">Selected Paper · 02</div><h2>Concurrent Order Dispatch for Instant Delivery with Time-Constrained Actor-Critic Reinforcement Learning</h2><p class="lede">结合时间预测剪枝与长期匹配评分的并发派单</p><div><span class="chip">reinforcement learning</span><span class="chip">food delivery</span><span class="chip">concurrent dispatch</span><span class="chip">dynamic action space</span><span class="chip">bipartite matching</span><span class="chip deep-label">Deep Read</span></div><div class="paper-summary"><p class="meta">Baoshen Guo；Shuai Wang；Yi Ding；Guang Wang；Suining He；Desheng Zhang；Tian He<br>Southeast University · Alibaba Group · University of Minnesota · Rutgers University · University of Connecticut<br>2021-12 · IEEE RTSS 2021:176–187</p><p><strong>第一作者：</strong>Baoshen Guo；<strong>通讯作者：</strong>Shuai Wang；<strong>最后作者：</strong>Tian He。</p><p><strong>选读原因：</strong>用户在截图中明确选中；实际外卖配送中的强化学习。<br><strong>一句话：</strong>先预测插单后的路线与时间，再学习订单—骑手边权，最后用 KM 执行批量匹配。</p><p><a href="https://doi.org/10.1109/RTSS52674.2021.00026" target="_blank" rel="noopener noreferrer">论文来源 · DOI</a> · <a href="https://u2clabuconn.github.io/publications/2021/Conference/guo-rtss-2021.pdf" target="_blank" rel="noopener noreferrer">作者托管全文</a></p><details><summary>English abstract · 原文（仅合并 PDF 换行与连字）</summary><blockquote>Instant delivery has developed rapidly in recent years and significantly changed the lifestyle of people due to its timeliness and convenience. In instant delivery, the order dispatch process is concurrent. Couriers take new orders continuously and deliver multiple orders in a delivery trip (i.e., a batch). The delivery time of orders in a batch is often overlapped and interlinked with each other. The pickup and delivery sequence of the existing orders in a batch changes dynamically due to time constraints and real-time overdue possibility (i.e., the rate of deliveries that are not finished in promised time). Most of existing order dispatch mechanisms are designed for independent order dispatch or concurrent delivery without strict time constraints, hence are incapable of handling real-time concurrent dispatch with strict time constraints in on-demand instant delivery. To address the challenge, we propose a Time-Constrained Actor-Critic Reinforcement learning based concurrent dispatch system called TCAC-Dispatch to enhance the long-term overall revenue and reduce the overdue rate. Specifically, we design a deep matching network (DMN) with a variable action space, which integrates the state embedding (including route behaviors encoding) and actions embedding features into a long-term matching value. Then the Actor-Critic model tackles the concurrent order dispatch problem considering strict time constraints and stochastic demand-supply in instant delivery. An estimated time-based action pruning module is designed to ensure time constraints guarantee and accelerate the training as well as dispatching processes. We evaluate the TCAC-Dispatch with one-month data involved with 36.48 million orders and 42,000 couriers collected from one of the largest instant delivery companies in China, i.e., Eleme. Empirical experiments are conducted on a data-driven emulator deployed on the development environment of Eleme and results show that our method achieves 22% of the increase in total revenue and reduces the overdue rate by 21.6%.</blockquote></details></div><div class="deep-reading-content"><h3>1. 摘要与阅读范围</h3>
+<p>即时配送近年来迅速发展，并因及时和便捷而显著改变了人们的生活方式。在即时配送中，订单派送过程是并发的。骑手持续接收新订单，并在一次配送行程（即一个批次）中配送多个订单。同一批次订单的配送时间常常重叠并相互关联。由于时间约束及实时超时可能性（即未能在承诺时间内完成的配送比例），一个批次中已有订单的取餐和送达顺序会动态变化。大多数现有派单机制为独立派单，或没有严格时间约束的并发配送设计，因此无法处理按需即时配送中带严格时间约束的实时并发派单。为应对这一挑战，我们提出基于时间约束 Actor-Critic 强化学习的并发派单系统 TCAC-Dispatch，以提高长期整体收入并降低超时率。具体而言，我们设计了具有可变动作空间的深度匹配网络（DMN），将状态嵌入（包括路线行为编码）与动作嵌入特征整合成长期匹配价值。随后，Actor-Critic 模型在考虑严格时间约束及即时配送中随机供需的情况下处理并发派单问题。我们设计了基于预计时间的动作剪枝模块，以保障时间约束并加快训练和派单过程。我们使用中国最大的即时配送企业之一饿了么收集的一个月数据评估 TCAC-Dispatch，涉及 3,648 万单和 42,000 名骑手。实证实验在部署于饿了么开发环境的数据驱动仿真器上开展，结果显示，我们的方法使总收入增加 22%，超时率降低 21.6%。</p>
+<p>以上是摘要完整翻译，保留作者对时间保证和增益的措辞；下文分别核对预测保证的边界及这两个提升比例的比较对象。</p>
+<p><strong>版本范围</strong>：本文精读 RTSS 2021 的 12 页会议论文，DOI 为 10.1109/RTSS52674.2021.00026。截图中另有一篇以 “Time-Constrained Actor-Critic…” 开头、Shuai Wang 为首作者的期刊文章，不能与本篇混作同一版本。已检查全文技术部分、算法、全部结果图表与讨论；该版本没有附录。英文摘要在本模块上方保留；全文 PDF 已保存于本次临时目录。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文发表时机构</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baoshen Guo</td>
+<td>Southeast University</td>
+<td>第一作者</td>
+</tr>
+<tr>
+<td>Shuai Wang</td>
+<td>Southeast University</td>
+<td>明确标注的通讯作者</td>
+</tr>
+<tr>
+<td>Yi Ding</td>
+<td>Alibaba Group; University of Minnesota</td>
+<td>双重机构署名</td>
+</tr>
+<tr>
+<td>Guang Wang</td>
+<td>Rutgers University</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Suining He</td>
+<td>University of Connecticut</td>
+<td>合作者，所在实验室提供本文 PDF</td>
+</tr>
+<tr>
+<td>Desheng Zhang</td>
+<td>Rutgers University</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Tian He</td>
+<td>Southeast University</td>
+<td>最后作者</td>
+</tr>
+</tbody>
+</table></div>
+<p>这是围绕城市计算、配送系统和数据驱动调度的合作。作者的当前机构不能倒填为 2021 年署名。<a href="https://baoshenguo.com/publications/" target="_blank" rel="noopener noreferrer">Baoshen Guo 的论文列表</a>同时列出了本篇、后续 TMC 版本和 FairCod，可用于核对版本；<a href="https://guangwang.me/" target="_blank" rel="noopener noreferrer">Guang Wang 主页</a>可用于继续查找相关工作。本文没有核验每位作者完整学术履历，不凭姓名推断同名作者身份。</p>
+<h3>3. 技术精读</h3>
+<h4 id="tcac-background">3.1 从一名正在送餐的骑手开始：为什么不能只找最近的人</h4>
+
+<p>考虑一个解释性例子：骑手甲已经拿着 A，要先去给 B 取餐，再送 A、B；新单 C 的餐厅离甲很近，但 C 的客户与 A 方向相反。把 C 派给甲，取餐距离很短，却可能迫使甲绕路，使 A 超时。骑手乙离餐厅稍远，但后续路线顺路。平台必须比较整条路线增加的时间，而不是只比较到餐厅的直线距离。这个例子是机制说明，不是论文测得的样本。</p>
+<p>论文分析了 2019 年 9 月上海的配送轨迹：每名骑手每日订单数中位数为 23，每趟订单数中位数为 2；只有约 29.5% 的配送趟次没有发生顺序变化。图 1–2 说明“一个任务做完才接下一个”的独立服务模型会漏掉真实业务中的大量情况。表 I 的 A、B、C 例子进一步展示：新单加入后，旧单的送达节点可以被后移，而已经访问的取餐节点不会重新出现。</p>
+<p>这里的 <strong>concurrent</strong> 是多个订单的服务时间区间重叠，以及途中不断接单，不是计算机多线程。它带来两类后果：眼下的绕路会使已有订单迟到；接下长距离或很紧急的订单，又可能占用未来接顺路订单的机会。因此作者同时考虑当前插单代价与未来收益。论文把严格时间要求作为设计目标，但后文的可行性判断依赖预测，不能直接推导出现实世界的零迟到保证。</p>
+<h4 id="tcac-flow">3.2 系统数据流：预测、学习与匹配各做哪一段</h4>
+
+<p>离线阶段先从历史订单、轨迹和天气等信息建立仿真器，提取骑手状态和订单—骑手组合特征。Actor 给组合打分，Critic 用配送后的收益与状态变化评价这些选择，反复更新网络。在线派单时保留学到的评分网络：收集当前订单及附近骑手，预测接单后的路线和时间，删除不满足预测时间要求的边，再由 KM 匹配选出整批订单的分配。</p>
+<p>因此，系统中有三个不同的“模型”：XGBoost Ranking 预测骑手接下来可能访问哪个停靠点；神经网络学习订单与骑手的匹配分数；KM 解决给定边权下的组合分配。论文没有让神经网络直接输出完整取送路线，也没有用 RL 替代所有传统求解环节。预测到的骑手路线可以与数学上最短的路线不同，因为它学习的是历史骑手行为。</p>
+<h4 id="tcac-state">3.3 状态、动作、时间尺度与式（1）</h4>
+
+<p>论文从骑手视角定义智能体，状态分为个人信息、区域供需和环境背景：</p>
+<p>\[s_t^k=(p_t^k,g_t^k,c_t^k),\qquad p_t^k=(\mathrm{loc}_t,t,n_c,DT,\mathrm{route}).\]</p>
+<p>这里 \(k\) 是骑手，\(t\) 是决策时段；\(\mathrm{loc}_t\) 是当前位置，\(n_c\) 是当前运力容量，\(DT\) 是已有订单路线的总配送时间，\(\mathrm{route}\) 是未访问取送节点的有序列表。论文给出了容量特征，但没有详述容量上限的统一数值及完整容量掩码实现，不能自行补成某个标准 CVRPTW 约束集。</p>
+<p>区域供需 \(g_t\) 包括骑手分布矩阵 \(V_t\) 和订单分布矩阵 \(D_t\)。两名骑手虽然离同一新单同样近，所在网格未来的需求压力不同，模型也可能给出不同评分。环境特征 \(c_t\) 将天气、星期和交通状态编码成向量，帮助区分雨天、周末或拥堵时段。原文对这些背景特征采用 one-hot 编码，而非学习一个额外的交通预测器。</p>
+<p>式（1）把不同长度的路线压缩为固定长度表示：</p>
+<p>\[h_j=\operatorname{GRU}(x_j,h_{j-1}).\]</p>
+<p>这是对原文 \(\mathrm{route}_j=\operatorname{GRU}(s_j,\mathrm{route}_{j-1})\) 的符号清理：\(x_j\) 表示第 \(j\) 个停靠点，避免与整个 MDP 状态混淆；\(h_j\) 汇总前 \(j\) 个节点。GRU 逐个读取节点，因此可以区分“先送 A 再取 B”和“先取 B 再送 A”，不像无序求和只知道有哪些点。但压缩向量本身不证明所有截止时间信息都被无损保留。</p>
+<p><strong>两个更新时间尺度不能混淆。</strong> 供需与背景在每个时段开始时更新；个人状态在新单被派给该骑手时立即更新。实验以 5 分钟为时段，一天 288 个时段，一天为一个 episode。5 分钟是建模时间刻度，不是神经网络推理耗时，也不能把论文所有实时状态更新都理解成每 5 分钟一次。</p>
+<p>一次动作是一个订单—骑手匹配。动作特征包括餐厅和客户位置、订单价格、配送费、剩余承诺时间，以及该骑手到餐厅的距离和时间、接单后增加的路线时间。候选数量由真实位置和时间条件决定，可以每次变化。订单身份不是固定输出层中的永久位置。</p>
+<h4 id="tcac-reward">3.4 式（2）：奖励同时偏好高订单价格、少绕路与高需求区域</h4>
+
+<p>首先定义增加的路线耗时：</p>
+<p>\[T_{\mathrm{in}}=DT_{\mathrm{after}}-DT_{\mathrm{before}},\qquad \Delta t=\frac{T_{\mathrm{in}}}{t_{\mathrm{step}}}.\]</p>
+<p>这不是新订单从下单到送达的全部时间，而是接下它以后，骑手原有路线总时间多了多少。高度顺路的新单即使自身配送距离不短，也可能只增加很少时间。用这个差值是为了捕捉并单共享路段的价值。</p>
+<p>对预测不超时的订单，原文式（2）是：</p>
+<p>\[r_t^i=\gamma^{\Delta t}\,\mathrm{rev}_i\frac{N_o}{N_c},\qquad N_c=\sum_k n_c^k.\]</p>
+<p>\(\mathrm{rev}_i\) 是订单价格；\(N_o\) 是该动作目的网格的订单数，\(N_c\) 是该网格骑手容量之和。原文以到达餐厅网格取餐为目的网格的例子，不能擅自一概改成客户所在网格。\(N_o/N_c\) 越高表示相对运力越紧张，会鼓励骑手去需求较多的区域。\(\gamma^{\Delta t}\) 使增加时间大的匹配受到折扣；预测该单超时则奖励置零。</p>
+<p>例如，仅为解释公式，取 \(\gamma=0.9\)、时段 5 分钟：增加 5 分钟时的时间系数是 0.9，增加 10 分钟时是 0.81。同价、同供需情况下，第二种插单奖励更小。供需比若翻倍，奖励也翻倍，因此它是显式奖励塑形，不只是 Critic 自己学出的远期价值。</p>
+<p>必须区分三件事：订单价格、训练奖励、平台净收入。平台评价指标还要减去商家货款、骑手配送报酬及迟到补偿；式（2）并不是这个净收入的逐项分解。它作为代理目标可能与真实收益方向一致，却没有证明二者最优策略相同。原文也没有给出 \(N_c=0\) 时的平滑规则，复现时不能默默忽略这个数值边界。奖励内的耗时折扣和回报计算中的跨时段折扣还会同时影响长任务。</p>
+<h4 id="tcac-pruning">3.5 先预测路线，再做时间约束筛选</h4>
+
+<p>给定骑手当前路线和拟加入订单，系统逐个预测下一停靠点。候选点的特征包括节点位置、从当前位置去该节点的距离和时间，以及对应订单的剩余时间。XGBoost Ranking 用真实历史访问顺序训练，对候选点打分；选择分数最高的点，将模拟骑手移到那里，再预测下一个点，直到形成路线。原文选择 XGBoost 的理由是训练效率、处理大规模数据的能力，以及特征重要性可解释性。</p>
+<p>在新旧路线都估计完后计算 \(T_{\mathrm{in}}\)。先收集新订单周围数公里内的骑手作为 \(C_t^i\)，再过滤预测送达时间超过承诺时刻的订单—骑手组合。作为解释性记号，可以写成：</p>
+<p>\[\widetilde C_t^i=\{k\in C_t^i:\widehat e_i(k)\le d_i\}.\]</p>
+<p>\(\widehat e_i(k)\) 是把订单 \(i\) 派给骑手 \(k\) 后的预测送达时刻，\(d_i\) 是承诺截止时刻。该集合表达正文明确描述的新订单筛选，不额外声称作者给出了所有旧单逐个截止时间检查的完整伪代码。已有订单确实通过路线、增加时间及状态影响决策，但“逐个检查所有旧单并保证都不迟到”的实现细节在本文没有完整展示。</p>
+<p><strong>为什么剪枝对学习也有帮助？</strong> 如果一百个候选匹配中大部分明显赶不上，提前删除这些动作，Actor 就不用反复探索它们，匹配图也更稀疏。但这种删除相对于预测器有效：若雨天速度被高估，预测可行的动作仍可能真实迟到；若时间被高估，也可能错误删除真实可行的动作。论文没有提供预测误差上界、机会约束或最坏情况可行性证明。空候选集合、所有候选超时后的业务兜底，以及取餐先于送达的具体候选生成实现也没有充分披露。</p>
+<h4 id="tcac-actor">3.6 DMN 与式（3）：输入一个组合，输出一个标量</h4>
+
+<p>固定动作 DQN 通常把状态映射为固定个数的输出。这里每个时刻订单和骑手数量都变化，DMN（Deep Matching Network）将状态和候选动作一起输入，得到单个 \(Q_\theta(s,a)\)。先把稀疏类别特征变成稠密表示，状态与动作分别编码，然后拼接、经过前馈网络输出匹配分数；同一个网络在任意数量的候选组合上重复运行。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/faa6c7fbea27330cf0784921.png" alt="TCAC 原图 4–5：Actor-Critic 闭环与可变候选组合评分。" loading="lazy"></div><figcaption>TCAC 原图 4–5：Actor-Critic 闭环与可变候选组合评分。</figcaption></figure>
+<p>图 4 左侧展示环境与时间剪枝、Actor、Critic 的闭环；图 5 右侧展示成对打分结构。关键是右图顶部只有一个匹配分数，而非固定长度订单向量。这里的“可变动作空间”来自对候选组合共享评分函数，不要求网络输出层随订单数量改变。</p>
+<p>给订单 \(i\) 的所有候选骑手打分后，式（3）在这个集合上归一化：</p>
+<p>\[\pi_\theta(k\mid i,t)=\frac{\exp Q_\theta(s_t^k,a_t^i)}{\sum_{k&#x27;\in\widetilde C_t^i}\exp Q_\theta(s_t^{k&#x27;},a_t^i)}.\]</p>
+<p>分母只枚举当前可行候选。分数越高，被选中概率越大；候选增减时概率重新归一化。虽然论文把骑手称为 agent、把接订单称为 action，实际式（3）的归一化方向是<strong>固定订单、在候选骑手之间选择</strong>，不是每名骑手独立挑一个订单后不处理冲突。</p>
+<p>还要小心 \(Q\) 的意义：本文把 DMN 分数称作长期匹配价值，但其 Actor 更新是策略梯度，并未给这个标量额外配置标准 DQN 的 Bellman 回归损失。因此从数学上更稳妥地把它视为通过长期回报训练的策略评分；不能仅因记号为 \(Q\) 就断言它是校准的人民币期望净收入。这个区别也会影响后面的批量匹配：softmax 的排序概率与任意不同订单间分数的可比性不是同一个条件。</p>
+<h4 id="tcac-training">3.7 式（4）—（8）：Critic 评价什么，Actor 如何变化</h4>
+
+<p>式（4）定义骑手当前状态的剩余期望折扣回报。整理时间下标后为：</p>
+<p>\[V_\phi(s_t)=\mathbb E_\pi\left[\sum_{j=0}^{T-t-1}\gamma^j r_{t+j+1}\mid s_t\right].\]</p>
+<p>\(T\) 是一天结束的时刻，\(\phi\) 为 Critic 参数。它回答“从这个状态继续按现有策略派单，大概还能得到多少奖励”，不只评价刚才那一单。Critic 输入状态，输出一个实数。</p>
+<p>式（5）使用时序差分误差：</p>
+<p>\[\delta_t=r_{t+1}+\gamma V_\phi(s_{t+1})-V_\phi(s_t),\qquad L_c=\frac12\delta_t^2.\]</p>
+<p>刚得到的奖励加上下一状态价值，构成对当前价值的新估计；平方误差推动预测接近这个目标。例如当前预估 10，观察到奖励 3、下一状态价值 9、\(\gamma=0.9\)，则 \(\delta=1.1\)，意味着结果比原先预期好。数值仅为解释。原文没有完整说明 target network、目标端是否停止梯度和日末终止掩码，复现应明确这些选择，不把它们当作已披露配置。</p>
+<p>式（6）直接把一步 TD 误差用作优势估计：</p>
+<p>\[A(s_t,a_t)=r_{t+1}+\gamma V_\phi(s_{t+1})-V_\phi(s_t).\]</p>
+<p>减掉状态基线的目的，是判断某次选择相对于“处在这个状态通常能获得什么”是好是坏，从而减少策略梯度方差。例如午高峰的奖励普遍较高，不应只因为绝对奖励高就认为任何选择都好。</p>
+<p>式（7）与式（8）给出策略梯度及更新：</p>
+<p>\[\nabla_\theta J=\mathbb E[\nabla_\theta\log\pi_\theta(a_t\mid s_t)A(s_t,a_t)],\qquad \theta\leftarrow\theta+\alpha\nabla_\theta J.\]</p>
+<p>正优势增加该选择的概率，负优势降低其概率；\(\alpha\) 为学习率。原文文字称 gradient descent，但带加号的式（8）是对收益目标做梯度上升，或等价地对负收益损失下降，不能照文字把更新方向反过来。训练时可在一个 minibatch 上取平均，正文单样本公式不代表只用一条样本训练。</p>
+<p><strong>Algorithm 1 按执行顺序读：</strong> 初始化 Critic 等网络；外层按最大训练迭代次数重复，内层遍历一天的时段与订单。先预匹配、找候选骑手，再按式（3）采样匹配，执行后更新骑手路线和个人状态，计算价值/优势并把转移放入 replay memory。随后分批抽样，先在设定更新步数内训练 Critic，再训练 Actor。终止条件是设定的训练迭代和每日时段结束；文章未披露 maxIteration、criticMaxUpdateStep、actorMaxUpdateStep 的最终数值，也未把“收敛”写成一个误差阈值停止条件。伪代码中的 order similarity 预匹配没有给出完整的相似度函数。</p>
+<p><strong>理论边界。</strong> 算法从 replay 中取历史动作来更新策略梯度，却未在式（7）中写出行为策略与当前策略的概率比修正，也没有 PPO 裁剪或离策略收敛证明。旧数据与当前策略差别大时，梯度可能有偏，这是阅读者基于更新式提出的复现疑问。全文没有新定理或证明，不能把实验中的损失趋稳说成已证明全局最优。</p>
+<h4 id="tcac-km">3.8 式（9）：真正在线执行时还有 KM 匹配</h4>
+
+<p>线上把订单作为一侧顶点，骑手作为另一侧顶点，可行组合构成边，DMN 分数作为边权，KM（Kuhn–Munkres）寻找最大权二分匹配。为了把原文省略的分配约束说清楚，可规范写成：</p>
+<p>\[\max_x\sum_{i,k}x_{ik}Q_\theta(s_t^k,a_t^i),\qquad x_{ik}\in\{0,1\},\quad \sum_kx_{ik}\le1,\quad\sum_ix_{ik}\le1.\]</p>
+<p>不可行边固定 \(x_{ik}=0\)。这是解释 KM 单轮匹配含义的约束展开，并非声称原文式（9）逐项印出了这些约束。每个订单在一轮最多分给一个骑手，每个骑手在一轮最多接一个新单；骑手身上可以已经有其他订单，下一轮仍可继续接单，所以“一轮一对一”不等于整个服务过程一人只能送一单。</p>
+<p>正文在 \(M\) 单、\(N\) 名骑手场景下，按下单先后取前 \(N\) 个订单组成每轮图，再反复派单。实际实现要处理不足 \(N\) 单、候选图不完全和无完美匹配，通常可用虚拟节点或未分配状态，但论文没有给出这些边界的具体实现，不能当作作者已经采用了某一种补齐策略。</p>
+<p>原文还把 \(a_{ik}\) 同时用于“候选边存在”和优化选择的描述，容易产生歧义；上式用 \(x_{ik}\) 表示最终决策、用候选集合表示允许边，能把两者分开。KM 对<strong>当前给定边权</strong>求解匹配，不证明整天随机动态派单的最优性。每次接单后状态和路线变化，旧边权也不能不加更新地无限复用。多轮匹配与训练时逐单 softmax 采样存在差异，文章未提供两种策略完全等价的证明。</p>
+<h4 id="tcac-emulator">3.9 仿真器如何构造，以及“部署”的准确含义</h4>
+
+<p>论文在饿了么的开发环境中把仿真器和派单系统作为插件接入，沿用生产环境的数据流与接口。历史订单和轨迹存于 ODPS；仿真器生成场景，TCAC 返回订单—骑手匹配，仿真器执行并返回新状态。正文明确说尚未全面用于生产派单，这支持工程接口可接入性的结论，但不构成真实商业 A/B 增益证据。</p>
+<p>订单按历史记录生成；骑手上线/下线时间和初始位置分布由轨迹、订单跟踪记录用最大似然估计得到。骑手速度从同一路段、同一时段的轨迹平均速度估计，并考虑天气和拥堵。主要交通工具是电动自行车，因此作者强调时空条件对速度的影响，而不是混合汽车与步行的大范围模式差异。骑手数量随上线/下线分布变化，并非常量车队。</p>
+<p>城市被分为数平方公里的派单区域，再细分约 100 米尺度的网格。供需在细网格统计，匹配在区域级执行；这使问题规模可控，也意味着跨区域协作并未在本文中得到系统验证。论文举一般区域约 \(5\mathrm{km}\times5\mathrm{km}\)，实验披露子区域为 \(6\mathrm{km}\times6\mathrm{km}\)，两者并不冲突。网格会考虑道路、河流和建筑等地理边界；路网来自 OpenStreetMap。</p>
+<p>每一步依次加入新单、提取骑手及订单特征、派单、执行结果并更新路线。天气等信息既作为 RL 输入，也通过速度和时间预测影响仿真器。因此性能受整套预测链条共同影响，不只是 Actor 网络结构。仿真中未来订单按历史生成，也不代表上线策略能预知所有未来订单。</p>
+<p>平台收入按订单价格减商家货款、骑手报酬和迟到折扣计算，作者认为前两项在订单创建后通常固定，派单主要通过改变迟到影响净收入。这也解释为什么评价可以偏好减少迟到。但完整补偿函数、未完成或无法分配订单的会计处理并未全部列出，单凭网络超参数不能复现平台收益。</p>
+<h4 id="tcac-experiments">3.10 实验设计：总数据规模与实际展示范围</h4>
+
+<p>总数据是上海 2019-09-01 至 2019-09-30 的 3,648 万单、42,000 名骑手。因商业协议，论文公布的评估结果来自一个 \(6\mathrm{km}\times6\mathrm{km}\) 子区域，含 110,853 单、1,054 名骑手，划分为 \(60\times60\) 个网格。不能把结果表直接描述成全城 3,648 万单都取得同样提升。前三周训练，最后一周测试，时间切分比随机拆分更接近面向未来部署，但只覆盖一个月与一个城市。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>配置</th>
+<th>论文数值</th>
+<th>为什么会影响结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DMN / Critic 隐藏层</td>
+<td>256、128、64；ReLU</td>
+<td>是中小型前馈网络，效率结论不能直接移植到大模型</td>
+</tr>
+<tr>
+<td>batch / replay</td>
+<td>256 / \(10^5\)</td>
+<td>影响样本相关性、梯度稳定性和旧策略数据比例</td>
+</tr>
+<tr>
+<td>optimizer / learning rate</td>
+<td>Adam / 0.001</td>
+<td>固定配置，文中未给大规模调参敏感性研究</td>
+</tr>
+<tr>
+<td>discount / time slot</td>
+<td>0.9 / 5 分钟</td>
+<td>同时决定远期收益权重和新增耗时折扣的尺度</td>
+</tr>
+<tr>
+<td>设备</td>
+<td>Tesla V100-SXM2、16GB memory</td>
+<td>延迟与训练时间依赖该计算环境及评估区域规模</td>
+</tr>
+<tr>
+<td>软件</td>
+<td>实验段 Python 3.6 / TensorFlow 1.14</td>
+<td>系统实现段另写 Python 3.7，存在版本描述不一致</td>
+</tr>
+</tbody>
+</table></div>
+<p>基线各自隔离不同问题。<strong>SD2</strong> 只派给最近骑手，是短视且没有完整时间预测的弱基线；<strong>OSquare</strong> 预测路线，优先低超时风险和小新增距离，检验长期学习能否胜过即时启发式；<strong>DDQN-as</strong> 用 Double DQN 和时空动作搜索，是来自网约车的学习基线，奖励主要考虑行程费用，不能视为对所有问题定制细节完全一致；<strong>MPBM</strong> 用利润增益作为匹配边权、多轮 KM 分配，是比较接近的优化方法。若只拿 TCAC 与 SD2 比，很难区分收益来自学习、剪枝、路线预测还是批派机制，因此正文另做批派与顺序派单对照。</p>
+<p>超时率定义为实际送达晚于承诺时刻的订单占比：</p>
+<p>\[\mathrm{OverdueRate}=\frac{\sum_{i=1}^N\mathbf1\{e_i&gt;d_i\}}{N}.\]</p>
+<p>\(e_i\) 为实际送达时刻、\(d_i\) 为截止时刻。它与“已超时订单平均迟到多久”不同，论文还用迟到时长 CDF 补充后一方面。收入则相对 SD2 归一化，不能把表中的 122.9% 当成人民币金额。表格给出 ± 数值，但正文没有明确其为标准差、标准误还是置信区间，也没有充分披露随机种子数；本报告保留原符号，不替作者解释统计口径。</p>
+<h4 id="tcac-results">3.11 主结果：逐项核对增益的比较对象</h4>
+
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/6ed555c04bbaa3e4af52fdac.png" alt="TCAC 原表 III：收入、超时率及四个高峰时段结果。" loading="lazy"></div><figcaption>TCAC 原表 III：收入、超时率及四个高峰时段结果。</figcaption></figure>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>日收入，相对 SD2</th>
+<th>超时率</th>
+<th>11–12 时</th>
+<th>12–13 时</th>
+<th>17–18 时</th>
+<th>18–19 时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SD2</td>
+<td>100.0% ± 0.6%</td>
+<td>3.94% ± 0.09%</td>
+<td>100.0%</td>
+<td>100.0%</td>
+<td>100.0%</td>
+<td>100.0%</td>
+</tr>
+<tr>
+<td>OSquare</td>
+<td>106.5% ± 0.8%</td>
+<td>1.85% ± 0.12%</td>
+<td>113.7%</td>
+<td>104.1%</td>
+<td>104.5%</td>
+<td>105.7%</td>
+</tr>
+<tr>
+<td>DDQN-as</td>
+<td>112.9% ± 0.8%</td>
+<td>1.64% ± 0.09%</td>
+<td>112.3%</td>
+<td>106.5%</td>
+<td>107.8%</td>
+<td>108.8%</td>
+</tr>
+<tr>
+<td>MPBM</td>
+<td>113.1% ± 1.1%</td>
+<td>1.47% ± 0.16%</td>
+<td>115.9%</td>
+<td>114.8%</td>
+<td>108.8%</td>
+<td>108.2%</td>
+</tr>
+<tr>
+<td>TCAC</td>
+<td>122.9% ± 0.9%</td>
+<td>1.45% ± 0.18%</td>
+<td>132.6%</td>
+<td>115.3%</td>
+<td>111.4%</td>
+<td>122.1%</td>
+</tr>
+</tbody>
+</table></div>
+<p>表 III 对最接近的 MPBM，收入相对增益约为 \(122.9/113.1-1=8.66\%\)；超时率只降低 0.02 个百分点，约为 1.36% 相对降低。这个差距比与 SD2 比较小得多，且两者 ± 范围重叠；没有正式统计检验，不能据此宣称超时率显著优于 MPBM。</p>
+<p>对 SD2，超时率从 3.94% 降至 1.45%，降低 2.49 个百分点，约为 63.2% 相对降低。摘要的“降低 21.6%”<strong>不是这组比较</strong>；用 OSquare 的 1.85% 作分母，\((1.85-1.45)/1.85\approx21.6\%\)。所以该摘要数字与 OSquare 对照相符，而收入约 22% 的宣传数字对应 SD2。这里是根据表 III 的算术核对，不能把摘要两个百分比默认绑定同一个基线。</p>
+<p>图 7 与四个高峰时段列说明，订单少且运力充足时策略差异较小，高负荷时更明显，例如 11–12 时相对 SD2 收入高 32.6%。这与“顺路并单减少运力浪费”的机制吻合，但不能单独证明是长期价值而非约束剪枝造成提升，需要结合消融。</p>
+<h4 id="tcac-ablation">3.12 消融：Actor-Critic 与批派机制分别贡献什么</h4>
+
+<p>TCAC− 保留深匹配网络，移除 Actor-Critic 设计，改用 epsilon-greedy 选动作。作者分别在批量派单和顺序派单机制下比较完整系统、TCAC−、OSquare 和 SD2；批派版本记作 OSquare-b、SD2-b。这样至少避免把“只因从逐单变成批派”全部归功于学习。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>机制与对应图</th>
+<th>TCAC</th>
+<th>TCAC−</th>
+<th>OSquare 对应版本</th>
+<th>SD2 对应版本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>批量派单，图 9</td>
+<td>114.89</td>
+<td>107.7</td>
+<td>104.0</td>
+<td>100.0</td>
+</tr>
+<tr>
+<td>顺序派单，图 11</td>
+<td>122.6</td>
+<td>114.9</td>
+<td>110.8</td>
+<td>100.0</td>
+</tr>
+</tbody>
+</table></div>
+<p>这些数分别按本机制的 SD2 归一化，<strong>两个 100 不是同一绝对收入基准</strong>，所以不能用 122.6 大于 114.89 推导顺序派单优于批派。图 11 柱标 122.6，但相邻叙述写 22.9% 增长，与主表 122.9 一致；本报告保留这处小的不一致，不选一个值覆盖另一个。</p>
+<p>图 8、10 是超时订单迟到时长的累积分布：同一迟到分钟阈值下 CDF 越高，表示更多迟到单落在较短延误内。它与所有订单中的超时比例不同，不能混用。完整系统的曲线总体更好，说明其改善不仅体现在迟到单占比，也体现在已经迟到的单晚了多久。但此消融同时改变了评估器和探索/学习方式，不能进一步分解成“单独 Critic 带来多少收益”。文中没有逐个去掉 GRU、供需项、上下文项的系统性消融。</p>
+<h4 id="tcac-runtime">3.13 收敛与运行时间：哪些是测量，哪些不是保证</h4>
+
+<p>图 12 中 Critic 的训练损失在约 3,000 步后进入较低、较稳定区间。这表明该实验中的拟合趋稳；损失低不自动意味着政策全局最优，也不证明换城市后一样稳定。</p>
+<p>图 13 对比平均训练时间：TCAC 15.3 分钟，去掉时间剪枝的 TCAC-t 23.9 分钟，DDQN-as 18.2 分钟。相对于 TCAC-t，剪枝后时间少约 36.0%。这是同一硬件与实验设置中的测量，不能理解为整个商业系统从原始轨迹处理、训练所有预测器到上线只需要 15 分钟。原文没有清楚拆出全部上游模型和数据处理成本。</p>
+<p>图 15 显示区域级每批派单小于 40 ms；去掉剪枝更慢，DDQN-as 与 MPBM 也更慢。SD2 和 OSquare 更快，但效果较弱，说明该方法以一定计算成本换取更好的派单结果。图 14 提供业务尺度：约 64% 订单从创建到被接单少于 5 分钟，送达耗时中位数约 51 分钟。算法计算几十毫秒与业务等待几分钟是不同概念，不能把后者全归因于算法推理。</p>
+<p>剪枝同时减少训练候选和在线图边，是加速的直观原因；然而 KM 的整体开销也取决于顶点规模、实现以及是否利用稀疏图。因此“删除边”并不单独给出新的严格复杂度界，40 ms 更不是任意订单规模下的最坏执行时间承诺。</p>
+<h4 id="tcac-related">4. 与相关工作的具体关系</h4>
+
+<p>论文把相关工作按“独立/并发”与“学习/非学习”交叉分类，其贡献定位是把学习式长期评分用于允许在途追加订单的即时配送。这个表有助于理解作者的问题定位，但“首个”属于作者在当时文献范围内的主张，不是本报告对全部相关研究的独立优先权认证。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>工作或方法</th>
+<th>联系</th>
+<th>本文明确改变之处</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route Prediction for Instant Delivery（OSquare，本文参考文献 18）</td>
+<td>同样借助骑手路线预测</td>
+<td>从主要按即时超时风险/新增距离派单，扩展到学习长期匹配分数</td>
+</tr>
+<tr>
+<td>MPBM（本文参考文献 31）</td>
+<td>同样用多轮二分匹配</td>
+<td>KM 保留，边权引入经过 Actor-Critic 训练的评分与时间约束处理</td>
+</tr>
+<tr>
+<td><a href="https://arxiv.org/abs/1802.06444" target="_blank" rel="noopener noreferrer">Efficient Large-Scale Fleet Management via Multi-Agent Deep Reinforcement Learning</a></td>
+<td>都考虑供需分布与未来价值，原文参考文献 9</td>
+<td>本文重点是在途追加订单、路线互相干扰及时间要求，而不是仅在服务结束后再分配下一任务</td>
+</tr>
+<tr>
+<td><a href="https://baoshenguo.com/publications/" target="_blank" rel="noopener noreferrer">后续 TMC 版本，作者论文列表</a></td>
+<td>作者列表展示同主题期刊工作</td>
+<td>本报告不将期刊版新增细节冒充 RTSS 2021 已有内容</td>
+</tr>
+</tbody>
+</table></div>
+<p>工程上最可迁移的思路是让传统匹配器保留组合约束，把“边到底值多少”交给长期学习，并让路线时间预测提前筛掉不合适的边。它适用于订单与骑手可形成明确候选对、能够快速预测路线时间的场景；如果订单必须作为不可拆分大组合一起选择，逐对评分未必足够描述组合互补性。</p>
+<h4 id="tcac-limits">5. 后续引用、局限与落地判断</h4>
+
+<p>已核实后续 FairCod（KDD 2023）全文，其参考文献 [7] 明确引用本篇，并将基于 Actor-Critic 与二分图匹配的 AC-bgm 作为基线；FairCod 在奖励和状态中加入骑手收入效率公平信号。它仍采用组合评分及路线特征，但改用逐单竞争采样，不能认为完全保留 TCAC 的在线 KM 与全部时间剪枝细节。同主题 TMC 期刊版见作者论文列表，本次不冒充已精读该扩展版本。不报告未经核验的引用总数。</p>
+<p>作者明确指出两项部署障碍。第一，替换商用系统需要改造数据接入和骑手 App SDK 等上下层接口，不是换一个模型文件就完成；第二，实验来自上海，跨城市泛化仍有障碍。作者认为模型未包含城市特定设计，因而有迁移潜力，但没有提供跨城市实验来兑现这一判断。对医院急救、物流和网约车的拓展是讨论中的可能性，不能视为这些任务的验证结果。</p>
+<p>从方法与实验还可提出以下具体边界：</p>
+<ul>
+<li><strong>预测可行不等于实际可行。</strong> 出餐异常延迟或天气突变会破坏预计时间，正文没有随机旅行时间下的安全裕量或违约概率控制。</li>
+<li><strong>没有明确学习骑手拒单。</strong> 仿真中派单被执行，路线行为虽被预测，但这不等于“骑手是否愿意接单”的行为模型。研究众包抢单或偏好时不能直接套用强制分配假设。</li>
+<li><strong>公平性没有进入明确优化目标。</strong> 高效率骑手可能持续得到顺路订单；全平台收入上升并不推出每名骑手收入都变好。这是本篇未解决的问题，不是已经测得的不公平结论。</li>
+<li><strong>奖励与最终会计指标存在差距。</strong> 供需比和订单价格塑形可能放大某些区域或高价订单，最终净收入还受未披露补偿规则影响；需要单独验证奖励设计。</li>
+<li><strong>训练到执行的差异。</strong> replay 策略梯度、逐单采样到批量 KM 的切换、打分跨订单可比性，都值得在复现时检查，原文没有给出完整理论保证。</li>
+<li><strong>评估覆盖有限。</strong> 一城一月、披露子区域，没有多季节、极端天气和大规模换城测试；主表优势也不能等同于相对最强基线都显著。</li>
+</ul>
+<p>隐私部分报告三步：服务商匿名化骑手、订单和商家 ID；只保留相关时间、位置和轨迹字段；展示聚合结果。它减少身份直接暴露，但不是差分隐私机制，也没有形式化重识别风险界。复现时应继续遵循原数据使用条件。</p>
+<p>作者给出<a href="https://tianchi.aliyun.com/dataset/dataDetail?dataId=103969" target="_blank" rel="noopener noreferrer">天池一周数据入口</a>。它是论文提供的复现资源，不等于完整一个月商业数据、预测器权重和训练代码已经公开；本轮没有下载或验证该数据集现时可用性。实现前至少还需明确候选半径、容量规则、无可行匹配的处理、XGBoost 训练配置、到达时间估计、实际赔付函数和随机种子。</p>
+<h3>6. 公开讨论检索</h3>
+<p>本轮以完整标题或核心标题词限定检索 X、Reddit、知乎与小红书，未检得可核验的相关讨论。没有为了凑足评论数量而引用摘要转载、生成评论或虚构作者发言；“未检得”不等于这些平台上绝对不存在讨论。</p>
+<h4 id="tcac-audit">7. 覆盖审计与阅读结论</h4>
+
+<p>覆盖账本逐项映射到本模块：I–II 的并发/时限动机 → 3.1；III-A → 3.2；III-B 与式（1）–（2）→ 3.3–3.4；IV-A → 3.5；IV-B–C 与式（3）→ 3.6；IV-D、式（4）–（8）及 Algorithm 1 → 3.7；IV-E–F 与式（9）→ 3.8、3.13；V → 3.9；VI-A–B → 3.10；VI-C 与表 III、图 7–11 → 3.11–3.12；VI-D、图 12–15 → 3.13；VII → 第 5 节；VIII–IX → 第 4、5 节。没有需要补读的本版技术附录或定理证明；致谢与参考文献中不影响算法的条目不逐项展开。</p>
+<p>对一个要落地的配送系统，这篇文章最值得借鉴的是“预测路线代价—过滤不可行组合—学习长期边权—执行组合匹配”这条分工。最需要继续验证的则是预测误差、真实收入目标与奖励的关系，以及生产环境中骑手行为和数据分布变化。它给出了区域仿真中的有效证据，尚不足以提供零迟到、全局最优、跨城市稳健或骑手公平保证。</p></div><div class="qa-log"><strong>本次要求 · 2026-11-10</strong><p>精读截图标蓝的三篇文章，按规范加入图书库。全文已读取，原图与结果表已核对；PDF 保存在本次临时目录并记录来源。FairCod 另含作者代码静态核查。</p></div></section>
+<section class="paper-card is-deep-read" id="paper-faircod2023" data-paper-id="faircod2023" data-deep-read="true"><div class="kicker">Selected Paper · 03</div><h2>FairCod: A Fairness-aware Concurrent Dispatch System for Large-scale Instant Delivery Services</h2><p class="lede">兼顾骑手收入公平与配送效率的并发派单</p><div><span class="chip">reinforcement learning</span><span class="chip">food delivery</span><span class="chip">concurrent dispatch</span><span class="chip">dynamic action space</span><span class="chip">fairness</span><span class="chip deep-label">Deep Read</span></div><div class="paper-summary"><p class="meta">Lin Jiang；Shuai Wang；Baoshen Guo；Hai Wang；Desheng Zhang；Guang Wang<br>Southeast University · Rutgers University · Florida State University<br>2023-08-04 · ACM KDD 2023:4229–4238</p><p><strong>第一作者：</strong>Lin Jiang；<strong>通讯作者：</strong>Shuai Wang；<strong>最后作者：</strong>Guang Wang。</p><p><strong>选读原因：</strong>用户在截图中明确选中；实际外卖配送中的强化学习。<br><strong>一句话：</strong>让候选骑手竞争新订单，用增量收益与历史收入效率差异共同塑造派单奖励。</p><p><a href="https://doi.org/10.1145/3580305.3599824" target="_blank" rel="noopener noreferrer">论文来源 · DOI</a> · <a href="https://github.com/LinJiang18/FairCod" target="_blank" rel="noopener noreferrer">作者代码</a></p><details><summary>English abstract · 原文（仅合并 PDF 换行与连字）</summary><blockquote>In recent years, we have been witnessing a rapid prevalence of instant delivery services (e,g., UberEats, Instacart, and Eleme) due to their convenience and timeliness. A unique characteristic of instant delivery services is the concurrent dispatch mode, where (i) one courier usually simultaneously delivers multiple orders, especially during rush hours, and (ii) couriers can receive new orders when delivering existing orders. Most existing concurrent dispatch systems are efficiency-oriented, which means they usually dispatch a group of orders that have a similar delivery route to a courier. Although this strategy may achieve high overall efficiency, it also potentially causes a huge disparity of earnings between different couriers. To address the problem, in this paper, we design a Fairness-aware Concurrent dispatch system called FairCod, which aims to optimize the overall operation efficiency and individual fairness at the same time. Specifically, in FairCod, we design a Dynamic Advantage Actor-Critic algorithm with Fairness constrain (DA2CF). The basic idea is that it includes an Actor network to make dispatch decisions based on dynamic action space and a Critic network to evaluate the dispatch decisions from the fairness perspective. More importantly, we extensively evaluate our FairCod system based on one-month real-world data consisting of 36.38 million orders from 42,000 couriers collected by one of the largest instant delivery companies in China. Experimental results show that our FairCod improves courier fairness by 30.3% without sacrificing the overall system benefit compared to state-of-the-art baselines.</blockquote></details></div><div class="deep-reading-content"><h3>1. 摘要中文全译</h3>
+<p>近年来，由于便捷和及时，即时配送服务（如 UberEats、Instacart 和饿了么）迅速普及。即时配送服务的一个独特特点是并发派单模式，其中：（i）一名骑手通常同时配送多个订单，尤其在高峰期；（ii）骑手在配送已有订单时还可以接收新订单。大多数现有并发派单系统以效率为导向，通常将一组配送路线相似的订单派给一名骑手。虽然这种策略可能取得很高的整体效率，但也可能造成不同骑手之间巨大的收入差异。为解决这一问题，本文设计了一个称为 FairCod 的公平性感知并发派单系统，旨在同时优化整体运营效率和个体公平性。具体而言，我们在 FairCod 中设计了带公平性约束的动态优势 Actor-Critic 算法（DA2CF）。其基本思想是由 Actor 网络基于动态动作空间作出派单决策，并由 Critic 网络从公平性角度评价这些决策。更重要的是，我们基于中国最大的即时配送企业之一收集的一个月真实数据，对 FairCod 进行了广泛评估；数据包含来自 42,000 名骑手的 3,638 万个订单。实验结果表明，与最先进的基线相比，FairCod 在不牺牲系统整体收益的情况下，使骑手公平性改善了 30.3%。</p>
+<p>上述为摘要全译，保留作者的数量和提升比例；这些数字与正文、表 2 存在冲突，下面逐项核对。阅读范围为所给 KDD 2023 论文全部 10 页、式（1）—（8）、图 1—14、表 1—3；论文无附录。另对作者公开仓库的关键实现作静态检查，未执行训练，也未声称复现主实验。</p>
+<h3>2. 作者与机构</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文发表时机构</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lin Jiang</td>
+<td>Southeast University</td>
+<td>第一作者；<a href="https://linjiang18.github.io/" target="_blank" rel="noopener noreferrer">作者主页</a>及<a href="https://linjiang18.github.io/publications/" target="_blank" rel="noopener noreferrer">论文列表</a></td>
+</tr>
+<tr>
+<td>Shuai Wang</td>
+<td>Southeast University</td>
+<td>明确标注的通讯作者</td>
+</tr>
+<tr>
+<td>Baoshen Guo</td>
+<td>Southeast University</td>
+<td>与 TCAC 的第一作者相同</td>
+</tr>
+<tr>
+<td>Hai Wang</td>
+<td>Southeast University</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Desheng Zhang</td>
+<td>Rutgers University</td>
+<td>合作者</td>
+</tr>
+<tr>
+<td>Guang Wang</td>
+<td>Florida State University</td>
+<td>最后作者；<a href="https://guangwang.me/" target="_blank" rel="noopener noreferrer">个人主页</a></td>
+</tr>
+</tbody>
+</table></div>
+<p>本篇由用户明确选择，主题是实际配送中的多目标决策。已核实的代表性关联工作是本报告同时精读的 TCAC：它在 FairCod 参考文献 [7] 中明确列出，并作为 AC-bgm 基线来源。作者重合与正式引文可证实两项工作的联系；不据此声称所有代码、数据划分或模块都完全沿用。其余作者履历与机构当前任职未逐人调查，按发表时署名记录。</p>
+<h3>3. 技术精读</h3>
+<h4 id="faircod-background">3.1 顺路派单为什么可能扩大收入差异</h4>
+
+<p>考虑解释性场景：甲已经带着三单去热门商业区，乙刚送完一单在附近等待。新单与甲的路线更顺，效率优先的派单器再次选甲。下一单又因甲有更多在途任务而更容易找到可共享路段，甲不断得到订单，乙越来越空闲。作者把这种正反馈称作 Matthew effect。目标是在保持准时和收益的同时，避免历史处境持续降低某些骑手获得后续订单的机会。</p>
+<p>数据动机来自饿了么上海订单。第 2 节的一周子区域分析发现：全天 52.2% 的工作时间存在多单同时配送，午间 11—14 时为 69.0%，低谷为 30.6%；约 65% 的配送序列会被新单改变，部分趟次可改变九次。图 4 中 21% 骑手的收入效率低于每小时 10 元，14% 高于 20 元；图 5 显示相似收入效率下，有些骑手每单仍多跑 400 米以上。这些是收入与工作负担差异的观察，不单独识别差异由派单、能力、工作选择或地理位置各造成多少。</p>
+<p>论文通过线上咨询和线下问卷选择“收入与工作时间成比例”作为公平目标，但没有披露完整样本规模和问卷设计。公平标准因此是本文采用的业务定义，不是对全部骑手偏好或所有公平观念的证明。尤其动机提到多跑路，但最终奖励并未直接平衡每个人的体力消耗。</p>
+<h4 id="faircod-fairness">3.2 公平指标到底量什么：式（1）—（2）</h4>
+
+<p>对某名骑手，在一段时间完成 \(K\) 个订单，式（1）定义收入效率：</p>
+<p>\[CE=\frac{\mathrm{Revenue}-\mathrm{Penalty}}{\sum_{j=1}^K T_{order}^{(j)}}=\frac{\sum_{j=1}^K(R_{order}^{(j)}-P_{order}^{(j)})}{\sum_{j=1}^K T_{order}^{(j)}}.\]</p>
+<p>\(R\) 是配送收入，\(P\) 是超时罚款，分母意在表示总工作时间。作者强调通常按周或月看长期公平，不应只用刚接到某一单的瞬时收入比较。因不合理派单导致旧单超时，既会伤害体验，又会通过罚款降低骑手收入，因此准时性也进入公平问题。</p>
+<p><strong>并发服务下的分母需要特别小心。</strong> 如果 \(T_{order}\) 指每单从接单到送达的历时，多单的重叠时间重复相加，就不等于实际工作时长；如果指每单分摊的增量时间，必须说明分摊规则。正文没有明确消除这个歧义。下面的公开代码采用累计工作时间变量计算效率，但不能据此倒推原实验必然使用了完全相同口径。</p>
+<p>设区域内有 \(N\) 位骑手，式（2）定义：</p>
+<p>\[CF=\frac1N\sum_{k=1}^N(\omega_k CE^{(k)}-\overline{CE})^2.\]</p>
+<p>越小被认为越公平。\(\omega_k\) 来自企业对骑手工作能力的评级，能力越强，权重越小；意图是不要求不同能力的人绝对同收入。\(\overline{CE}\) 为平均收入效率，但正文没有充分说明它是否对同一能力校正量取平均。若减的是未加权平均，式（2）也不严格等同于“加权效率的通常方差”。不能省略权重后再声称准确复现了原定义。</p>
+<p>例如两人收入效率都是 20 元／小时，若评级权重不同，校正后的比较也会不同；反过来相同工作时间不同收入可能被评级视为合理。这是规范性选择：评级本身若继承历史派单偏差，可能把原有不平等解释成能力差异。论文没有审计评级偏差，也没有性别／年龄群体公平、最低收入保证或个体不会受损的约束。</p>
+<h4 id="faircod-state">3.3 状态、动作和公平奖励：式（3）</h4>
+
+<p>每位骑手被建模为 agent，平台集中处理决策。总人数 \(N\) 固定，每个时段未达到容量上限、可参与竞争的人数 \(N_t\) 变化。位置采用网格表示，同一格的位置特征视作相同，实际距离、交通和路线在其他特征及仿真中补充。</p>
+<p>状态包括五组信息：①当前位置和时段；②已有订单的未来路线、数量、每单剩余承诺时间；③本人的当前收入效率和全局平均收入效率；④各网格剩余运力与订单需求；⑤晴雨、工作日／周末、畅通／拥堵。可写成 \(s_t^k=(c_{st},r_t,n_t,d_t,eff_t^k,\overline{eff}_t,e_{sd},e_c)\)。公平状态提供历史处境，区域供需提供未来接单机会，两者解决不同问题。</p>
+<p>一个动作是把订单 \(i\) 派给骑手 \(k\)，组合特征为 \(a_i^k=(rev_i^k,\Delta t_i^k,dis_i^k,dl_i,l_i^m,l_i^u)\)。其中 \(rev\) 是接入新单后的<strong>净增加收入</strong>，不是简单的新单配送费：如果新单使旧单超时，旧单损失应扣掉。\(\Delta t\) 是预测路线增加的时间，\(dis\) 是到商家的距离，\(dl\) 是截止期限，最后两项为商家和顾客位置。</p>
+<p>\[r_i^k=rev_i^k\gamma^{\Delta t_i^k}-\alpha(\omega_k eff_t^k-\overline{eff}_t).\]</p>
+<p>第一项偏好增收多、额外耗时少的插单，顺路订单的增量时间较小因而折扣较少；第二项对能力校正后效率高于平均的骑手扣分，对低于平均的骑手补分。\(\alpha\) 控制公平信号相对强度，\(\gamma&lt;1\) 是时间折扣。论文还用 \(\gamma\) 作跨时段回报折扣，复现时需核实 \(\Delta t\) 的单位，不能把分钟和 5 分钟时段混用。</p>
+<p>举一个不代表实验数据的例子：两位骑手增收和绕路相同，收入效率分别高于／低于平均 2，且 \(\omega=1,\alpha=0.4\)，公平项分别是 −0.8 和 +0.8。低收入骑手竞争优势增加，但若给他派单的绕路与旧单罚款非常大，效率项仍可能压过补偿。这个项是软奖励，不是要求 \(CF\) 小于某个阈值的硬约束；名称中的 “Fairness constrain” 不应误读为有约束优化求解器或公平性保证。</p>
+<p>公平项使用当前差距，而非显式计算派单后全局方差减少量，故单步奖励增大不必等同于 \(CF\) 单调下降。所有骑手的平均效率会随他人行为变化，单个骑手的“环境”也会非平稳。再者收入单位、时间单位和特征归一化改变后，\(\alpha=0.4\) 的意义会改变，不是可跨城市照搬的常数。</p>
+<h4 id="faircod-features">3.4 路线预测、轨迹嵌入和仿真环境</h4>
+
+<p>仿真器按真实道路移动；速度分布依据历史 GPS 并受天气、拥堵影响；商家等餐时间用 Poisson 分布模拟。骑手按预测的取送序列行动。这样能在离线试验中评价新策略，但假设路线、速度、等餐模型在新派单政策下仍适用。极端天气、相关性很强的商家积压等未必被独立分布充分表达。</p>
+<p>路线预测采用 XGBoost ranking：训练样本来自历史实际下一站，特征含站点位置、距离、配送费、剩余时间、站点网格供需和环境。预测时给所有候选停靠点打分，选最高分为下一站，移除它，继续排剩余点，直到形成完整路线。它学的是行为顺序，采用逐站贪心生成，不是在枚举所有取送顺序求全局最短路。正文没有完整交代先取后送合法候选构造、硬截止时间过滤等实现，不能自行补成 TCAC 的全部 action pruning。</p>
+<p>得到可变长路线后，RNN encoder 按顺序读入各位置和 end token，输出固定向量。论文借鉴 encoder-decoder 轨迹表示，但派单端使用 encoder；正文没有详细公开单独的轨迹表示训练损失与所有层宽。路线序列比仅用订单数更能告诉网络“新单是否顺路”，同时也会传播预测错误。数值特征直接输入，类别特征 one-hot；并未对每个天气类别另训一个策略。</p>
+<h4 id="faircod-actor">3.5 多骑手竞争一单怎样解决可变动作数：式（4）</h4>
+
+<p>对新单 \(i\)，收集附近且有容量的 \(n_t\) 个候选骑手，构造 \(m_{i,t}^k=[s_t^k,a_i^k]\)。共享的 Matching Degree Network 给每个组合输出一个标量 \(q_k=Q_{\theta_a}(s_t^k,a_i^k)\)，再在本次候选集合内归一化：</p>
+<p>\[\pi_{\theta_a}(k\mid i,S_t)=\frac{\exp(q_k)}{\sum_{j=1}^{n_t}\exp(q_j)}.\]</p>
+<p>原式（4）的求和下标从 0 开始，而叙述骑手从 1 编号；这里统一成 \(1\ldots n_t\)，避免多算一个不存在的候选。这里叫 \(Q\) 的输出实质上充当策略 logit，不应与 Critic 的价值函数混为一谈。</p>
+<p>无论有 3 个还是 30 个骑手，都复用同一个标量网络，再产生对应长度的概率向量。因此网络没有固定的“第 30 位骑手输出神经元”。通过概率采样选骑手而不总选最大分，是为了探索；在同一候选集合内各概率和为 1，也不等于不同订单间的分数天然可比较。</p>
+<p>平台逐单执行此流程，已有订单和可用容量影响后续竞争。一名骑手可以在并发模式中获得多单；这不是同一批订单一次求完整二分图匹配，也没有给出全局联合动作优化。所谓 multi-agent competition 在这里指共享评分下多个骑手争同一订单，正文没有纳什均衡求解、独立自治通信协议或对抗训练。其价值是适应候选变化并结合公平状态，而非仅因为“多智能体”三个字就保证全局最优。</p>
+<h4 id="faircod-train">3.6 DA2CF 的价值、优势和更新：式（5）—（8）</h4>
+
+<p>式（5）让 Critic 预测后续折扣回报：</p>
+<p>\[V_{\theta_c}(s_t^k)=\mathbb E\left[\sum_{j=0}^{\infty}\gamma^j r_{t+j+1}^k\mid s_t^k\right].\]</p>
+<p>这里 \(r\) 已含公平项，因此所谓“未来收入”严格说是塑形后的效用，不是纯现金收入。价值网络可以学到“接单后到了未来高需求区域”的好处，弥补只看即时增收的贪心策略。原文有限和的末项下标有不整齐之处，上式保留其标准折扣回报意图。</p>
+<p>式（6）的优势用一步 TD 误差近似：</p>
+<p>\[\delta_t^k=r_i^k+\gamma V_{\theta_c}(s_{t+1}^k)-V_{\theta_c}(s_t^k).\]</p>
+<p>若实际奖励加下一状态估值比当前预期高，\(\delta&gt;0\)，应提高此次匹配的概率；若更差，则降低。式（7）印为 \(J(\theta_a)=\log\pi_{\theta_a}(k\mid i,S_t)\delta_t^k\)，这应作<strong>上升目标</strong>。若用梯度下降，正确对应损失是：</p>
+<p>\[L_a=-\mathbb E_{\mathcal D}[\log\pi_{\theta_a}(k\mid i,S_t)\operatorname{stopgrad}(\delta_t^k)].\]</p>
+<p>原文把两项都称 loss 并说 gradient descent，未在式（7）写负号，容易把好动作概率反向降低。作者公开代码实际有负号，支持以上解释。式（8）是 Critic 的平方 TD 误差：</p>
+<p>\[L_c=\frac12\mathbb E_{\mathcal D}[(r_i^k+\gamma V_{\theta_c}(s_{t+1}^k)-V_{\theta_c}(s_t^k))^2].\]</p>
+<p>以 bootstrap 目标停止梯度后，下降能把当前估值拉向奖励加未来估值。论文未明确 target network、terminal mask 的完整定义，不能自动按 DDPG 加一套目标网络。</p>
+<p>训练流程依次是：观察所有候选状态和动作特征；逐对评分并采样；将订单加入被选骑手路线；环境推进给出奖励和新状态；保存候选集合、实际被选动作、奖励和该骑手新状态到 replay；抽取小批量更新 Critic 和 Actor。必须保存候选集合，才能重建这次 softmax 的分母，仅存被选骑手一条向量不足以训练同一概率。由于 replay 中的决策来自旧策略，而式（7）没有重要性采样校正，该训练是经验性的离策略 Actor-Critic 近似；正文没有证明无偏或收敛。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/95d5eaa04da7fe95ce38b9d6.png" alt="FairCod 原图 8：逐对打分、softmax 采样和 TD 更新。" loading="lazy"></div><figcaption>FairCod 原图 8：逐对打分、softmax 采样和 TD 更新。</figcaption></figure>
+<p>图 8 展示共享评分、softmax、环境和 replay 的关系。图中的若干加号和反馈连线是结构示意，不能替代式（6）的价值差或正确的 Actor 目标符号。该图不包含批量 KM 求解器，和 TCAC 的在线分配环节应分开读。</p>
+<h4 id="faircod-experiments">3.7 实验协议与公平对照</h4>
+
+<p>论文背景数据规模有三种写法：摘要和结论 36.38 million，第 2.1 节 36.48 million，第 5.1 节 6.48 million；均提 42,000 名骑手、2019 年 9—10 月。没有勘误可用，因此不能挑一个数当作已核实事实。真正报告的模型评估区域是上海 \(12\times12\) 平方公里、500 多名骑手、约 60 万单。全平台数据量不等于每次神经网络实验都覆盖全平台。</p>
+<p>一天测试 8:00—23:00，共 15 小时、180 个 5 分钟时段。实现 PyTorch 1.6.0、Python 3.7、16GB 内存和 GTX 1650；replay \(10^6\)，batch 50，Actor/Critic Adam 学习率均 0.002，折扣 0.9。正文未明确像 TCAC 那样提供完整按日期训练／测试分割、训练轮数、随机种子和误差条，也未充分说明能力评级权重的分布、更新频率和新骑手初始化。这些限制独立复现及对泛化的判断。</p>
+<p>基线含随机 RD、最近距离 SD2、即时奖励贪心 RGD，以及 DQND、带动作搜索的 DDQN-as、带二分图匹配的 AC-bgm。后三种 RL 基线也加入公平奖励项并调公平参数，不是让 FairCod 优化公平、却故意让所有 RL 对手完全不知道公平。其贡献因此应解读为状态与动作结构配合奖励的表现，而非仅“加入公平项胜过没加”。但没有逐一给出所有基线调参预算，仍不能确认预算绝对相等。</p>
+<p>指标为平均骑手收入效率 \(mean_{eff}\)、总体迟到率 \(od_{rate}\)、收入效率差异 \(var_{eff}\)。第一项是平均每小时净收入，不等同于总平台利润或总成交额；后一项被正文称为方差，并指向式（2）。实验没有统计群体身份公平，也没有骑手主观满意度的干预后测量。</p>
+<h4 id="faircod-results">3.8 表 2 逐项复算：哪些百分比成立</h4>
+
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align: right;">平均收入效率，RD=100 ↑</th>
+<th style="text-align: right;">迟到率，RD=100 ↓</th>
+<th style="text-align: right;">收入效率差异，RD=100 ↓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RD</td>
+<td style="text-align: right;">100.0</td>
+<td style="text-align: right;">100.0</td>
+<td style="text-align: right;">100.0</td>
+</tr>
+<tr>
+<td>SD2</td>
+<td style="text-align: right;">102.1</td>
+<td style="text-align: right;">79.6</td>
+<td style="text-align: right;">425.8</td>
+</tr>
+<tr>
+<td>RGD</td>
+<td style="text-align: right;">105.5</td>
+<td style="text-align: right;">43.9</td>
+<td style="text-align: right;">372.5</td>
+</tr>
+<tr>
+<td>DQND</td>
+<td style="text-align: right;">105.5</td>
+<td style="text-align: right;">43.5</td>
+<td style="text-align: right;">242.5</td>
+</tr>
+<tr>
+<td>DDQN-as</td>
+<td style="text-align: right;">107.6</td>
+<td style="text-align: right;">30.4</td>
+<td style="text-align: right;">120.5</td>
+</tr>
+<tr>
+<td>AC-bgm</td>
+<td style="text-align: right;">107.0</td>
+<td style="text-align: right;">35.1</td>
+<td style="text-align: right;">108.9</td>
+</tr>
+<tr>
+<td>FairCod-0</td>
+<td style="text-align: right;">107.6</td>
+<td style="text-align: right;">30.1</td>
+<td style="text-align: right;">126.5</td>
+</tr>
+<tr>
+<td>FairCod-0.2</td>
+<td style="text-align: right;">107.4</td>
+<td style="text-align: right;">32.0</td>
+<td style="text-align: right;">106.4</td>
+</tr>
+<tr>
+<td>FairCod-0.4</td>
+<td style="text-align: right;"><strong>107.9</strong></td>
+<td style="text-align: right;"><strong>27.7</strong></td>
+<td style="text-align: right;"><strong>70.7</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>这些是各指标分别归一化后的指数，27.7 不是 27.7% 订单迟到，70.7 也不是 70.7 元／小时的方差。FairCod-0.4 在表中同时最好；FairCod-0.2 的均值收入低于 DDQN-as，不能说每个 FairCod 变体在每项都胜过所有基线。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/faeb6f20119c90663691d2b6.png" alt="FairCod 原表 2：三项指标分别以 RD=100 归一化。" loading="lazy"></div><figcaption>FairCod 原表 2：三项指标分别以 RD=100 归一化。</figcaption></figure>
+<p>由原表直接复算：相比 RD，FairCod-0.4 的差异指标降低 \(1-70.7/100=29.3\%\)，不是正文一处说的 30.3%；相比最好的 RL 公平基线 AC-bgm，降低 \(1-70.7/108.9\approx35.1\%\)。迟到率相比 RD 降低 72.3%，相比 DDQN-as 降低 \(1-27.7/30.4\approx8.9\%\)，不是摘要／结论另一处的 8.0%。这些是表格复算，不是新增实验结果。</p>
+<p>论文还称平均收入效率提升 0.3 CNY/h，但表 2 给的是归一化指数，不能直接把 \(107.9-107.6=0.3\) 个指数点当作 0.3 元／小时。没有对应原始量纲基准，无法从本表复现该绝对增量。本报告保留作者宣称，明确其无法与此表直接对齐，不替作者猜测修正。</p>
+<p>表中出现效率和公平同时改善，作者用“可能更接近 Pareto 最优”解释。能成立的是对列出这些点的经验比较；没有完整 Pareto 前沿搜索、约束可行域或定理，不能宣称已经证明效率公平无代价。在别的 \(\alpha\) 下，论文自己的敏感性实验就出现代价和训练恶化。</p>
+<h4 id="faircod-ablation">3.9 不同负载、参数敏感性、模块消融：图 9—14</h4>
+
+<p>负载实验选 11—13 时、14—16 时、20—22 时代表高、中、低订单量，比较 FairCod-0.4、DDQN-as 和 AC-bgm。图 10 显示 FairCod 在三段差异指标都更低，尤其高负载；图 11 的平均收入效率接近，图 12 的迟到率仍有优势。高负载图上约 1.5 个百分点的迟到率差异是绝对比例差，不是表 2 中的相对下降 8.9%。一天内时段同时改变交通、订单地理分布等因素，因此这项试验并非仅改变订单数量、其他变量完全受控的因果实验。</p>
+<p>作者扫描 \(\alpha\) 从 0 到 0.5。图 13 中 0—0.3 区间，公平改善同时均值效率略降；0.4 附近两项表现最好；0.5 突然恶化，正文说大于 0.5 时甚至难以收敛。这是明确的负面结果：公平权重过大可能压倒收入与路线信号，不能从一个最佳点推广为权重越大越好。也没有证据证明每个城市都以 0.4 最优。</p>
+<p>图 14 在 10—14 时高负载做两种消融。FairCod-T 去掉未来轨迹特征，差异指标明显变差、接近 AC-bgm；FairCod-C 去掉多骑手竞争机制，表现最差，作者概括为约三倍不公平。图上不同小时的倍率不同，应把“三倍”看成作者趋势概括而非每个小时精确相同的数。轨迹特征让模型识别顺路与延误，竞争机制让动态候选能按公平状态比较，二者有协同作用。</p>
+<figure class="figure-block"><div class="figure-tools"><label>原图缩放 <input type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><span>可拖动或滚动查看</span></div><div class="figure-viewport"><img src="assets/782eb7e55282dfc9786f37e1.png" alt="FairCod 原图 13–14：公平权重敏感性与两个模块消融。" loading="lazy"></div><figcaption>FairCod 原图 13–14：公平权重敏感性与两个模块消融。</figcaption></figure>
+<p>原图 13 左轴是平均收入效率、右轴是差异指标，不能拿两条线的视觉高度当同量纲比较。图 14 测的是去掉组件后的整体结果，没有报告多次随机试验误差，也未详述移除竞争后是否保持相同参数量与搜索预算；因此支持组件有用，但不是对每个设计原创性或独立因果贡献的完全证明。</p>
+<h3>4. 相关工作比较</h3>
+<p>论文第 6 节把工作按“独立／并发服务”和“效率／公平目标”分成四格。独立服务中可在上一单结束后再接下一单，并发配送则必须考虑旧单路线和新增罚款。公平独立派单文献关注反复匹配、司机乘客两侧公平或电动车调度；FairCod 将收入效率补偿嵌入并发即时配送。</p>
+<p>与其明确引用的 <a href="https://doi.org/10.1109/RTSS52674.2021.00026" target="_blank" rel="noopener noreferrer">TCAC（RTSS 2021）</a> 相比，FairCod 加入骑手历史效率与公平奖励，以逐单竞争采样选人；TCAC 的重点是时间预测剪枝、匹配价值与批量 KM。两篇都使用订单—骑手特征评分和路线表示，不能把 FairCod 的“动态动作空间”解读成此前从无相关设计。与 <a href="https://doi.org/10.1109/TITS.2023.3237580" target="_blank" rel="noopener noreferrer">DRLOR</a> 的差异则是最终决定权：FairCod 平台直接派单，DRLOR 推荐后仍由骑手选择。这项比较来自本次阅读全文，本文未把 DRLOR 列为其公平派单基线。</p>
+<h3>5. 后续引用、复现核查与局限</h3>
+<h4 id="faircod-code">5.1 公开代码能核实什么</h4>
+
+<p>作者脚注链接到 <a href="https://github.com/LinJiang18/FairCod" target="_blank" rel="noopener noreferrer">LinJiang18/FairCod</a>，README 将它描述为带 toy data 的示例。此次固定核查提交 <code>84d781a85fd519f336b735e97bafe228c1aea616</code> 的 <code>algorithm/AC.py</code>、<code>simulator/envs.py</code>、<code>simulator/couriers.py</code>、<code>simulator/dispatch.py</code> 和 <code>run/run.py</code>，只做静态阅读。它有助于解释论文，但不等于原 60 万单主实验的完整归档。</p>
+<p>关键对应与差异如下：</p>
+<ul>
+<li><code>AC.py</code> 的 Actor loss 是负的 log probability 乘 detached TD error，解决了原式（7）下降方向的歧义。Critic 的 bootstrap 目标也 detach。</li>
+<li>示例 ValueNet 实际接收状态与动作特征拼接，并在输出加 ReLU；与正文写的纯 \(V(s)\) 及可能含负公平奖励的价值范围存在差异。不能把示例直接当作数学定义的逐字实现。</li>
+<li><code>envs.py</code> 以 <code>accMoney/(accPeriod/60)</code> 算效率；这比直接累计各单重叠历时更接近工作时长口径，但需要进一步审计 <code>accPeriod</code> 的更新规则才能确认是否包含等待／空闲。奖励使用 \(0.98^{addTime}\)、把负增收的效率项截成 0、公平差项未显式使用论文的能力权重；与式（3）并非完全一致。</li>
+<li><code>run.py</code> 写入名为 <code>varEff</code> 的记录实际调用 <code>np.std</code>，是标准差而不是方差。两者排序虽一致，相对改善率通常不同；不能用这个示例输出直接验证论文称为 variance 的提升百分比。</li>
+<li>示例 replay 为 \(10^5\)、Actor/Critic 学习率 0.001／0.0001、循环 30 天；与正文 replay \(10^6\)、两者均 0.002 不同。网络状态和动作投影到 64／4 维，后接 32、8、1；这些是代码示例细节，不倒填为论文未公布的主实验设置。</li>
+</ul>
+<p>上述差异要求复现者先决定“复现论文定义”还是“运行作者 toy 示例”，并记录选择。没有重新训练或原始实验配置，就不能判断主表到底使用哪一套实现，更不能把差异直接定性为结果无效。</p>
+<h4 id="faircod-limits">5.2 结论的边界</h4>
+
+<p>本文提供了在数据驱动仿真中同时改善公平与效率的经验案例。它没有报告部署后真实收入公平的随机试验，也没有确保每位骑手收入不下降。主要限制是：公平标准和能力评级可能遗漏真实劳动负担；公平长期窗口与每日实验的对应不充分；初始效率为零和新老骑手混合可能影响短期补偿；路线、等餐和交通的模型误差会改变增收及罚款；候选范围、容量和硬可行性实现不足；训练／测试划分与误差条未完整披露；表述、表格和示例代码存在口径差异。</p>
+<p>本次没有取得可明确核实、且已阅读全文的后续引用论文，故不列“已验证复现”或引用量。作者仓库与主页是进一步跟踪入口。最适合借用的想法，是把骑手历史收入处境放进状态与奖励，同时保留增量路线成本；若用于自己的研究，应额外报告原始收入分布、分位数、真实工作时长、多个权重的完整折衷，以及不确定性。</p>
+<h3>6. 社交媒体反响</h3>
+<p>检索 FairCod 标题与方法名在 X、Reddit、知乎、小红书的公开结果，未找到可核实的针对本文讨论。作者主页和 GitHub 仓库属于一手研究材料，不冒充社区评价。无可核实结果不等于从未有人讨论。</p></div><div class="qa-log"><strong>本次要求 · 2026-11-10</strong><p>精读截图标蓝的三篇文章，按规范加入图书库。全文已读取，原图与结果表已核对；PDF 保存在本次临时目录并记录来源。FairCod 另含作者代码静态核查。</p></div></section>
+<footer>全文来源与公式、图表对应位置见各模块。原 PDF 仅保留在本机临时目录，不随报告上传。报告与图书库仅发布精读内容及引用的图表。</footer></main><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+ renderMathInElement(document.body,{delimiters:[{left:String.raw`\[`,right:String.raw`\]`,display:true},{left:String.raw`\(`,right:String.raw`\)`,display:false}],throwOnError:false});
+ document.querySelectorAll('.figure-block').forEach(b=>{
+  const v=b.querySelector('.figure-viewport'),s=b.querySelector('[data-zoom]'),im=v.querySelector('img');
+  function zoom(){const xr=v.scrollLeft/Math.max(1,v.scrollWidth-v.clientWidth),yr=v.scrollTop/Math.max(1,v.scrollHeight-v.clientHeight);im.style.width=(Math.min(im.naturalWidth||v.clientWidth,Math.max(280,v.clientWidth))*Number(s.value))+'px';requestAnimationFrame(()=>{v.scrollLeft=xr*Math.max(0,v.scrollWidth-v.clientWidth);v.scrollTop=yr*Math.max(0,v.scrollHeight-v.clientHeight)})}
+  im.addEventListener('load',zoom);zoom();s.addEventListener('input',zoom);let state=null;
+  v.addEventListener('pointerdown',e=>{state=[e.clientX,e.clientY,v.scrollLeft,v.scrollTop];v.classList.add('is-dragging');v.setPointerCapture(e.pointerId);e.preventDefault()});
+  v.addEventListener('pointermove',e=>{if(state){v.scrollLeft=state[2]+state[0]-e.clientX;v.scrollTop=state[3]+state[1]-e.clientY}});
+  for(const event of ['pointerup','pointercancel'])v.addEventListener(event,()=>{state=null;v.classList.remove('is-dragging')});
+ });
+
+});
+</script></body></html>
