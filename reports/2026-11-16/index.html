@@ -1,0 +1,666 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>2026-11-16 · Pay Attention to MLPs 精读</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js"></script><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:30px}body{margin:0;background:#f4f6fa;color:#223146;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;font-size:16px;line-height:1.92}a{color:#245dc0;text-underline-offset:3px}a:visited{color:#76549d}a.is-deep-read-link,a[data-deep-read="true"]{color:#a35209;font-weight:700;text-decoration-thickness:2px}.shell{max-width:1260px;margin:auto;padding:34px 26px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:30px}aside{position:sticky;top:25px;align-self:start;font-size:14px}aside a{display:block;padding:7px 10px;border-radius:7px;text-decoration:none}aside a:hover{background:#e6ecf7}aside small{color:#6d788b}.brand{font-weight:800;letter-spacing:.1em;color:#325172;font-size:12px;margin-bottom:20px}.hero{background:#142e48;color:#edf3ff;border-radius:16px;padding:32px;margin-bottom:24px}.hero p{color:#cedced;margin:12px 0 0}.hero h1{font-size:34px;line-height:1.35;margin:8px 0}.eyebrow{font-size:12px;letter-spacing:.16em;color:#a5cbe5}.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}.chip{font-size:12px;line-height:1.5;border:1px solid #cedbec;padding:4px 9px;border-radius:16px;background:#eff5fa;color:#335773}.panel,.paper-card{border:1px solid #dce3ec;background:white;border-radius:12px;padding:28px;margin-bottom:24px;min-width:0}.paper-card.is-deep-read{border-left:4px solid #df9b3d;background:linear-gradient(90deg,#fff9ef,#fff 20rem)}h2{font-size:24px;margin:48px 0 15px;line-height:1.55;border-top:1px solid #dce3ec;padding-top:20px}h3{font-size:20px;margin:35px 0 13px;line-height:1.6;color:#173956}.paper-card>h2{margin-top:0;border:0;padding:0}.paper-summary{padding-bottom:20px;border-bottom:1px solid #e0e6ef}.meta{font-size:14px;color:#617087}.deep-reading-content p{margin:15px 0}strong{color:#173956}.table-wrap{overflow:auto;margin:20px 0;border:1px solid #dfe5ed;border-radius:8px}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.6}th{background:#e9eff6;color:#233e5d;text-align:left;white-space:nowrap}th,td{padding:10px 12px;border-bottom:1px solid #e4e9f0;vertical-align:top}tbody tr:nth-child(even){background:#f7f9fc}blockquote{margin:20px 0;padding:8px 20px;border-left:3px solid #7ca2bb;background:#f0f5f8;color:#3c5268}.katex-display{overflow-x:auto;overflow-y:hidden;padding:15px 5px;margin:20px 0!important;background:#f7f9fc;border-radius:8px}.katex{font-size:1.05em!important}.figure-block{margin:24px 0}.figure-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;color:#63728a;margin-bottom:8px}.figure-tools label{display:flex;align-items:center;gap:8px}.figure-tools button{background:white;border:1px solid #becbdc;border-radius:4px;padding:3px 10px;color:#35516e}.figure-viewport{max-height:min(65vh,700px);overflow:auto;border:1px solid #d8dee9;border-radius:8px;background:white;cursor:grab;resize:both;min-height:150px;max-width:100%}.figure-viewport.is-dragging{cursor:grabbing}.figure-viewport img{display:block;max-width:none;height:auto;transform:none}.figure-block figcaption{font-size:13px;color:#526379;line-height:1.75;margin-top:9px}.qa-log{margin-top:35px;padding:16px;background:#eef4f8;border-radius:8px;font-size:14px}.qa-log h3{margin:0}footer{font-size:12px;color:#7a8799;padding:10px 0}main{min-width:0}button,input{font:inherit}span[id]{scroll-margin-top:25px}@media(max-width:900px){.shell{display:block;padding:16px}aside{position:static;margin-bottom:20px}aside nav{display:flex;overflow:auto;gap:5px}aside a{white-space:nowrap;padding:5px 9px}aside .brand,aside small{display:none}.hero{padding:22px}.hero h1{font-size:28px}.panel,.paper-card{padding:18px}h2{font-size:22px}h3{font-size:19px}body{font-size:15px}}</style><style id="portal-font">html,body,button,input,select,textarea{font-family:"Times New Roman","Noto Serif CJK SC","SimSun",serif!important}</style></head><body id="top"><div class="shell"><aside><div class="brand">RESEARCH / READING</div><a class="is-deep-read-link" href="#paper-2105.08050">01 · gMLP 精读</a><nav><a href="#overview">摘要与核心问题</a><a href="#block">block 数据流</a><a href="#spatial">空间混合</a><a href="#gate">乘法门控</a><a href="#toeplitz">Toeplitz 与 MLM</a><a href="#vision">视觉结果</a><a href="#ablation">消融实验</a><a href="#scaling">规模扩展</a><a href="#hybrid">aMLP 与对齐</a><a href="#results">完整主结果</a><a href="#transfer">附录迁移实验</a><a href="#limitations">证据与局限</a></nav><small>正文 12 页＋补充材料 5 页<br>只精读用户指定的这一篇</small></aside><main><header class="hero"><div class="eyebrow">2026-11-16 · SINGLE PAPER DEEP READ</div><h1>Pay Attention to MLPs</h1><p>固定的位置混合，如何完成输入相关的门控？<br>从 gMLP 到 aMLP，逐式读懂机制、实验与边界。</p><div class="chips"><span class="chip">NeurIPS 2021</span><span class="chip">1 paper · 1 deep read</span><span class="chip">Main text + Appendix A–E</span></div></header><section class="panel"><div class="eyebrow" style="color:#45617c">本次记录</div><p>按用户要求仅精读这一篇。来源为会议正式论文、官方补充材料与 arXiv 元数据；未开展每日推荐目录搜索。全部实验数字为作者报告，本次未复现训练。</p><div class="table-wrap"><table><thead><tr><th>论文</th><th>选择理由</th><th>一句话判断</th></tr></thead><tbody><tr><td><a class="is-deep-read-link" data-deep-read="true" href="#paper-2105.08050">01 · Pay Attention to MLPs</a></td><td>用户明确指定</td><td>空间门控可替代大量注意力功能，但任务迁移与计算成本必须分开评估。</td></tr></tbody></table></div></section><section class="paper-card is-deep-read" id="paper-2105.08050" data-paper-id="2105.08050" data-deep-read="true"><h2>01 · Pay Attention to MLPs</h2><div class="paper-summary"><p><strong>中文题名：</strong>关注多层感知机 · <strong>发表于：</strong>NeurIPS 2021</p><p class="meta">Hanxiao Liu · Zihang Dai · David R. So · Quoc V. Le<br>Google Research, Brain Team · 通讯作者未明确标注</p><p><a href="https://arxiv.org/abs/2105.08050" target="_blank" rel="noopener noreferrer">论文与英文摘要</a> · <a href="https://proceedings.neurips.cc/paper/2021/file/4cc05b35c2f937c5bd9e7d41d3686fff-Paper.pdf" target="_blank" rel="noopener noreferrer">正式论文 PDF</a> · <a href="https://papers.neurips.cc/paper_files/paper/2021/file/4cc05b35c2f937c5bd9e7d41d3686fff-Supplemental.pdf" target="_blank" rel="noopener noreferrer">补充材料</a></p><div class="chips"><span class="chip">MLP architectures</span><span class="chip">spatial gating</span><span class="chip">attention</span><span class="chip">masked language modeling</span><span class="chip">scaling laws</span></div><details><summary>英文摘要短摘（全文见论文来源）</summary><p lang="en">Here we propose a simple network architecture, gMLP, based on MLPs with gating</p></details></div><div class="deep-reading-content"><p><span id="overview"></span></p>
+<h2>1. 摘要中文翻译与阅读入口</h2>
+<p>Transformer 已成为深度学习最重要的架构创新之一，并推动了过去数年的许多突破。本文提出一种基于带门控 MLP 的简单网络架构 gMLP，并表明它在关键的语言和视觉应用中可以达到 Transformer 的表现。比较结果显示，自注意力并非 Vision Transformer 达到相同准确率的必要条件，gMLP 也能做到。在 BERT 设置下，该模型在预训练困惑度上达到与 Transformer 相当的水平，并在部分下游自然语言处理任务上表现更好。对于 gMLP 表现较差的微调任务，显著增大 gMLP 可以缩小其与 Transformer 的差距。总体而言，实验显示，随着数据量和计算量增加，gMLP 可以呈现与 Transformer 相当的扩展表现。</p>
+<p><strong>先想一个具体问题。</strong> 输入两句话：“一个孩子在草地上奔跑”和“一个人正在户外活动”，模型要判断前一句是否蕴含后一句。普通逐 token 的 MLP 即使看见“孩子”，也不能直接读取另一位置上的“人”；Transformer 用输入决定的注意力权重建立联系。gMLP 改成：用一组学到的、在推理时固定的位置混合权重读取其他 token，再用这些信息逐元素调节当前位置的特征。这个例子用于解释机制，不是论文中的实测样本。</p>
+<p><strong>全文的主要收获是：跨 token 信息交换不必依赖自注意力，但交换方式会影响迁移到具体任务时的效率。</strong> 图像分类、填空预训练和句对推理必须分别判断。本文不是“任何 MLP 都能替代任何 Transformer”的证明，也没有验证现代长上下文生成式 LLM。</p>
+<p>阅读版本：NeurIPS 2021 正式论文 12 页（其中后部为参考文献）及独立补充材料 5 页，补充材料原页码 13–17。arXiv 首次提交于 2021-05-17，v2 日期为 2021-06-01。本报告以会议版正文和附录为结果依据；其中部分表格比早期网上介绍更完整。<a href="https://proceedings.neurips.cc/paper/2021/file/4cc05b35c2f937c5bd9e7d41d3686fff-Paper.pdf" target="_blank" rel="noopener noreferrer">会议论文</a> · <a href="https://papers.neurips.cc/paper_files/paper/2021/file/4cc05b35c2f937c5bd9e7d41d3686fff-Supplemental.pdf" target="_blank" rel="noopener noreferrer">补充材料</a> · <a href="https://arxiv.org/abs/2105.08050" target="_blank" rel="noopener noreferrer">arXiv</a>。</p>
+<h2>2. 作者与机构</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>作者</th>
+<th>论文发表时机构</th>
+<th>本次阅读中的角色与介绍入口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hanxiao Liu</td>
+<td>Google Research, Brain Team</td>
+<td>第一作者；<a href="https://quark0.github.io/" target="_blank" rel="noopener noreferrer">个人主页</a>、<a href="https://www.cs.cmu.edu/~hanxiaol/" target="_blank" rel="noopener noreferrer">CMU 旧主页与论文列表</a>；研究涉及深度学习、架构搜索、语言理解</td>
+</tr>
+<tr>
+<td>Zihang Dai</td>
+<td>Google Research, Brain Team</td>
+<td><a href="https://zihangdai.github.io/" target="_blank" rel="noopener noreferrer">个人主页</a>、<a href="https://scholar.google.com/citations?hl=en&amp;user=uZqsVXkAAAAJ" target="_blank" rel="noopener noreferrer">Scholar</a>；本篇及 Primer 的共同作者</td>
+</tr>
+<tr>
+<td>David R. So</td>
+<td>Google Research, Brain Team</td>
+<td><a href="https://www.davidrso.com/" target="_blank" rel="noopener noreferrer">个人主页与论文列表</a>；研究涉及 AutoML、语言模型与神经网络架构</td>
+</tr>
+<tr>
+<td>Quoc V. Le</td>
+<td>Google Research, Brain Team</td>
+<td>最后作者；可从 <a href="https://arxiv.org/abs/2105.08050" target="_blank" rel="noopener noreferrer">本篇作者信息</a> 和 <a href="https://www.davidrso.com/" target="_blank" rel="noopener noreferrer">共同作者的论文列表</a> 核对其架构搜索与语言建模工作</td>
+</tr>
+</tbody>
+</table></div>
+<p>通讯作者：原文没有明确指定，记为 <strong>not explicitly listed</strong>，不能把最后作者或 arXiv 提交人自动认作通讯作者。机构按 2021 年论文署名记录，不把作者主页的当前任职倒填进历史论文。上述作者在本次为新介绍对象；选择理由是<strong>用户直接指定</strong>，并非今日推荐排名。</p>
+<p>作为背景而非额外精读，Hanxiao Liu 的旧主页列出 DARTS、Hierarchical Representations for Efficient Architecture Search、RACE；David R. So 的主页列出 Primer、AutoML-Zero、The Evolved Transformer，后两篇与 Quoc V. Le 合作，Primer 则包含本篇四位作者。这能帮助理解本工作的架构探索背景。Zihang Dai 的简短主页没有完整代表作列表，Scholar 本次返回 429，因此不补写未经此次来源核验的履历。Quoc V. Le 的独立机构主页本次未能取得，保留可核对的论文入口。</p>
+<h2>3. 技术精读</h2>
+<h3>3.1 问题、假设与论证结构</h3>
+<p>原文 §1 把 Transformer 的成功拆成两个候选原因：其一，所有 token 可以并行计算，不需要 RNN 的时间递归；其二，自注意力根据输入内容动态决定位置之间的交互权重。gMLP 保留前者，改造后者，检验多头自注意力的作用究竟有多大。</p>
+<p>“MLP 能逼近任意函数”仅是研究动机，不能推出有限宽度、有限数据下能高效学习任何任务。本篇没有新的逼近定理、收敛证明或泛化误差界。证据链是架构设计 → 控制基线 → 规模变化 → 下游任务差异 → 加回少量注意力后的变化。</p>
+<p><span id="block"></span></p>
+<h3>3.2 一个 gMLP block 的完整数据流</h3>
+<p>令输入 \(X\in\mathbb R^{n\times d}\)：\(n\) 是 token 个数，\(d\) 是每个 token 的通道数。忽略 batch 维。\(e=d_{\mathrm{ffn}}\) 是扩展后的通道数，\(L\) 是堆叠 block 数。原文式 (1) 为：</p>
+<p>\[Z=\sigma(XU),\qquad \widetilde Z=s(Z),\qquad Y=\widetilde ZV.\]</p>
+<p>\(U\) 逐 token 混合通道，例如把 512 维表示展开到 3072 维；\(\sigma\) 为 GeLU；\(s\) 负责跨 token 交互；\(V\) 再把通道投影回模型宽度。这里“空间”在语言中就是序列位置，在图像中就是 patch 位置。如果 \(s\) 是恒等映射，整个 block 仍然只是在分别加工每个 token，不能让一个词直接读到另一个词。</p>
+<p>原式省略了归一化、残差和偏置。按图 1 伪代码，实际 split-SGU block 可完整写成：</p>
+<p>\[\begin{aligned}
+H&amp;=\operatorname{LN}(X),\\
+Z&amp;=\operatorname{GeLU}(HU+a),\\
+(Z_1,Z_2)&amp;=\operatorname{split}_{\mathrm{channel}}(Z),\\
+G&amp;=W\operatorname{LN}(Z_2)+b\mathbf 1_{e/2}^{\mathsf T},\\
+S&amp;=Z_1\odot G,\\
+X_{\mathrm{next}}&amp;=X+SV+c.
+\end{aligned}\]</p>
+<p>第一处 LayerNorm 在通道维稳定输入尺度；通道扩展提供足够多的特征；split 将其分为内容支路和门控支路；第二处 LayerNorm 只用于门控输入，避免大模型门值尺度不稳；最后残差使原表示可以直接传递。\(a,c\) 是通道偏置，\(b\in\mathbb R^n\) 是位置偏置，后者对所有门控通道广播。图中的空间投影是线性的，门后没有必须存在的 sigmoid。</p>
+<p><strong>尺寸不能照抄普通 FFN。</strong> split 后 \(Z_1,Z_2,S\in\mathbb R^{n\times e/2}\)，所以 \(U\in\mathbb R^{d\times e}\)，\(V\in\mathbb R^{(e/2)\times d}\)。例如 \(d=512,e=3072\)，最后投影是 \(1536\rightarrow512\)。原文对一般 FFN 的尺寸举例不等于 split 版仍把 3072 个通道送入最后投影。每层结构与大小相同，也不意味着各层共享同一组参数。</p>
+<figure class="figure-block"><div class="figure-tools"><label>缩放 <input aria-label="调整图片缩放" type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><button type="button" data-reset>复位</button><span>可拖动平移查看细节</span></div><div class="figure-viewport"><img src="assets/dab45a12f7fe82f9541cb475.png" alt="原文图 1：左侧是残差 block，右侧是空间门控与伪代码。读图时沿 Norm → 通道扩展 → GeLU → split → 空间投影 → 逐元素乘法 → 通道回投影走一遍；跨 token 交换只发生在空间投影。" loading="lazy"></div><figcaption>原文图 1：左侧是残差 block，右侧是空间门控与伪代码。读图时沿 Norm → 通道扩展 → GeLU → split → 空间投影 → 逐元素乘法 → 通道回投影走一遍；跨 token 交换只发生在空间投影。</figcaption></figure>
+<p>输入输出沿用 BERT/ViT，以减少改输入管线造成的混杂。语言微调把文本片段连接、补齐长度，并从最终层保留的 CLS 表示做分类；SQuAD 使用相应问答输出协议。视觉输入先切成 \(16\times16\) patch 并投影到通道空间。patch embedding 本身可视为步长卷积，因此“MLP-like”不表示每一个底层算子都与卷积毫无关系。堆叠 \(L\) 次后进入任务头；这里没有搜索循环、动态停止条件或强化学习动作。</p>
+<p><span id="spatial"></span></p>
+<h3>3.3 空间投影：混合位置，而不是缩短序列</h3>
+<p>原文式 (2) 为 \(f_{W,b}(Z)=WZ+b\)，其中 \(W\in\mathbb R^{n\times n}\)。逐元素展开更容易看懂：</p>
+<p>\[[f_{W,b}(Z)]_{i,c}=\sum_{j=1}^{n}W_{ij}Z_{j,c}+b_i.\]</p>
+<p>输出位置 \(i\) 从所有输入位置 \(j\) 收集同一通道 \(c\) 的信息。\(n=128\) 时就是一个 \(128\times128\) 矩阵；同一个矩阵用于这一层的所有通道。这是论文所说的 spatial contraction：对重复的索引 \(j\) 求和。<strong>它不是把 128 个 token 池化成更少的 token，输出仍有 128 个位置。</strong></p>
+<p>自注意力也混合位置，但混合矩阵通常由输入算出，例如 \(\operatorname{softmax}(QK^{\mathsf T}/\sqrt{d_k})\)。gMLP 的 \(W\) 是训练得到的参数，推理时不会为每个样本重新生成；不过被乘的特征会变，因此整个模型仍随输入变化。</p>
+<p><span id="gate"></span></p>
+<h3>3.4 从线性混合到乘法门控：式 (3)、式 (4) 为什么有用</h3>
+<p>原文先尝试不拆通道的门控：</p>
+<p>\[s(Z)=Z\odot(WZ+b).\]</p>
+<p>当前位置的内容与从其他位置汇总的信号相乘。忽略归一化、激活等细节，输出含有 \(Z_{i,c}Z_{j,c}\) 的二阶乘积；它能够表达“这里有某种特征，同时别处有另一种相关特征时，增强或抑制输出”。单纯 \(WZ\) 只把值相加；\(Z+WZ\) 仍缺少这个显式乘法交互。</p>
+<p>最终 SGU 是原文式 (4)：</p>
+<p>\[s(Z)=Z_1\odot f_{W,b}(Z_2),\qquad Z=Z_1\Vert Z_2.\]</p>
+<p>内容支路和产生门值的支路来自不同通道，前者可以学习“要传递什么”，后者可以学习“根据上下文如何调节”。这是机制解释，效果证据来自后面的消融，不能把这种直观分工当成作者已证明的通用分解定理。</p>
+<p><strong>一个可手算的例子（本报告构造）。</strong> 假设某通道的内容值为 2，门控归一化后的三个位置值是 \([0.4,-0.2,0.1]\)，当前行空间权重为 \([0.5,0,-1]\)，偏置为 1。门值是 \(1+0.5\times0.4-1\times0.1=1.1\)，输出变为 2.2。如果第三位置改成 0.8，门值变成 0.4，输出变为 0.8。权重没变，输出调节却随着上下文改变；这就是“静态位置权重”和“输入相关门值”可以同时成立的原因。</p>
+<p>这里 gate 不是概率，不要求在 0–1，也不要求各位置权重和为 1；它可以放大、减小或改变符号。若自行在空间投影后加 sigmoid，就改变了论文的线性门控设计。</p>
+<p><strong>初始化有明确目的。</strong> 作者将 \(W\) 初始化为接近零，\(b\) 初始化为 1，使门值起步接近 1。不拆分时 \(s(Z)\approx Z\)，拆分时 \(s(Z)\approx Z_1\)。这样早期网络近似稳定的逐 token 前馈网络，随后逐渐学入跨 token 依赖，而不是一开始就让随机全局混合把每层激活任意相乘。作者强调这对稳定性关键，并称门控前归一化改善大型 NLP 模型的稳定性；论文没有给出覆盖所有初始化尺度的系统数值曲线，不应把这两点写成有完整敏感性证明的结论。</p>
+<p><span id="cost"></span></p>
+<h3>3.5 与 GLU、卷积和注意力的区别，以及实际代价</h3>
+<p>GLU、Highway Network、LSTM 都有乘法门控的先例；本篇的区别在于门控中显式沿<strong>位置维</strong>投影，跨 token 获取信息。SE block 也用乘法重标定，但其通道压缩/变换方式不同；SGU 内部空间线性算子本身不混合通道，通道交互由 block 外围的 \(U,V\) 完成。</p>
+<p>一般 \(W\) 的不同行可学习不同位置关系，网络不必对任意置换保持等变。更准确地说，不加位置信息的标准自注意力是<strong>置换等变</strong>：重排输入导致输出随之重排，并非逐 token 输出“完全不变”；报告在这里区分原文较宽泛的 permutation invariance 用语。gMLP 的位置次序已经写进 \(W\)，因此不用额外位置 embedding 也不等于不知道词序。</p>
+<p>若 \(W\) 学出近似卷积形状，它仍与常见 depthwise convolution 不同：后者可每通道一个滤波器，SGU 是同一层所有通道共享一个空间变换；它也不预设小方形局部卷积核。原文关于阶数的比较是：忽略非线性时，SGU 的门控有二阶交互，点积注意力中的 \(QK^{\mathsf T}V\) 有三阶交互。真实网络含 GeLU、LayerNorm、softmax 和多层复合，不能据此给整网简单定阶或推断谁更有表达能力。</p>
+<p>空间部分的乘加数为：</p>
+<p>\[C_{\mathrm{SGU}}=\frac{n^2e}{2},\qquad C_{\mathrm{attention}}\approx2n^2d.\]</p>
+<p>第一项是 \(W\) 乘 \(n\times(e/2)\) 特征；第二项对应标准注意力形成位置分数和汇聚值的两次主要矩阵乘法。它们都随长度 \(n\) <strong>平方增长</strong>，这里只比较空间运算，不包括所有通道投影、softmax、归一化与硬件开销。在 \(e=6d\) 时，SGU 空间项是 \(3n^2d\)，甚至比 \(2n^2d\) 更大。少了多头注意力不保证更省 FLOPs、更少内存或更快。</p>
+<p><span id="toeplitz"></span></p>
+<h3>3.6 MLM、位置共享与 Toeplitz 约束</h3>
+<p>MLM 是 masked language modeling：输入某些词被遮蔽的句子，让网络利用上下文恢复被遮蔽词，例如“她把书放在 [MASK] 上”。为解释训练指标，可把常见 MLM 目标写为：</p>
+<p>\[\mathcal L_{\mathrm{MLM}}=-\frac{1}{\lvert M\rvert}\sum_{i\in M}\log p_\theta(x_i\mid\widetilde x),\qquad \mathrm{PPL}=\exp(\mathcal L_{\mathrm{MLM}}).\]</p>
+<p>\(M\) 是预测位置集合，\(x_i\) 是原词，\(\widetilde x\) 是破坏后的输入。PPL 越低说明对真实词分配的平均概率越高。此式是指标的常规解释，不是本文新增的损失；论文沿用 BERT 输入输出协议，没有提出额外门控损失、对齐辅助损失或损失权重。它是双向填空困惑度，不能直接等同于自回归生成模型的困惑度。正文与附录未展开 mask 比例、替换概率和全部数据处理代码，本报告不把习惯性的 BERT 默认值冒充逐项核验结果。</p>
+<p>作者在不约束 \(W\) 的初步 NLP 实验中观察到 Toeplitz-like 结构（附录 C 图 9）：同一条对角线上的权重近似相同，即更依赖相对距离而非绝对位置。随后正式 MLM 实验直接约束：</p>
+<p>\[W_{ij}=w_{i-j+n-1},\qquad w\in\mathbb R^{2n-1}.\]</p>
+<p>这里用 0-based 下标。它把 \(n^2\) 个空间权重压成 \(2n-1\) 个相对位移参数；\(n=128\) 时是 255 个。作者报告该约束不影响质量，理由是模型本来就倾向学出这种结构。对于“猫在桌上”和前面多了几个词的句子，相同的局部相对关系不必从不同绝对位置分别学习。</p>
+<p>附录伪代码的具体做法是：创建长度 \(2n-1\) 的向量；补 \(n\) 个零；复制 \(n\) 份；裁掉末尾 \(n\) 项；reshape 为 \(n\times(3n-2)\)；再取中间 \(n\) 列。由此形成沿对角线复用权重的矩阵。关键是“相同位移共用参数”，并非代码中的 padding 操作赋予了额外注意力。</p>
+<p><strong>边界要保留。</strong> Toeplitz 的线性部分类似全序列长度的一维卷积，仍是共享通道的滤波器。若以稠密矩阵实现，参数减少不会自动把计算从平方变成线性；边缘 padding、特殊 token、位置偏置也使整个网络不能被直接宣称具有严格的平移等变性。原文图 4 中有前向、后向和双向滤波器，正符合双向填空；这种矩阵不能直接用于自回归生成，否则会读到未来词。</p>
+<p>作者还报告微调时不用显式屏蔽 pad token，模型可以学会忽略它们。它是在本文固定协议下的经验观察；更换 padding 值、长度分布或任务时，需要重新验证，而不能把 padding 当成数学上不存在的输入。</p>
+<p><span id="protocol"></span></p>
+<h3>3.7 实验设计与完整训练设置</h3>
+<p><strong>任务为什么这样选。</strong> ImageNet-1K 分类检查视觉 patch 交互是否必须有注意力；MLM 检查语言预训练的预测能力；SST-2 是单句情感分类，MNLI 是句对蕴含/矛盾/中立分类，二者对比用于观察跨句对齐的差异；SQuAD v1.1/v2.0 检查较长文本上的抽取式问答，v2.0 还含无答案问题。MNLI m/mm 分别指匹配/不匹配领域验证集，不能只挑较高的一列。</p>
+<p>Top-1 和分类 accuracy 是最高分预测正确的比例；SQuAD 的 F1 衡量预测答案与参考答案的 token 重合，不能把 F1 点数说成同样数量的正确回答比例。COCO box mAP 是跨类别和 IoU 阈值汇总的检测平均精度，与分类准确率不是同一指标。</p>
+<p><strong>两套 NLP 预训练设置不能混用（附录 A 表 8）。</strong> 二者都用 32K、区分大小写的 SentencePiece 词表。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>设置</th>
+<th>消融/规模分析</th>
+<th>正式主结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据</td>
+<td>C4 的 RealNews-like 子集</td>
+<td>完整 C4 English</td>
+</tr>
+<tr>
+<td>最大序列长度</td>
+<td>128</td>
+<td>512</td>
+</tr>
+<tr>
+<td>batch</td>
+<td>2048</td>
+<td>256</td>
+</tr>
+<tr>
+<td>步数</td>
+<td>125K</td>
+<td>1M</td>
+</tr>
+<tr>
+<td>峰值学习率</td>
+<td>7e-4</td>
+<td>1e-4</td>
+</tr>
+<tr>
+<td>warmup</td>
+<td>10K steps</td>
+<td>10K steps</td>
+</tr>
+<tr>
+<td>优化</td>
+<td>AdamW，线性学习率衰减</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>Adam 参数</td>
+<td>beta=(0.9,0.999)，epsilon=1e-6</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>权重衰减</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr>
+<td>hidden / GeLU / attention dropout</td>
+<td>都为 0</td>
+<td>都为 0</td>
+</tr>
+<tr>
+<td>gradient clipping</td>
+<td>0（未启用）</td>
+<td>0（未启用）</td>
+</tr>
+<tr>
+<td>作者报告硬件/时长</td>
+<td>32 核 TPUv3，约 1–2 天/次</td>
+<td>128 核 TPUv2，约 1–5 天/次</td>
+</tr>
+</tbody>
+</table></div>
+<p>两套预算的序列样本数相同，但最大 token 槽位预算约为 32.768B 和 131.072B；这里是按 batch×steps×max-length 推算的上界，不是独立语料规模，也不是实际非 padding token 计数。更长上下文、更多 token 和不同数据分布都会影响结果，故表 3 的 4.35 不能直接拿来与表 6 的 4.28 比模型改进。</p>
+<p><strong>微调设置（表 9）。</strong> SST-2/MNLI 最大长度 128，batch 在 {16,32} 中选，学习率在 {1e-5,2e-5,3e-5} 中选，训练 5 epochs、10% warmup。SQuAD 最大长度 512，batch 32、学习率 5e-5、8K steps、1K warmup。共同使用 AdamW、线性衰减、beta=(0.9,0.999)、epsilon=1e-6、权重衰减 0.01，不启用梯度裁剪；hidden dropout 为 0.1，GeLU dropout 为 0，存在注意力时 attention dropout 为 0.1。预训练无 dropout 与微调有 dropout 不矛盾：后者数据更少，更需抑制过拟合。主实验明确说 GLUE 使用五次独立微调的中位数，不能未经说明就把这一汇总规则扩大到所有表和 SQuAD。</p>
+<p><strong>视觉训练设置（表 7）。</strong> ImageNet-1K 无额外训练数据，输入 224、300 epochs、batch 4096、warmup 10K steps；AdamW 峰值学习率 1e-3、cosine decay、beta=(0.9,0.999)、epsilon=1e-6、weight decay 0.05、gradient clipping 1.0。增强为 AutoAugment、CutMix alpha=1.0、Mixup alpha=0.8、二者切换概率 0.5、label smoothing=0.1。没有 repeated augmentation、random erasing、EMA，hidden/GeLU/attention/classification dropout 都为 0。Ti/S/B 的 stochastic-depth survival probability 分别是 1.00/0.95/0.80；Mixer-B 同设置用 0.95。模型越大越易过拟合，因此只调随机深度强度，其他参数共享。增强改变训练样本，标签平滑缓和过度自信，随机深度降低对固定完整路径的依赖。作者报告 128 核 TPUv2 每次 1–4 小时，不能据此承诺普通 GPU 或本机复现耗时。</p>
+<p>这些是作者报告的协议。本次完成源文阅读、表格核对和报告校验，没有运行大规模训练，也没有下载模型权重。</p>
+<p><span id="vision"></span></p>
+<h3>3.8 视觉结果：支持“可以达到”，不支持“全面更优”</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>层数 / d / e</th>
+<th style="text-align: right;">参数 M</th>
+<th style="text-align: right;">FLOPs B（表 1）</th>
+<th style="text-align: right;">MAdds B（表 2）</th>
+<th style="text-align: right;">ImageNet Top-1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gMLP-Ti</td>
+<td>30 / 128 / 768</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">2.7</td>
+<td style="text-align: right;">1.4</td>
+<td style="text-align: right;">72.3</td>
+</tr>
+<tr>
+<td>gMLP-S</td>
+<td>30 / 256 / 1536</td>
+<td style="text-align: right;">19.5</td>
+<td style="text-align: right;">8.9</td>
+<td style="text-align: right;">4.5</td>
+<td style="text-align: right;">79.6</td>
+</tr>
+<tr>
+<td>gMLP-B</td>
+<td>30 / 512 / 3072</td>
+<td style="text-align: right;">73.4</td>
+<td style="text-align: right;">31.6</td>
+<td style="text-align: right;">15.8</td>
+<td style="text-align: right;">81.6</td>
+</tr>
+<tr>
+<td>DeiT-Ti</td>
+<td>对照</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1.3</td>
+<td style="text-align: right;">72.2</td>
+</tr>
+<tr>
+<td>DeiT-S</td>
+<td>对照</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">4.6</td>
+<td style="text-align: right;">79.8</td>
+</tr>
+<tr>
+<td>DeiT-B</td>
+<td>对照</td>
+<td style="text-align: right;">86</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">17.5</td>
+<td style="text-align: right;">81.8</td>
+</tr>
+<tr>
+<td>Mixer-B/16</td>
+<td>原论文设置</td>
+<td style="text-align: right;">59</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">12.7</td>
+<td style="text-align: right;">76.4</td>
+</tr>
+<tr>
+<td>Mixer-B/16</td>
+<td>本文重训设置</td>
+<td style="text-align: right;">59</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">12.7</td>
+<td style="text-align: right;">77.3</td>
+</tr>
+<tr>
+<td>Mixer-L/16</td>
+<td>原论文设置</td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">44.8</td>
+<td style="text-align: right;">71.8</td>
+</tr>
+<tr>
+<td>ResMLP-12 / 24 / 36</td>
+<td>对照</td>
+<td style="text-align: right;">15 / 30 / 45</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">3.0 / 6.0 / 8.9</td>
+<td style="text-align: right;">76.6 / 79.4 / 79.7</td>
+</tr>
+</tbody>
+</table></div>
+<p>表 1 的 FLOPs 与表 2 的 MAdds 存在约 2 倍口径差异，这是把一次乘加计为两个浮点运算与一个乘加的区别；不能把 gMLP-B 的 31.6 与 DeiT-B 的 17.5 当成同口径比较。表 2 参数数有四舍五入。作者报告多次独立运行的准确率标准差约 0.1 点。</p>
+<p>gMLP 与 DeiT 在三个规模上非常接近：例如 B 为 81.6 对 81.8，说明这个特定视觉任务并不依赖自注意力才能达到这一水平。对 Mixer 的宣传数字要对齐设置：gMLP-S 的 79.6 比原始 Mixer-B 的 76.4 高 <strong>3.2 个百分点</strong>，参数约少 66%；对本文同设置重训的 77.3，优势是 <strong>2.3 点</strong>。不是“对所有 Mixer 都固定提高 3%”。</p>
+<p>原表还包含 ResNet-152（78.3）、RegNetY-8GF（81.7）、EfficientNet-B0/B3/B7（77.1/81.6/84.3）、NFNet-F0（83.6）以及 ViT-B/L（77.9/76.5）。其分辨率与计算预算并不全相同，例如 B7 用 600，NFNet-F0 用 192，ViT 原始对照用 384。它们说明 gMLP 在当时强 ConvNet 面前并没有全面领先；DeiT 才是更接近其训练条件的注意力对照。MLP 类模型也会严重过拟合，正则方案本身是成功的一部分。</p>
+<figure class="figure-block"><div class="figure-tools"><label>缩放 <input aria-label="调整图片缩放" type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><button type="button" data-reset>复位</button><span>可拖动平移查看细节</span></div><div class="figure-viewport"><img src="assets/748f04c9f74853d150303b79.png" alt="原文图 3：同一层中多个位置的空间滤波器呈现局部性及近似平移规律，局部区域并非预设的正方形卷积核。它是训练后权重的定性证据，不能证明每层严格具有卷积结构，也没有单独证明这些图样造成了准确率提升。" loading="lazy"></div><figcaption>原文图 3：同一层中多个位置的空间滤波器呈现局部性及近似平移规律，局部区域并非预设的正方形卷积核。它是训练后权重的定性证据，不能证明每层严格具有卷积结构，也没有单独证明这些图样造成了准确率提升。</figcaption></figure>
+<p><span id="ablation"></span></p>
+<h3>3.9 消融：真正有效的不是“任意替掉 attention”</h3>
+<p>表 3 的对照包括：绝对位置 BERT；采用 layer/head-specific T5 式相对位置 bias 的 BERT；删除 softmax 内内容相关项、仅保留相对位置 bias 的 BERT（可视为 Random Synthesizer 变体）；以及用两层空间 MLP 替代注意力的 MLP-Mixer。后两者用于检验“静态混合本身是否足够”。Mixer 是 24 层、d=768、空间隐藏宽度 384、FFN 宽度 3072；四种 gMLP 是 36 层、d=512、e=3072；Mixer/gMLP 不加位置编码。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模型 / 空间操作</th>
+<th style="text-align: right;">PPL ↓</th>
+<th style="text-align: right;">参数 M</th>
+<th>能说明什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BERTbase，绝对位置</td>
+<td style="text-align: right;">4.37</td>
+<td style="text-align: right;">110</td>
+<td>常规注意力基线</td>
+</tr>
+<tr>
+<td>BERTbase，相对位置</td>
+<td style="text-align: right;">4.26</td>
+<td style="text-align: right;">110</td>
+<td>本设置中更强的基线</td>
+</tr>
+<tr>
+<td>相对位置 BERT，移除内容注意力</td>
+<td style="text-align: right;">5.64</td>
+<td style="text-align: right;">96</td>
+<td>直接删除内容项损失较大</td>
+</tr>
+<tr>
+<td>MLP-Mixer</td>
+<td style="text-align: right;">5.34</td>
+<td style="text-align: right;">112</td>
+<td>两层空间 MLP 并未自动替代注意力</td>
+</tr>
+<tr>
+<td>Linear：f(Z)</td>
+<td style="text-align: right;">5.14</td>
+<td style="text-align: right;">92</td>
+<td>可交流，但没有乘法门控</td>
+</tr>
+<tr>
+<td>Additive：Z+f(Z)</td>
+<td style="text-align: right;">4.97</td>
+<td style="text-align: right;">92</td>
+<td>加法路径有帮助但仍弱</td>
+</tr>
+<tr>
+<td>Multiplicative：Z⊙f(Z)</td>
+<td style="text-align: right;">4.53</td>
+<td style="text-align: right;">92</td>
+<td>显式乘法交互明显改善</td>
+</tr>
+<tr>
+<td>Split：Z1⊙f(Z2)</td>
+<td style="text-align: right;">4.35</td>
+<td style="text-align: right;">102</td>
+<td>分支分工后最接近注意力基线</td>
+</tr>
+</tbody>
+</table></div>
+<p>这里 \(f\) 包含输入归一化。最有力的局部对照是前三种 gMLP 同为 92M，从 5.14/4.97 到 4.53 支持乘法的重要性；split 进一步改善，但 102M 与 92M 不同，所以不能把全部改进都归因于拆分这一件事，也不能把表理解为严格等 FLOPs 的因果实验。</p>
+<p>原文将 4.35 与 4.26 的差异描述为相对于扩展模型带来的变化较小。表注 PPL 标准差约 0.01，故 <strong>0.09 的差值不是“统计上没差别”的充分依据</strong>，论文也没有给出相应显著性检验。准确表述是性能接近，不能抹去真实差距。图 4 的滤波器既有前向、后向，也有双向读取模式，说明共享静态混合依然能够组织多种上下文范围。</p>
+<p><span id="scaling"></span></p>
+<h3>3.10 扩展规模：PPL 相近不等于迁移效果相同</h3>
+<p>表 4 在消融设置中把深度乘以 0.5、1、2、4，宽度保持各自家族的设置。Transformer 的 “12+12” 是 12 个注意力子块与 12 个 FFN 子块，不能误读成 24 个完整 Transformer layers。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>子块/层记法</th>
+<th style="text-align: right;">参数 M</th>
+<th style="text-align: right;">PPL ↓</th>
+<th style="text-align: right;">SST-2 ↑</th>
+<th style="text-align: right;">MNLI-m ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transformer</td>
+<td>6+6</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">4.91</td>
+<td style="text-align: right;">90.4</td>
+<td style="text-align: right;">81.5</td>
+</tr>
+<tr>
+<td>gMLP</td>
+<td>18</td>
+<td style="text-align: right;">59</td>
+<td style="text-align: right;">5.25</td>
+<td style="text-align: right;">91.2</td>
+<td style="text-align: right;">77.7</td>
+</tr>
+<tr>
+<td>Transformer</td>
+<td>12+12</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">4.26</td>
+<td style="text-align: right;">91.3</td>
+<td style="text-align: right;">83.3</td>
+</tr>
+<tr>
+<td>gMLP</td>
+<td>36</td>
+<td style="text-align: right;">102</td>
+<td style="text-align: right;">4.35</td>
+<td style="text-align: right;">92.3</td>
+<td style="text-align: right;">80.9</td>
+</tr>
+<tr>
+<td>Transformer</td>
+<td>24+24</td>
+<td style="text-align: right;">195</td>
+<td style="text-align: right;">3.83</td>
+<td style="text-align: right;">92.1</td>
+<td style="text-align: right;">85.2</td>
+</tr>
+<tr>
+<td>gMLP</td>
+<td>72</td>
+<td style="text-align: right;">187</td>
+<td style="text-align: right;">3.79</td>
+<td style="text-align: right;">93.5</td>
+<td style="text-align: right;">82.8</td>
+</tr>
+<tr>
+<td>Transformer</td>
+<td>48+48</td>
+<td style="text-align: right;">365</td>
+<td style="text-align: right;">3.47</td>
+<td style="text-align: right;">92.8</td>
+<td style="text-align: right;">86.3</td>
+</tr>
+<tr>
+<td>gMLP</td>
+<td>144</td>
+<td style="text-align: right;">357</td>
+<td style="text-align: right;">3.43</td>
+<td style="text-align: right;">95.1</td>
+<td style="text-align: right;">84.6</td>
+</tr>
+</tbody>
+</table></div>
+<p>较大 gMLP 的填空 PPL 可稍优，SST-2 也更高，但 MNLI 仍低。比如 187M gMLP 的 3.79 低于 195M Transformer 的 3.83，MNLI 却是 82.8 对 85.2。训练同一个填空目标并不强制两种网络以同样方式组织跨句关系；这就是归纳偏置会在微调时显现的具体例子。</p>
+<figure class="figure-block"><div class="figure-tools"><label>缩放 <input aria-label="调整图片缩放" type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><button type="button" data-reset>复位</button><span>可拖动平移查看细节</span></div><div class="figure-viewport"><img src="assets/d7be5b7a852ce1041a0fa3f0.png" alt="原文图 5：左图的预训练曲线接近，右侧两个下游任务出现不同方向的偏移。斜率相近说明所测范围内两家族都从扩容获益；几条有限长度曲线不能证明无限扩展时一定追平，也不能推导固定算力下谁最优。" loading="lazy"></div><figcaption>原文图 5：左图的预训练曲线接近，右侧两个下游任务出现不同方向的偏移。斜率相近说明所测范围内两家族都从扩容获益；几条有限长度曲线不能证明无限扩展时一定追平，也不能推导固定算力下谁最优。</figcaption></figure>
+<p>作者用近似幂律描述观测，并主张增大容量能补偿差距。报告将其理解为实验趋势：已观测到规模增长改善指标，但没有给出对所有任务成立的“总能补齐”定理，也没有固定算力最优数据/参数配比实验。参数相近本身不足以保证训练计算公平。</p>
+<p><span id="thin"></span>
+<strong>附录 B 的反向控制也重要。</strong> 为排查“只要更深就赢”，作者在约相同容量下把 Transformer 加深并缩窄：12+12、d=768、12 heads、110M，PPL=4.83；24+24、d=512、8 heads、92M，5.08；48+48、d=384、12 heads、98M，4.99；96+96、d=256、8 heads、84M，5.30。更深并未自然改善，极深处更差。不过容量并不完全一致，而且作者明确说这组训练设置与正文相似但不同，<strong>不能</strong>将这里的 4.83 与表 3 的 4.26 直接横比来评价同一模型。</p>
+<p><span id="hybrid"></span></p>
+<h3>3.11 aMLP：小注意力具体加在哪里</h3>
+<p>前述例子中，“孩子”和“人”可能出现在不同偏移；固定相对距离滤波器不能像内容注意力那样直接为当前词对生成匹配强度。作者因此怀疑，MNLI 的短板与跨句对齐有关，提出 aMLP：在 gMLP 的门控支路加一个小自注意力模块。</p>
+<p>小注意力读取的是 block 输入归一化后的 \(H=\operatorname{LN}(X)\)，<strong>不是</strong>扩展后的 \(Z_2\)。设单头宽度为 \(d_a\)，输出宽度为 \(e/2\)，按图 6 可以写成：</p>
+<p>\[Q=HW_Q,\quad K=HW_K,\quad V_a=HW_V,\quad A(H)=\operatorname{softmax}\!\left(\frac{QK^{\mathsf T}}{\sqrt{d_a}}\right)V_aW_O.\]</p>
+<p>\(Q,K,V_a\) 均为 \(n\times d_a\)；注意力分数为 \(n\times n\)，softmax 沿被读取的位置归一化；除以 \(\sqrt{d_a}\) 缓和点积随维数增加而变大；\(W_O\) 把值汇聚结果从 \(d_a\) 投影到 \(e/2\)。为避免与 block 输出矩阵 \(V\) 混淆，这里将注意力 value 记为 \(V_a\)。</p>
+<p>加法发生在静态空间投影之后、与内容支路相乘之前：</p>
+<p>\[S=Z_1\odot\left[W\operatorname{LN}(Z_2)+b\mathbf1_{e/2}^{\mathsf T}+A(H)\right].\]</p>
+<p>因此静态关系与输入内容匹配共同决定门值，然后才经过回投影与残差。它不是在模型末尾附加一个分类注意力头，也不是用注意力完全取代 SGU。</p>
+<figure class="figure-block"><div class="figure-tools"><label>缩放 <input aria-label="调整图片缩放" type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><button type="button" data-reset>复位</button><span>可拖动平移查看细节</span></div><div class="figure-viewport"><img src="assets/94d029e69132342c8b29b4ae.png" alt="原文图 6：虚线支路从 block 归一化输入读取内容，小注意力输出在圆圈加号处接入静态门值，随后才进入圆圈乘号。右侧伪代码对应 QKV、缩放点积、softmax、值汇聚和回投影。" loading="lazy"></div><figcaption>原文图 6：虚线支路从 block 归一化输入读取内容，小注意力输出在圆圈加号处接入静态门值，随后才进入圆圈乘号。右侧伪代码对应 QKV、缩放点积、softmax、值汇聚和回投影。</figcaption></figure>
+<p>消融通常用 64 维单头，对比 BERTbase 每层 12×64=768 维；主结果的 aMLPlarge 用 128 维单头，对比 BERTlarge 的 16×64=1024。<strong>“tiny”指每个 block 内注意力宽度小，不是整网只有一个 64 维注意力模块。</strong> 单头只限制该模块的结构，不能据此说整个网络最多只能建立一种语义关系。</p>
+<p>图 7 用深度倍率 {0.5,1,2} 或数据倍率 {1,2,4,8} 收集点，画预训练 PPL 与下游分数的校准关系，目的在于把“预训练预测能力”与“迁移效率”分开看。aMLP 加上 tiny attention 后填补了 MNLI 差距，同时保留 gMLP 在 SST-2 上的趋势；图 8 再将规模与下游表现放在一起。这支持两种交互方式互补，但不等于所有模型规模和每个任务点都严格提升。</p>
+<figure class="figure-block"><div class="figure-tools"><label>缩放 <input aria-label="调整图片缩放" type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><button type="button" data-reset>复位</button><span>可拖动平移查看细节</span></div><div class="figure-viewport"><img src="assets/3f227eb9ff6021fb4f28a966.png" alt="附录图 10 的一个 MNLI 示例：句内对角结构之外，可看到跨句区域的对应关系。这里每个像素是网络前半部分中该 token 对取得的最大注意力权重，不是某一层，也不是平均 attention。挑选样例与取最大值会突出显著匹配；它支持对齐解释，但不是证明预测因果来源的干预实验。" loading="lazy"></div><figcaption>附录图 10 的一个 MNLI 示例：句内对角结构之外，可看到跨句区域的对应关系。这里每个像素是网络前半部分中该 token 对取得的最大注意力权重，不是某一层，也不是平均 attention。挑选样例与取最大值会突出显著匹配；它支持对齐解释，但不是证明预测因果来源的干预实验。</figcaption></figure>
+<p><span id="results"></span></p>
+<h3>3.12 全规模 BERT 主结果：完整比较与反例</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align: right;">参数 M</th>
+<th style="text-align: right;">FLOPs B</th>
+<th>层数</th>
+<th style="text-align: right;">d</th>
+<th style="text-align: right;">e</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BERTbase</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">100.8</td>
+<td>12+12</td>
+<td style="text-align: right;">768</td>
+<td style="text-align: right;">3072</td>
+</tr>
+<tr>
+<td>gMLPbase</td>
+<td style="text-align: right;">130</td>
+<td style="text-align: right;">158.0</td>
+<td>48</td>
+<td style="text-align: right;">512</td>
+<td style="text-align: right;">3072</td>
+</tr>
+<tr>
+<td>aMLPbase</td>
+<td style="text-align: right;">109</td>
+<td style="text-align: right;">128.9</td>
+<td>36</td>
+<td style="text-align: right;">512</td>
+<td style="text-align: right;">3072</td>
+</tr>
+<tr>
+<td>BERTlarge</td>
+<td style="text-align: right;">336</td>
+<td style="text-align: right;">341.2</td>
+<td>24+24</td>
+<td style="text-align: right;">1024</td>
+<td style="text-align: right;">4096</td>
+</tr>
+<tr>
+<td>gMLPlarge</td>
+<td style="text-align: right;">365</td>
+<td style="text-align: right;">430.1</td>
+<td>96</td>
+<td style="text-align: right;">768</td>
+<td style="text-align: right;">3072</td>
+</tr>
+<tr>
+<td>aMLPlarge</td>
+<td style="text-align: right;">316</td>
+<td style="text-align: right;">370.3</td>
+<td>72</td>
+<td style="text-align: right;">768</td>
+<td style="text-align: right;">3072</td>
+</tr>
+<tr>
+<td>gMLPxlarge</td>
+<td style="text-align: right;">941</td>
+<td style="text-align: right;">1091.3</td>
+<td>144</td>
+<td style="text-align: right;">1024</td>
+<td style="text-align: right;">4096</td>
+</tr>
+</tbody>
+</table></div>
+<p>表 5 显示 aMLPbase 虽然参数接近 BERTbase，FLOPs 仍约高 28%；aMLPlarge 参数少约 6%，FLOPs 却约高 8.5%。因此作者说的参数效率不能直接换成训练成本效率。超大 gMLP 相对同设置 BERTlarge 参数约 2.8 倍、FLOPs 约 3.2 倍。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align: right;">PPL ↓</th>
+<th style="text-align: right;">SST-2</th>
+<th>MNLI m/mm</th>
+<th style="text-align: right;">SQuAD v1.1 F1</th>
+<th style="text-align: right;">SQuAD v2.0 F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原始 BERTbase</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">92.7</td>
+<td>84.4 / —</td>
+<td style="text-align: right;">88.5</td>
+<td style="text-align: right;">76.3</td>
+</tr>
+<tr>
+<td>本文 BERTbase</td>
+<td style="text-align: right;">4.17</td>
+<td style="text-align: right;">93.8</td>
+<td>85.6 / 85.7</td>
+<td style="text-align: right;">90.2</td>
+<td style="text-align: right;">78.6</td>
+</tr>
+<tr>
+<td>gMLPbase</td>
+<td style="text-align: right;">4.28</td>
+<td style="text-align: right;">94.2</td>
+<td>83.7 / 84.1</td>
+<td style="text-align: right;">86.7</td>
+<td style="text-align: right;">70.1</td>
+</tr>
+<tr>
+<td>aMLPbase</td>
+<td style="text-align: right;">3.95</td>
+<td style="text-align: right;">93.4</td>
+<td>85.9 / 85.8</td>
+<td style="text-align: right;">90.7</td>
+<td style="text-align: right;">80.9</td>
+</tr>
+<tr>
+<td>原始 BERTlarge</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">93.7</td>
+<td>86.6 / —</td>
+<td style="text-align: right;">90.9</td>
+<td style="text-align: right;">81.8</td>
+</tr>
+<tr>
+<td>本文 BERTlarge</td>
+<td style="text-align: right;">3.35</td>
+<td style="text-align: right;">94.3</td>
+<td>87.0 / 87.4</td>
+<td style="text-align: right;">92.0</td>
+<td style="text-align: right;">81.0</td>
+</tr>
+<tr>
+<td>gMLPlarge</td>
+<td style="text-align: right;">3.32</td>
+<td style="text-align: right;">94.8</td>
+<td>86.2 / 86.5</td>
+<td style="text-align: right;">89.5</td>
+<td style="text-align: right;">78.3</td>
+</tr>
+<tr>
+<td>aMLPlarge</td>
+<td style="text-align: right;">3.19</td>
+<td style="text-align: right;">94.8</td>
+<td>88.4 / 88.4</td>
+<td style="text-align: right;">92.2</td>
+<td style="text-align: right;">85.4</td>
+</tr>
+<tr>
+<td>gMLPxlarge</td>
+<td style="text-align: right;">2.89</td>
+<td style="text-align: right;">95.6</td>
+<td>87.7 / 87.7</td>
+<td style="text-align: right;">90.9</td>
+<td style="text-align: right;">82.1</td>
+</tr>
+</tbody>
+</table></div>
+<p>第一，纯 gMLP 的短板确实会随规模缩小：同设置 SQuAD v2.0，base 落后 8.5 点，large 落后 2.7 点。941M 版本达到 82.1，超过本文 336M BERTlarge 的 81.0，但它在 SQuAD v1.1 仍是 90.9 对 92.0。这个例子说明无注意力架构能够在困难问答上达到可观表现，并非全面且公平地胜过 Transformer。</p>
+<p>第二，aMLPlarge 的 SQuAD v2.0 为 85.4，<strong>比本文重训 BERTlarge 的 81.0 高 4.4 个 F1 点</strong>；与原始 BERTlarge 的 81.8 比则为 3.6 点。必须指定参照物。它在表中其它 large 规模任务也有优势，说明少量内容相关交互在这个范围里很实用。</p>
+<p>第三，必须保留反例：<strong>aMLPbase 的 SST-2 为 93.4，低于本文 BERTbase 的 93.8，也低于 gMLPbase 的 94.2。</strong> 原文“所有 NLP 任务都可超过”的总体陈述不能改写成“任何规模的 aMLP 在每个任务都优于 BERT”。GLUE 是 dev 结果，调参也在该协议中进行；没有统一展示置信区间，不应把所有小差异都解释成稳健提升。</p>
+<figure class="figure-block"><div class="figure-tools"><label>缩放 <input aria-label="调整图片缩放" type="range" data-zoom min="1" max="4" step="0.1" value="1"></label><button type="button" data-reset>复位</button><span>可拖动平移查看细节</span></div><div class="figure-viewport"><img src="assets/2f3b1dd095bd2954fa58cb4d.png" alt="原文表 5 与表 6 的裁切，供核对模型大小、计算量、原 BERT 与本文重训 BERT。报告上面的可选中文表格与解释保留了 aMLPbase 的 SST-2 反例以及超大模型的成本。" loading="lazy"></div><figcaption>原文表 5 与表 6 的裁切，供核对模型大小、计算量、原 BERT 与本文重训 BERT。报告上面的可选中文表格与解释保留了 aMLPbase 的 SST-2 反例以及超大模型的成本。</figcaption></figure>
+<p><span id="transfer"></span></p>
+<h3>3.13 附录 E：分辨率迁移与 COCO，实际做了什么</h3>
+<p><strong>ImageNet-21K → ImageNet-1K。</strong> 作者先在 224 输入上预训练，再改为 384 微调。一般稠密空间矩阵与 patch 数绑定，所以不能把不同大小直接塞进原矩阵。他们取图像中心位置学到的空间滤波器，平铺来外推到更大网格，再微调。文中用 224/384 图像尺度描述矩阵扩展；若只计 16×16 patches，网格实际从 14×14=196 个位置变成 24×24=576 个位置，不能误写为 SGU 仅需一个 224×224 的 token 权重矩阵。</p>
+<p>Large gMLP 的设置是 30 层、d=1024、e=6144。表 11 中 ViT-B/16 为 84.6、86M，gMLP-B/16 为 84.5、81M；ViT-L/16 为 85.1、307M，gMLP-L/16 为 85.2、294M，均为 224→384。模型参数随扩展空间算子而变化，所以 gMLP-B 的 81M 不要与 224 设置的 73.4M 混为同一个计数。该结果支持经过专门迁移和微调可以适应更大分辨率，<strong>不支持裸矩阵零改动处理任意长度</strong>。附录说训练设置与 ViT-L 可比，但没有像表 7 一样列出完整 21K 独立超参数表，这是复现信息边界。</p>
+<p><strong>COCO 检测。</strong> 作者把约 5M 的 DeiT-Tiny/gMLP-Tiny 分别作为 EfficientDet-D0 的 backbone，刻意不用空间池化或局部 shifted windows，以减少混入卷积式层级设计的影响；用双线性上采样把 backbone 的输出接到 Bi-FPN。两个模型用相同 AdamW、weight decay 0.05、learning rate 1e-3。最大输入大小 512，每张图随机缩放 0.1–2.0 倍，再 padding/cropping。</p>
+<p>结果是 DeiT-Tiny 24.5 box mAP、gMLP-Tiny 27.8、原 EfficientNet-B0 backbone 34.6。它说明在这个简单检测替换试验中 gMLP 优于对应 DeiT，但两者都弱于原卷积 backbone；也说明训练能处理有效物体尺度的剧烈变化。缩放后又 padding/cropping，并不能证明未改造的 \(W\) 接受任意 token 数。检测头仍是既有系统，本实验不等于“整个检测器都是 MLP”，也不是与所有先进检测架构的全面比较。</p>
+<p><span id="related"></span></p>
+<h2>4. 必要的相关工作比较</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>工作</th>
+<th>与本篇的具体关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://arxiv.org/abs/2105.01601" target="_blank" rel="noopener noreferrer">MLP-Mixer</a></td>
+<td>同期用通道 MLP 与空间 MLP 替换注意力；本文引入空间乘法门控，并把比较扩展到 BERT 式语言预训练与迁移。表 3 显示直接两层空间 MLP 的 NLP PPL 仍落后。</td>
+</tr>
+<tr>
+<td><a href="https://arxiv.org/abs/2105.03404" target="_blank" rel="noopener noreferrer">ResMLP</a></td>
+<td>同期研究残差前馈视觉网络，交替混合 patch 与通道；SGU 的显式内容×空间门值是这里重点检验的不同设计。</td>
+</tr>
+<tr>
+<td><a href="https://arxiv.org/abs/2005.00743" target="_blank" rel="noopener noreferrer">Synthesizer</a></td>
+<td>研究减少对成对内容注意力的依赖；本文把仅留相对位置 bias 的变体作为静态混合基线，5.64 的 PPL 说明移除动态项后还需要合适结构。</td>
+</tr>
+<tr>
+<td><a href="https://arxiv.org/abs/2002.05202" target="_blank" rel="noopener noreferrer">GLU Variants Improve Transformer</a></td>
+<td>同样强调乘法门控；常见 FFN 门控在单 token 通道内部，本文 SGU 的门值还通过空间矩阵读其他 token。不能把 gMLP 与只替换 FFN 激活的 GLU 视为同一操作。</td>
+</tr>
+</tbody>
+</table></div>
+<p>本文的新贡献在于一个足够简单、可与 Transformer 管线直接比较的空间门控架构，以及针对“预训练能力、迁移偏置、规模扩展”三者的区分。它既给出了不用自注意力的有效模型，也通过 aMLP 展示保留少量注意力的实际价值。本报告不扩展成跨论文发展史。</p>
+<p><span id="limitations"></span></p>
+<h2>5. 后续引用、局限与使用判断</h2>
+<p>已核对的后续引用是 <a href="https://proceedings.mlr.press/v162/peng22a/peng22a.pdf" target="_blank" rel="noopener noreferrer">Branchformer（ICML 2022）</a>。其 §1 明确采用 Liu et al. (2021) 的 gMLP 思路，使用卷积门控 cgMLP 建模局部关系，并与全局注意力分支并行组合。这里是后续论文明确记载的采用与修改，不是仅凭名称相近推断关系；本次只核对这一联系，没有把 Branchformer 标为精读，也不报告未经查询的总引用次数。</p>
+<p><strong>长度与位置结构限制。</strong> 例如将 128-token 稠密模型直接输入 256 tokens，矩阵维度就不匹配；Toeplitz 或附录的滤波器外推提供了特定改造途径，但新的距离、边界、数据分布仍需要验证。若任务是任意集合且希望元素顺序无关，位置绑定的 \(W\) 也不是默认合适的设计。</p>
+<p><strong>计算优势不能从名称推出。</strong> 例如 aMLPbase 参数 109M 接近 110M BERTbase，计算却更高；长序列的 SGU 仍有平方项。本文没有给出统一硬件下完整推理吞吐、峰值显存、延迟曲线，因此不能推荐它作为已经验证的长上下文加速方案。</p>
+<p><strong>任务外推有限。</strong> 证据主要来自 ImageNet、双向 MLM、少数 GLUE 任务、抽取式 QA 和一个 COCO 设置。比如自回归对话要防止读未来 token，需要改变空间算子和训练目标；本文结果不能直接保证生成质量、知识检索、多步推理或长距离外推。</p>
+<p><strong>跨句对齐解释有支持但不唯一。</strong> SST-2/MNLI 差异和 tiny attention 热图与该解释相符；但任务、数据分布、参数布局、优化难度也可能共同起作用，论文没有通过破坏指定对齐边等干预来证明因果路径。注意力图取最大值更应避免被当成忠实的决策解释。</p>
+<p><strong>“增大总能追平”不是证明。</strong> 数据点有限，也没有将各家族分别调到最优的相同训练计算预算；941M 的追赶例子还明显更贵。对样本少、算力固定的任务，归纳偏置的实用价值不能用无限资源假设抹去。</p>
+<p><strong>复现边界。</strong> 已有公开社区实现，例如 <a href="https://github.com/lucidrains/g-mlp-pytorch" target="_blank" rel="noopener noreferrer">lucidrains/g-mlp-pytorch</a>，但本次未核实出作者发布的完整训练仓库，不把第三方实现冒充官方代码，也没有做代码审计或训练复现。实现时最容易出错的是 split 后尺寸、归一化所在支路、门偏置 1、空间维转置、aMLP 加法位置以及语言模型的因果约束。原文对部分数据细节、分辨率扩展边界操作、检测训练预算未给出完整可复现规格。</p>
+<p><strong>值得保留的研究启发。</strong> 如果你在研究网络模块的作用，可以像本文一样：先固定输入输出管线和训练任务，再改交互算子；分别比较上游 loss 与下游能力；报告参数与计算两种成本；保留弱项与负结果。本文与 RL、可塑性或持续学习没有直接实验联系，不把这些兴趣强行写成论文已验证的应用结论。</p>
+<h2>6. 社区讨论与来源可用性</h2>
+<p>本次找到 Reddit 的相关讨论。以下是搜索索引实际返回的原帖片段，尝试打开 thread 时发生缓存获取失败，因此不声称已核验评论完整上下文、用户身份或当前票数；引用按帖子入口标注，缺失用户名不编造。</p>
+<blockquote>
+<p>“The complementary effect between ‘tiny-attn’ and the SGU is interesting.”</p>
+<p>中文：小注意力与 SGU 的互补效果很有意思。<a href="https://www.reddit.com/r/MachineLearning/comments/nfcrg3" target="_blank" rel="noopener noreferrer">2021-05-18 讨论帖</a>。报告解读：这与 aMLP 实验有关，但“互补”不意味着每一配置都提升，表 6 的 SST-2 base 结果就是边界。</p>
+<p>“I wonder why they want us to pay attention to MLPs when it's actually about quadratic relationships.”</p>
+<p>中文：既然核心在二次关系，为什么标题强调 MLP？<a href="https://www.reddit.com/r/MachineLearning/comments/nfcrg3" target="_blank" rel="noopener noreferrer">同一讨论帖</a>。报告解读：门控确实带来显式乘积，这个观察有助于避免把 SGU 当成普通线性层；不能据此忽略 GeLU、归一化和多层组合。</p>
+</blockquote>
+<p>另一个 <a href="https://www.reddit.com/r/MachineLearning/comments/ryohri" target="_blank" rel="noopener noreferrer">2022-01-08 帖子</a> 询问 spatial contraction 是否应缩短序列。这正是 §3.3 已解释的混淆：收缩是索引求和，输出位置数不必变化。以上来自同一个平台，<strong>未达到跨平台三条可核验实质评论的目标</strong>。</p>
+<p>X：搜索页未能获取；检索出现作者转发的第三方镜像，但没有可核验的原帖页面，故不引用镜像为作者原话。知乎：搜索页不可访问，检索未取得可核验的该论文讨论。小红书：搜索页不可访问，跳过。这些是本次访问限制，不是“这些平台不存在讨论”的断言。社区观点只辅助阅读，技术结论仍以正文和附录为准。</p>
+<h2>7. 覆盖审计与后续讨论入口</h2>
+<p>本报告已逐项对照正文 §1–5、式 (1)–(4)、图 1–8、表 1–6，以及补充材料 A–E 的训练设置、深窄 Transformer 对照、Toeplitz 构造、tiny attention 可视化、分辨率迁移与 COCO 实验。原文没有定理及证明章节，因此理论证明审计不适用；参考文献逐条展开与致谢不影响方法复现，未作额外精读。原图均为图或表区域的裁切，不使用整页 PDF 作为正文配图。</p>
+<p>当前最应记住的判断是：<strong>gMLP 证明了这组任务上“静态空间混合＋输入相关乘法门控”可以很强；aMLP 进一步说明，少量动态内容匹配仍可能显著改善迁移。</strong> 两句话同时成立，才忠实于论文的实验结果。</p></div><div class="qa-log"><h3>本篇讨论记录</h3><p><strong>Q · 2026-11-16</strong>：只精读《pay attention to MLPs》。</p><p><strong>A</strong>：本篇已按正文和全部技术附录完成精读，完整回答见上方唯一的精读模块；后续问题继续记录于本篇。</p></div></section><footer>来源范围：NeurIPS 2021 正文与独立补充材料。原图为局部裁切，支持缩放与拖动查看。此记录只包含一篇精读。</footer></main></div><script>window.addEventListener('DOMContentLoaded',()=>{
+if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:String.raw`\[`,right:String.raw`\]`,display:true},{left:String.raw`\(`,right:String.raw`\)`,display:false}],throwOnError:false});document.body.dataset.mathRender='complete';}else document.body.dataset.mathRender='missing';
+document.querySelectorAll('.figure-block').forEach(block=>{const viewport=block.querySelector('.figure-viewport'),img=viewport.querySelector('img'),slider=block.querySelector('[data-zoom]');function zoom(){const lr=viewport.scrollLeft/Math.max(1,viewport.scrollWidth-viewport.clientWidth),tr=viewport.scrollTop/Math.max(1,viewport.scrollHeight-viewport.clientHeight);img.style.width=`${Math.min(img.naturalWidth||viewport.clientWidth,viewport.clientWidth)*Number(slider.value)}px`;requestAnimationFrame(()=>{viewport.scrollLeft=lr*Math.max(0,viewport.scrollWidth-viewport.clientWidth);viewport.scrollTop=tr*Math.max(0,viewport.scrollHeight-viewport.clientHeight)})}if(img.complete)zoom();else img.addEventListener('load',zoom,{once:true});slider.addEventListener('input',zoom);block.querySelector('[data-reset]').addEventListener('click',()=>{slider.value=1;zoom();viewport.scrollLeft=0;viewport.scrollTop=0});let drag=null;viewport.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY,viewport.scrollLeft,viewport.scrollTop];viewport.setPointerCapture(e.pointerId);viewport.classList.add('is-dragging');e.preventDefault()});viewport.addEventListener('pointermove',e=>{if(drag){viewport.scrollLeft=drag[2]-e.clientX+drag[0];viewport.scrollTop=drag[3]-e.clientY+drag[1]}});for(const t of ['pointerup','pointercancel'])viewport.addEventListener(t,()=>{drag=null;viewport.classList.remove('is-dragging')});});
+});</script></body></html>
